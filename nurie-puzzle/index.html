@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ぬりえパズル">
+<meta name="theme-color" content="#fde68a">
+<title>パズル → ぬりえ</title>
+<script>
+// ── LINE等のアプリ内ブラウザ → 通常ブラウザへ誘導 ──
+(function(){
+  var ua = (navigator.userAgent || '').toLowerCase();
+  // LINEは openExternalBrowser=1 を付けるとSafari/Chromeで開き直す
+  if (ua.indexOf('line') !== -1) {
+    if (location.search.indexOf('openExternalBrowser=1') === -1) {
+      var sep = location.search ? '&' : '?';
+      location.href = location.href + sep + 'openExternalBrowser=1';
+      return;
+    }
+  }
+  // その他アプリ内ブラウザ（Instagram/Facebook/X等）は案内バーを出す
+  var inApp = /fban|fbav|instagram|micromessenger|twitter/.test(ua);
+  if (inApp) {
+    window.addEventListener('DOMContentLoaded', function(){
+      var bar = document.createElement('div');
+      bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#1f2937;color:#fff;padding:12px;font-size:13px;text-align:center;font-weight:bold;';
+      bar.innerHTML = '⚠ うまく うごかない ときは、みぎうえの「…」から<br>「ブラウザで ひらく」を えらんでね';
+      document.body.appendChild(bar);
+    });
+  }
+})();
+</script>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", sans-serif;
+    background: linear-gradient(160deg, #fef9c3 0%, #ffe4e6 50%, #dbeafe 100%);
+    user-select: none; -webkit-user-select: none;
+    overflow: hidden; -webkit-text-size-adjust: 100%;
+  }
+  #app { max-width: 600px; margin: 0 auto; padding: 14px; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior-y: contain; }
+  h1 { text-align: center; font-size: clamp(23px, 6vw, 36px); margin: 6px 0 2px;
+       color: #f43f5e; text-shadow: 2px 2px 0 #fff, 0 0 12px rgba(244,63,94,.3); }
+  .subtitle { text-align: center; color: #6b7280; font-size: 14px; margin-bottom: 14px; }
+
+  .btn { border: none; border-radius: 999px; padding: 10px 20px; font-size: 15px;
+         font-weight: bold; cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,.15); color: #fff; }
+  .btn:active { transform: scale(.93); }
+  .btn-back  { background: linear-gradient(135deg,#94a3b8,#64748b); }
+  .btn-go    { background: linear-gradient(135deg,#f59e0b,#ef4444); }
+  .btn-green { background: linear-gradient(135deg,#34d399,#10b981); }
+  .btn-blue  { background: linear-gradient(135deg,#38bdf8,#3b82f6); }
+
+  #select-screen { touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+  .grid-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; padding-bottom: 24px; }
+  .puzzle-card { background: #fff; border-radius: 20px; padding: 18px 10px; text-align: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,.1); cursor: pointer; border: 3px solid transparent;
+    transition: transform .12s, border-color .12s; }
+  .puzzle-card:active { border-color: #fbbf24; }
+  .puzzle-card { touch-action: pan-y; }
+  .pc-emoji { font-size: 46px; line-height: 1; }
+  .pc-label { margin-top: 8px; font-weight: bold; font-size: 17px; color: #374151; }
+  .puzzle-card.done { border-color: #34d399; background: #ecfdf5; }
+  .pc-check { color: #10b981; font-size: 13px; font-weight: bold; height: 16px; }
+
+  .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+  .top .title { font-size: 20px; font-weight: bold; color: #374151; }
+
+  #jigsaw-screen { display: none; }
+  #jigsaw-screen { touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+  #playfield { position: relative; margin: 0 auto; touch-action: pan-y; }
+  #jig-board { position: absolute; left: 0; top: 0; border-radius: 10px;
+    box-shadow: inset 0 0 0 3px #cbd5e1, 0 4px 12px rgba(0,0,0,.12); overflow: hidden; }
+  #jig-board .ghost { position: absolute; inset: 0; opacity: .16; }
+  #jig-board .slotline { position: absolute; background: rgba(148,163,184,.35); }
+  #tray-bg { position: absolute; left: 0; border-radius: 12px;
+    background: rgba(255,255,255,.45); box-shadow: inset 0 0 0 2px rgba(203,213,225,.6); }
+  .piece { position: absolute; cursor: grab; touch-action: none; filter: drop-shadow(1px 2px 2px rgba(0,0,0,.3));
+    transition: filter .1s; }
+  .piece.dragging { cursor: grabbing; filter: drop-shadow(2px 4px 5px rgba(0,0,0,.45)); }
+  .piece.locked { cursor: default; filter: none; }
+  .tray-hint { position: absolute; left: 0; right: 0; text-align: center; color: #9ca3af;
+    font-size: 13px; font-weight: bold; }
+
+  #diff-modal { display: none; position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,.5);
+    align-items: center; justify-content: center; }
+  #diff-modal.show { display: flex; animation: fadeIn .3s; }
+  .diff-card { background: #fff; border-radius: 24px; padding: 24px; text-align: center; width: 86%; max-width: 360px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.4); animation: cardPop .4s cubic-bezier(.34,1.56,.64,1); }
+  .diff-card h2 { margin: 4px 0 16px; color: #374151; font-size: 22px; }
+  .diff-btns { display: flex; flex-direction: column; gap: 12px; }
+  .diff-opt { padding: 16px; border-radius: 16px; border: none; cursor: pointer; font-size: 18px;
+    font-weight: bold; color: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.15); }
+  .diff-opt:active { transform: scale(.95); }
+  .diff-cancel { margin-top: 14px; background: none; border: none; color: #9ca3af; font-size: 14px;
+    font-weight: bold; cursor: pointer; }
+
+  #color-screen { display: none; }
+  .progress-wrap { height: 14px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin: 6px 0 12px; }
+  .progress-bar { height: 100%; width: 0%; border-radius: 999px;
+    background: linear-gradient(90deg,#34d399,#22d3ee); transition: width .3s; }
+  #board { width: min(90vw, 440px); aspect-ratio: 1; margin: 0 auto; display: grid; gap: 2px;
+    background: #e5e7eb; padding: 4px; border-radius: 12px; box-shadow: inset 0 0 0 2px #cbd5e1; }
+  .cell { border-radius: 4px; background: #f1f5f9; transition: background .12s, transform .1s; }
+  .cell.empty { background: transparent; }
+  .cell.fillable { cursor: pointer; box-shadow: inset 0 0 0 1px #e2e8f0; }
+  .cell.fillable:active { transform: scale(.9); }
+  .cell.pop { animation: popIn .3s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes popIn { 0%{transform:scale(.4)} 100%{transform:scale(1)} }
+  #palette { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+  .pal-btn { cursor: pointer; padding: 4px; border-radius: 14px; border: 3px solid transparent;
+    background: rgba(255,255,255,.6); transition: transform .1s, border-color .1s; }
+  .pal-btn:active { transform: scale(.9); }
+  .pal-btn.selected { border-color: #1f2937; background: #fff; transform: scale(1.08); }
+  .pal-swatch { width: clamp(38px,10vw,50px); height: clamp(38px,10vw,50px); border-radius: 11px;
+    display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px;
+    font-size: 11px; font-weight: bold; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.5);
+    box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+  .pal-swatch.light { color: #64748b; text-shadow: none; border: 1px solid #cbd5e1; }
+  #done-area { text-align: center; margin-top: 18px; }
+
+  #clear-overlay { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.55);
+    align-items: center; justify-content: center; flex-direction: column; }
+  #clear-overlay.show { display: flex; animation: fadeIn .4s; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .clear-card { background: #fff; border-radius: 28px; padding: 26px 34px; text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,.4); animation: cardPop .5s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes cardPop { from{transform:scale(.4);opacity:0} to{transform:scale(1);opacity:1} }
+  .clear-emoji { font-size: 64px; animation: bounce .6s infinite alternate; }
+  @keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-12px)} }
+  .clear-text { font-size: 28px; font-weight: bold; color: #f43f5e; margin: 10px 0 18px; }
+  .confetti { position: fixed; top: -20px; font-size: 22px; pointer-events: none; z-index: 99;
+    animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: .9; } }
+
+  #mute-btn { position: fixed; top: 10px; right: 10px; z-index: 50; width: 44px; height: 44px;
+    border-radius: 50%; border: none; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    font-size: 20px; cursor: pointer; }
+
+  /* ぬりえモード切替 */
+  .mode-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 10px; }
+  .mode-btn { border: 3px solid transparent; border-radius: 999px; padding: 8px 18px;
+    font-size: 14px; font-weight: bold; cursor: pointer; background: rgba(255,255,255,.7); color: #6b7280; }
+  .mode-btn.active { background: #fff; border-color: #f59e0b; color: #b45309;
+    box-shadow: 0 3px 8px rgba(0,0,0,.12); }
+
+  /* ばんごうぬりえの数字セル */
+  .cell.numbered { display: flex; align-items: center; justify-content: center;
+    font-size: clamp(9px, 2.4vw, 13px); font-weight: bold; color: #94a3b8; }
+  .cell.shake { animation: cellShake .3s ease; }
+  @keyframes cellShake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); } 75% { transform: translateX(3px); }
+  }
+
+  /* さくひんギャラリー */
+  #gallery-screen { display: none; }
+  .gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; padding-bottom: 24px; }
+  .gallery-card { background: #fff; border-radius: 16px; padding: 12px; text-align: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,.1); position: relative; }
+  .gallery-card canvas { border-radius: 8px; background: #f8fafc; width: 100%; height: auto; }
+  .gallery-label { font-weight: bold; font-size: 14px; color: #374151; margin-top: 6px; }
+  .gallery-date { font-size: 11px; color: #9ca3af; }
+  .gallery-del { position: absolute; top: 6px; right: 6px; border: none; background: rgba(239,68,68,.85);
+    color: #fff; border-radius: 50%; width: 26px; height: 26px; font-size: 13px; cursor: pointer; }
+  .gallery-empty { grid-column: 1 / -1; text-align: center; color: #9ca3af;
+    font-weight: bold; padding: 40px 0; }
+  .btn-gallery { display: block; margin: 0 auto 14px; background: linear-gradient(135deg,#a78bfa,#8b5cf6); }
+  .gallery-card canvas { cursor: pointer; }
+
+  /* なまえ入力欄 */
+  .title-hint { font-size: 12px; color: #9ca3af; margin: 6px 0 2px; }
+  .title-input { width: 100%; max-width: 260px; box-sizing: border-box; display: block; margin: 0 auto;
+    padding: 10px 14px; border: 2px solid #cbd5e1; border-radius: 12px; font-size: 16px;
+    font-family: inherit; text-align: center; color: #374151; background: #f8fafc; }
+  .title-input:focus { outline: none; border-color: #f59e0b; background: #fff; }
+
+  /* 拡大ビューア */
+  #viewer-overlay { display: none; position: fixed; inset: 0; z-index: 120; background: rgba(0,0,0,.78);
+    align-items: center; justify-content: center; flex-direction: column; padding: 16px; }
+  #viewer-overlay.show { display: flex; animation: fadeIn .3s; }
+  .viewer-card { background: #fff; border-radius: 24px; padding: 18px; text-align: center;
+    width: 92%; max-width: 360px; box-shadow: 0 10px 40px rgba(0,0,0,.5);
+    animation: cardPop .4s cubic-bezier(.34,1.56,.64,1); }
+  .viewer-card canvas { width: 100%; height: auto; border-radius: 12px; background: #f8fafc;
+    box-shadow: inset 0 0 0 2px #e5e7eb; }
+  .viewer-date { font-size: 12px; color: #9ca3af; margin: 6px 0 10px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="select-screen">
+    <h1>🧩 パズル → 🎨 ぬりえ</h1>
+    <div class="subtitle">パズルを かんせいさせたら、すきな いろを ぬろう！</div>
+    <button class="btn btn-gallery" onclick="openGallery()">🖼 さくひんしゅう</button>
+    <div class="grid-select" id="grid-select"></div>
+  </div>
+
+  <div id="gallery-screen">
+    <div class="top">
+      <button class="btn btn-back" onclick="backToSelect()">← もどる</button>
+      <div class="title">🖼 さくひんしゅう</div>
+      <div style="width:90px"></div>
+    </div>
+    <div class="subtitle">ぬった さくひんが ここに ならぶよ！</div>
+    <div class="gallery-grid" id="gallery-grid"></div>
+  </div>
+
+  <div id="jigsaw-screen">
+    <div class="top">
+      <button class="btn btn-back" onclick="backToSelect()">← もどる</button>
+      <div class="title" id="jig-title"></div>
+      <button class="btn btn-go" onclick="reshuffle()">シャッフル</button>
+    </div>
+    <div class="subtitle" style="margin-bottom:8px">ピースを ドラッグして ただしい ばしょに おいてね</div>
+    <div id="playfield"></div>
+  </div>
+
+  <div id="color-screen">
+    <div class="top">
+      <button class="btn btn-back" onclick="backToSelect()">← もどる</button>
+      <div class="title" id="color-title"></div>
+      <button class="btn btn-go" onclick="clearColoring()">けす</button>
+    </div>
+    <div class="mode-row">
+      <button id="mode-otehon" class="mode-btn active" onclick="setColorMode('otehon')">🔢 ばんごうぬりえ</button>
+      <button id="mode-free" class="mode-btn" onclick="setColorMode('free')">🎨 じゆうぬりえ</button>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+    <div id="board"></div>
+    <div id="palette"></div>
+    <div id="done-area">
+      <button class="btn btn-green" style="font-size:19px;padding:14px 30px" onclick="finishColoring()">
+        ✨ できた！
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="diff-modal">
+  <div class="diff-card">
+    <h2>なんピースに する？</h2>
+    <div class="diff-btns">
+      <button class="diff-opt" style="background:linear-gradient(135deg,#34d399,#10b981)" onclick="startJigsaw(2)">かんたん（4ピース）</button>
+      <button class="diff-opt" style="background:linear-gradient(135deg,#fbbf24,#f59e0b)" onclick="startJigsaw(3)">ふつう（9ピース）</button>
+      <button class="diff-opt" style="background:linear-gradient(135deg,#f472b6,#ec4899)" onclick="startJigsaw(4)">むずかしい（16ピース）</button>
+    </div>
+    <button class="diff-cancel" onclick="closeDiffModal()">やめる</button>
+  </div>
+</div>
+
+<div id="clear-overlay">
+  <div class="clear-card">
+    <div class="clear-emoji" id="clear-emoji">🎉</div>
+    <div class="clear-text">かんせい！</div>
+    <div class="title-hint">✏ さくひんに なまえを つけられるよ</div>
+    <input id="clear-title-input" class="title-input" maxlength="20" placeholder="さくひんの なまえ">
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
+      <button class="btn btn-green" style="font-size:16px;padding:12px 22px" onclick="replaySame()">もういちど</button>
+      <button class="btn btn-blue" style="font-size:16px;padding:12px 22px" onclick="backToSelect()">つぎの え ➡</button>
+    </div>
+  </div>
+</div>
+
+<div id="viewer-overlay" onclick="if(event.target===this)closeViewer()">
+  <div class="viewer-card">
+    <canvas id="viewer-canvas" width="320" height="320"></canvas>
+    <div class="title-hint">✏ なまえを へんこう できるよ</div>
+    <input id="viewer-title-input" class="title-input" maxlength="20" placeholder="さくひんの なまえ">
+    <div class="viewer-date" id="viewer-date"></div>
+    <button class="btn btn-blue" style="font-size:16px;padding:12px 26px" onclick="closeViewer()">とじる</button>
+  </div>
+</div>
+
+<button id="mute-btn" onclick="toggleMute()" title="こうかおんの ON/OFF">🔊</button>
+
+<script>
+const PUZZLES = [{"label": "🍎 りんご", "palette": ["#ef4444", "#92400e", "#22c55e"], "colornames": ["あか", "ちゃいろ", "みどり"], "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 2, 2, 3, 3, 0, 0, 0], [0, 0, 0, 0, 0, 2, 3, 3, 3, 3, 0, 0], [0, 0, 0, 1, 1, 2, 2, 3, 3, 0, 0, 0], [0, 0, 1, 1, 1, 2, 2, 1, 1, 1, 0, 0], [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0]]}, {"label": "🐟 おさかな", "palette": ["#38bdf8", "#fb923c", "#1e3a8a"], "colornames": ["みずいろ", "オレンジ", "あお"], "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 2, 2], [0, 0, 3, 3, 1, 1, 1, 1, 0, 2, 2, 2], [0, 1, 3, 3, 1, 1, 1, 1, 2, 2, 2, 2], [0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2], [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 2, 2], [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 2, 2], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}, {"label": "🌸 おはな", "palette": ["#f472b6", "#fbbf24", "#22c55e"], "colornames": ["ピンク", "きいろ", "みどり"], "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 1, 1, 0, 2, 2, 0, 1, 1, 0, 0], [0, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 0], [0, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 0], [0, 0, 1, 1, 0, 2, 2, 0, 1, 1, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0]]}, {"label": "🦋 ちょうちょ", "palette": ["#a855f7", "#c084fc", "#1f2937"], "colornames": ["むらさき", "うすむらさき", "くろ"], "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 1, 1], [0, 1, 1, 1, 1, 3, 3, 1, 1, 1, 1, 0], [0, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 0], [2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2], [0, 2, 2, 2, 2, 0, 0, 2, 2, 2, 2, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}, {"label": "⭐ ほし", "palette": ["#fbbf24"], "colornames": ["きいろ"], "grid": [[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0]]}, {"label": "❤️ ハート", "palette": ["#ef4444"], "colornames": ["あか"], "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0], [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0]]}, {"label": "🐶 いぬ", "palette": ["#b45309", "#78350f", "#1f2937"], "colornames": ["ちゃいろ", "こげちゃ", "くろ"], "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 2, 2, 0, 0, 0, 0, 2, 2, 0, 0], [0, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 0], [0, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 0], [0, 2, 2, 2, 3, 1, 1, 3, 2, 2, 2, 0], [0, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 0], [0, 0, 2, 2, 1, 3, 3, 1, 2, 2, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}, {"label": "🐱 ねこ", "palette": ["#9ca3af", "#1f2937", "#f472b6"], "colornames": ["はいいろ", "くろ", "ピンク"], "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0], [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 0, 1, 1, 2, 1, 1, 2, 1, 1, 0, 0], [0, 0, 1, 1, 1, 3, 3, 1, 1, 1, 0, 0], [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}, {"label": "🐼 ぱんだ", "palette": ["#1f2937", "#e5e7eb"], "colornames": ["くろ", "しろ"], "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0], [0, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 0], [0, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 0], [0, 0, 2, 2, 1, 2, 2, 1, 2, 2, 0, 0], [0, 0, 2, 1, 1, 1, 1, 1, 1, 2, 0, 0], [0, 0, 2, 2, 1, 1, 1, 1, 2, 2, 0, 0], [0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0], [0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0], [0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}, {"label": "🐘 ぞう", "palette": ["#94a3b8", "#cbd5e1", "#1f2937"], "colornames": ["はいいろ", "うすはい", "くろ"], "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 2, 0, 1, 1, 1, 1, 0, 2, 0, 0], [0, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 0], [0, 2, 2, 2, 3, 1, 1, 3, 2, 2, 2, 0], [0, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 0], [0, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 0], [0, 0, 2, 1, 1, 1, 1, 1, 1, 2, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0]]}, {"label": "🤍 しろいこ", "palette": ["#f8fafc", "#fbcfe8", "#1f2937"], "colornames": ["しろ", "ピンク", "くろ"], "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 1, 1, 3, 1, 1, 3, 1, 1, 0, 0], [0, 0, 1, 1, 3, 1, 1, 3, 1, 1, 0, 0], [0, 0, 1, 2, 1, 1, 1, 1, 2, 1, 0, 0], [0, 0, 0, 1, 1, 3, 3, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}, {"label": "🐰 うさぎ", "palette": ["#fde68a", "#fffbeb", "#fbcfe8", "#1f2937", "#fb7185"], "colornames": ["きいろ", "クリーム", "ピンク", "くろ", "あかピンク"], "grid": [[0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0], [0, 0, 0, 1, 2, 2, 2, 2, 1, 0, 0, 0], [0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0], [0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0], [0, 0, 2, 2, 4, 2, 2, 4, 2, 2, 0, 0], [0, 0, 2, 3, 2, 5, 5, 2, 3, 2, 0, 0], [0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0], [0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0], [0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}, {"label": "🐻 くまさん", "palette": ["#d6a06a", "#e7c08f", "#fef3c7", "#1f2937"], "colornames": ["ちゃいろ", "きつね", "クリーム", "くろ"], "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0], [0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0], [0, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 0], [0, 0, 1, 2, 2, 2, 2, 2, 2, 1, 0, 0], [0, 0, 2, 2, 4, 2, 2, 4, 2, 2, 0, 0], [0, 0, 2, 2, 2, 3, 3, 2, 2, 2, 0, 0], [0, 0, 2, 2, 3, 4, 4, 3, 2, 2, 0, 0], [0, 0, 2, 2, 3, 3, 3, 3, 2, 2, 0, 0], [0, 0, 0, 2, 2, 3, 3, 2, 2, 0, 0, 0], [0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}];
+
+// ── 追加絵柄（2026-06 アップデート）──
+PUZZLES.push(
+  {label:'🚀 ロケット', palette:['#ef4444','#cbd5e1','#3b82f6','#fb923c'], colornames:['あか','はいいろ','あお','オレンジ'], grid:[
+    [0,0,0,0,0,1,1,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,0,0,0],
+    [0,0,0,0,2,2,2,2,0,0,0,0],
+    [0,0,0,0,2,3,3,2,0,0,0,0],
+    [0,0,0,0,2,3,3,2,0,0,0,0],
+    [0,0,0,0,2,2,2,2,0,0,0,0],
+    [0,0,0,1,2,2,2,2,1,0,0,0],
+    [0,0,1,1,2,2,2,2,1,1,0,0],
+    [0,0,1,1,2,2,2,2,1,1,0,0],
+    [0,0,0,0,4,4,4,4,0,0,0,0],
+    [0,0,0,0,0,4,4,0,0,0,0,0]]},
+  {label:'🐙 たこ', palette:['#f472b6','#f8fafc','#1f2937'], colornames:['ピンク','しろ','くろ'], grid:[
+    [0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,0],
+    [0,0,1,1,1,1,1,1,1,1,0,0],
+    [0,0,1,1,2,1,1,2,1,1,0,0],
+    [0,0,1,1,3,1,1,3,1,1,0,0],
+    [0,0,1,1,1,1,1,1,1,1,0,0],
+    [0,0,0,1,1,1,1,1,1,0,0,0],
+    [0,0,1,1,0,1,1,0,1,1,0,0],
+    [0,1,1,0,1,1,1,1,0,1,1,0],
+    [0,1,0,0,1,0,0,1,0,0,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0]]},
+  {label:'🦕 きょうりゅう', palette:['#22c55e','#86efac','#1f2937'], colornames:['みどり','きみどり','くろ'], grid:[
+    [0,0,0,0,0,0,0,0,0,1,1,0],
+    [0,0,0,0,0,0,0,0,1,1,1,1],
+    [0,0,0,0,0,0,0,0,1,3,1,1],
+    [0,0,0,0,0,0,0,0,1,1,0,0],
+    [0,0,0,0,0,0,0,1,1,0,0,0],
+    [0,1,1,1,1,1,1,1,1,0,0,0],
+    [1,1,1,1,1,1,1,1,1,0,0,0],
+    [1,1,2,2,2,2,2,1,0,0,0,0],
+    [1,1,2,2,2,2,2,1,0,0,0,0],
+    [0,1,1,1,1,1,1,1,0,0,0,0],
+    [0,1,1,0,0,1,1,0,0,0,0,0],
+    [0,1,1,0,0,1,1,0,0,0,0,0]]}
+);
+
+let curIdx = -1, current = null;
+let muted = false;
+// 「できた！」記録を localStorage に永続化（リロードしても消えない）
+const cleared = new Set((()=>{ try { return JSON.parse(localStorage.getItem('nurieCleared')||'[]'); } catch(e){ return []; } })());
+function persistCleared(){ try { localStorage.setItem('nurieCleared', JSON.stringify([...cleared])); } catch(e){} }
+
+const FREE_COLORS = [
+  {c:'#ef4444',n:'あか'},   {c:'#fb923c',n:'オレンジ'}, {c:'#fbbf24',n:'きいろ'},
+  {c:'#84cc16',n:'きみどり'},{c:'#22c55e',n:'みどり'},   {c:'#38bdf8',n:'みずいろ'},
+  {c:'#3b82f6',n:'あお'},   {c:'#a855f7',n:'むらさき'}, {c:'#ec4899',n:'ピンク'},
+  {c:'#92400e',n:'ちゃいろ'},{c:'#1f2937',n:'くろ'},     {c:'#ffffff',n:'けす'}
+];
+let freeColor = FREE_COLORS[0].c;
+let paintState = [];
+
+let audioCtx = null;
+function actx(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function beep(freq, dur, type='sine', vol=0.2){
+  if(muted) return;
+  try { const c=actx(), o=c.createOscillator(), g=c.createGain();
+    o.type=type; o.frequency.value=freq; o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(vol,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
+    o.start(); o.stop(c.currentTime+dur);
+  } catch(e){}
+}
+function sPaint(){ beep(600,.07,'sine',.14); }
+function sSnap(){ beep(520,.08,'square',.18); setTimeout(()=>beep(780,.10,'square',.15),50); }
+function sClear(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.25,'triangle',.2),i*140)); }
+
+function showScreen(id){
+  ['select-screen','jigsaw-screen','color-screen','gallery-screen'].forEach(s=>
+    document.getElementById(s).style.display = (s===id?'block':'none'));
+}
+
+function buildSelect(){
+  const wrap=document.getElementById('grid-select'); wrap.innerHTML='';
+  PUZZLES.forEach((p,i)=>{
+    const card=document.createElement('div');
+    card.className='puzzle-card'+(cleared.has(i)?' done':'');
+    const emoji=p.label.split(' ')[0], name=p.label.split(' ').slice(1).join(' ');
+    card.innerHTML=`<div class="pc-emoji">${emoji}</div><div class="pc-label">${name}</div>
+                    <div class="pc-check">${cleared.has(i)?'✓ できた！':''}</div>`;
+    card.onclick=()=>choosePuzzle(i);
+    wrap.appendChild(card);
+  });
+}
+function choosePuzzle(idx){
+  curIdx=idx; current=PUZZLES[idx];
+  try{ actx().resume(); }catch(e){}
+  openDiffModal();
+}
+
+// ═══════════════ ① ジグソー ═══════════════
+let BOARD=0, N=2, P=0, MARGIN=0, pieces=[], placedCount=0;
+let TRAY_TOP=0, TRAY_H=0;
+
+function openDiffModal(){ document.getElementById('diff-modal').classList.add('show'); }
+function closeDiffModal(){ document.getElementById('diff-modal').classList.remove('show'); }
+
+function renderOutline(size){
+  const G=current.grid.length, cell=size/G;
+  const cv=document.createElement('canvas'); cv.width=size; cv.height=size;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,size,size);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`bold ${Math.floor(cell*0.5)}px sans-serif`;
+  for(let y=0;y<G;y++) for(let x=0;x<G;x++){
+    const v=current.grid[y][x];
+    if(v!==0){
+      ctx.fillStyle='#eef2f7'; ctx.fillRect(x*cell,y*cell,cell,cell);
+      ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1; ctx.strokeRect(x*cell+.5,y*cell+.5,cell-1,cell-1);
+      ctx.fillStyle='#94a3b8'; ctx.fillText(v, x*cell+cell/2, y*cell+cell/2);
+    }
+  }
+  return cv;
+}
+
+function startJigsaw(n){
+  closeDiffModal();
+  N=n;
+  // 画面の幅と高さ両方に収まるように盤サイズを決める（はみ出し防止）
+  const avail = Math.min(window.innerWidth*0.86, window.innerHeight*0.42, 430);
+  BOARD=Math.max(N*40, Math.floor(avail/N)*N); P=BOARD/N; MARGIN=Math.round(P*0.22);
+  const src=renderOutline(BOARD);
+  showScreen('jigsaw-screen');
+  document.getElementById('jig-title').textContent=current.label;
+
+  const Hsign=[], Vsign=[];
+  for(let r=0;r<N;r++){ Hsign[r]=[]; Vsign[r]=[]; for(let c=0;c<N;c++){
+    Hsign[r][c]=Math.random()<.5?-1:1; Vsign[r][c]=Math.random()<.5?-1:1; } }
+  buildPlayfield(src,Hsign,Vsign);
+}
+
+function buildPlayfield(src,Hsign,Vsign){
+  const pf=document.getElementById('playfield');
+  pf.innerHTML=''; pieces=[]; placedCount=0;
+  const W=P+2*MARGIN;
+  // トレイを「重ならないグリッド」で配置 → 全ピースが必ず触れる
+  const cols=N;                                   // 横に N 個
+  const rows=Math.ceil((N*N)/cols);
+  const slotW=BOARD/cols;                          // トレイ1マスの幅
+  const slotH=W*1.02;                              // トレイ1マスの高さ
+  TRAY_TOP=BOARD+34;
+  TRAY_H=rows*slotH + 10;
+  pf.style.width=BOARD+'px';
+  pf.style.height=(TRAY_TOP+TRAY_H+10)+'px';
+
+  // 盤
+  const board=document.createElement('div');
+  board.id='jig-board'; board.style.width=BOARD+'px'; board.style.height=BOARD+'px';
+  const ghost=document.createElement('img'); ghost.className='ghost'; ghost.src=src.toDataURL();
+  board.appendChild(ghost);
+  for(let i=1;i<N;i++){
+    const vl=document.createElement('div'); vl.className='slotline';
+    vl.style.cssText=`left:${i*P-1}px;top:0;width:2px;height:${BOARD}px`; board.appendChild(vl);
+    const hl=document.createElement('div'); hl.className='slotline';
+    hl.style.cssText=`top:${i*P-1}px;left:0;height:2px;width:${BOARD}px`; board.appendChild(hl);
+  }
+  pf.appendChild(board);
+
+  // トレイ背景
+  const tray=document.createElement('div'); tray.id='tray-bg';
+  tray.style.top=TRAY_TOP+'px'; tray.style.width=BOARD+'px'; tray.style.height=TRAY_H+'px';
+  pf.appendChild(tray);
+
+  const hint=document.createElement('div'); hint.className='tray-hint';
+  hint.style.top=(TRAY_TOP-22)+'px'; hint.textContent='⬇ ピースを うえへ ⬇';
+  pf.appendChild(hint);
+
+  // ピース生成
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+    const top   = r===0   ? 0 : Hsign[r-1][c];
+    const bottom= r===N-1 ? 0 : Hsign[r][c];
+    const left  = c===0   ? 0 : Vsign[r][c-1];
+    const right = c===N-1 ? 0 : Vsign[r][c];
+    const cv=makePiece(src,r,c,{top,right,bottom,left});
+    cv.className='piece'; cv.style.width=W+'px'; cv.style.height=W+'px';
+    const piece={r,c,el:cv,solvedX:c*P-MARGIN,solvedY:r*P-MARGIN,locked:false};
+    pieces.push(piece); pf.appendChild(cv); attachDrag(piece,pf);
+  }
+  layoutTray(slotW,slotH,cols,W);
+}
+
+function knobPath(ctx, cx, cy, r, axis, bump, reverse){
+  const steps=18;
+  for(let i=0;i<=steps;i++){
+    const k = reverse ? (steps-i) : i;
+    const a = Math.PI - Math.PI*(k/steps);
+    const along=Math.cos(a)*r, perp=Math.sin(a)*r;
+    if(axis==='h') ctx.lineTo(cx+along, cy+bump*perp);
+    else           ctx.lineTo(cx+bump*perp, cy+along);
+  }
+}
+function makePiece(src,r,c,edges){
+  const W=P+2*MARGIN; const cv=document.createElement('canvas'); cv.width=W; cv.height=W;
+  const ctx=cv.getContext('2d');
+  const x0=MARGIN,y0=MARGIN,x1=MARGIN+P,y1=MARGIN+P, rk=P*0.16;
+  ctx.beginPath(); ctx.moveTo(x0,y0);
+  if(edges.top===0) ctx.lineTo(x1,y0);
+  else { ctx.lineTo((x0+x1)/2-rk,y0); knobPath(ctx,(x0+x1)/2,y0,rk,'h',edges.top,false); ctx.lineTo(x1,y0); }
+  if(edges.right===0) ctx.lineTo(x1,y1);
+  else { ctx.lineTo(x1,(y0+y1)/2-rk); knobPath(ctx,x1,(y0+y1)/2,rk,'v',edges.right,false); ctx.lineTo(x1,y1); }
+  if(edges.bottom===0) ctx.lineTo(x0,y1);
+  else { ctx.lineTo((x0+x1)/2+rk,y1); knobPath(ctx,(x0+x1)/2,y1,rk,'h',edges.bottom,true); ctx.lineTo(x0,y1); }
+  if(edges.left===0) ctx.lineTo(x0,y0);
+  else { ctx.lineTo(x0,(y0+y1)/2+rk); knobPath(ctx,x0,(y0+y1)/2,rk,'v',edges.left,true); ctx.lineTo(x0,y0); }
+  ctx.closePath(); ctx.save(); ctx.clip();
+  ctx.drawImage(src, c*P-MARGIN, r*P-MARGIN, W, W, 0, 0, W, W);
+  ctx.restore();
+  ctx.lineWidth=1.5; ctx.strokeStyle='rgba(80,80,90,.55)'; ctx.stroke();
+  return cv;
+}
+
+// トレイに「重ならないグリッド＋小さなランダム」で並べる
+function layoutTray(slotW,slotH,cols,W){
+  const order=[...pieces].sort(()=>Math.random()-0.5);
+  order.forEach((p,i)=>{
+    if(p.locked) return;
+    const col=i%cols, row=Math.floor(i/cols);
+    const jx=(Math.random()-0.5)*Math.max(0,(slotW-W))*0.6;
+    const jy=(Math.random()-0.5)*Math.max(0,(slotH-W))*0.4;
+    let x=col*slotW + (slotW-W)/2 + jx;
+    let y=TRAY_TOP + row*slotH + (slotH-W)/2 + jy;
+    x=Math.max(0, Math.min(x, BOARD-W));          // 画面外に出さない
+    y=Math.max(TRAY_TOP, Math.min(y, TRAY_TOP+TRAY_H-W));
+    setPos(p,x,y);
+  });
+}
+function setPos(p,x,y){ p.x=x; p.y=y; p.el.style.left=x+'px'; p.el.style.top=y+'px'; }
+
+function attachDrag(p,pf){
+  let offX,offY,dragging=false;
+  p.el.addEventListener('pointerdown',e=>{
+    if(p.locked) return;
+    dragging=true; p.el.classList.add('dragging'); p.el.style.zIndex=1000;
+    const rect=pf.getBoundingClientRect();
+    offX=e.clientX-rect.left-p.x; offY=e.clientY-rect.top-p.y;
+    p.el.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  p.el.addEventListener('pointermove',e=>{
+    if(!dragging) return;
+    const rect=pf.getBoundingClientRect();
+    let nx=e.clientX-rect.left-offX, ny=e.clientY-rect.top-offY;
+    // 触れる範囲（プレイフィールド内）に必ず収める
+    nx=Math.max(-MARGIN, Math.min(nx, BOARD-P));
+    ny=Math.max(-MARGIN, Math.min(ny, TRAY_TOP+TRAY_H-P));
+    setPos(p,nx,ny);
+  });
+  p.el.addEventListener('pointerup',e=>{
+    if(!dragging) return;
+    dragging=false; p.el.classList.remove('dragging'); p.el.style.zIndex=5;
+    if(Math.hypot(p.x-p.solvedX, p.y-p.solvedY) < P*0.38){
+      setPos(p,p.solvedX,p.solvedY); p.locked=true; p.el.classList.add('locked');
+      p.el.style.zIndex=1; placedCount++; sSnap();
+      if(placedCount===pieces.length) onJigsawDone();
+    }
+  });
+}
+function reshuffle(){
+  document.getElementById('clear-overlay').classList.remove('show');
+  pieces.forEach(p=>{ p.locked=false; p.el.classList.remove('locked'); });
+  placedCount=0;
+  const W=P+2*MARGIN, cols=N, slotW=BOARD/cols, slotH=W*1.02;
+  layoutTray(slotW,slotH,cols,W);
+}
+function onJigsawDone(){
+  sClear(); launchConfetti();
+  setTimeout(()=>startColoring(), 700);
+}
+
+// ═══════════════ ② ぬりえ（ばんごう⇔じゆう）═══════════════
+let colorMode='otehon';   // 'otehon'=ばんごうぬりえ / 'free'=じゆうぬりえ
+let otehonIdx=0;          // ばんごうモードで選択中のパレット番号
+let paintColors=[];       // 塗った色の記録（ギャラリー保存用）
+let finishedThis=false;   // 二重finish防止
+
+function startColoring(){
+  showScreen('color-screen');
+  document.getElementById('color-title').textContent=current.label;
+  colorMode='otehon';
+  updateModeButtons();
+  resetColoring();
+}
+function setColorMode(m){
+  if(colorMode===m) return;
+  colorMode=m; updateModeButtons(); resetColoring(); beep(500,.05,'sine',.1);
+}
+function updateModeButtons(){
+  document.getElementById('mode-otehon').classList.toggle('active', colorMode==='otehon');
+  document.getElementById('mode-free').classList.toggle('active', colorMode==='free');
+}
+function resetColoring(){
+  freeColor=FREE_COLORS[0].c;
+  otehonIdx=0;
+  finishedThis=false;
+  paintState=current.grid.map(r=>r.map(v=>v===0));
+  paintColors=current.grid.map(r=>r.map(()=>null));
+  buildColorBoard(); buildPaletteUI(); updateColorProgress();
+}
+function buildColorBoard(){
+  const board=document.getElementById('board'); const G=current.grid.length;
+  board.style.gridTemplateColumns=`repeat(${G},1fr)`; board.innerHTML='';
+  for(let y=0;y<G;y++) for(let x=0;x<G;x++){
+    const v=current.grid[y][x]; const cell=document.createElement('div');
+    cell.className='cell'; cell.dataset.y=y; cell.dataset.x=x;
+    if(v===0){ cell.classList.add('empty'); }
+    else {
+      cell.classList.add('fillable');
+      if(colorMode==='otehon'){ cell.classList.add('numbered'); cell.textContent=v; }
+      cell.onclick=()=>paintCell(cell,x,y);
+    }
+    board.appendChild(cell);
+  }
+}
+function isLightColor(hex){
+  const n=parseInt(hex.slice(1),16); const r=n>>16&255, g=n>>8&255, b=n&255;
+  return (0.299*r+0.587*g+0.114*b) > 200;
+}
+function buildPaletteUI(){
+  const pal=document.getElementById('palette'); pal.innerHTML='';
+  if(colorMode==='otehon'){
+    // パズル専用パレット（番号つき）：数字と色の名前を学べる
+    current.palette.forEach((c,i)=>{
+      const btn=document.createElement('div');
+      btn.className='pal-btn'+(i===otehonIdx?' selected':'');
+      const light=isLightColor(c);
+      btn.innerHTML=`<div class="pal-swatch${light?' light':''}" style="background:${c}">${i+1} ${current.colornames[i]}</div>`;
+      btn.onclick=()=>{ otehonIdx=i; buildPaletteUI(); beep(500,.05,'sine',.1); };
+      pal.appendChild(btn);
+    });
+  } else {
+    FREE_COLORS.forEach(col=>{
+      const btn=document.createElement('div');
+      btn.className='pal-btn'+(col.c===freeColor?' selected':'');
+      const light=(col.c==='#ffffff');
+      btn.innerHTML=`<div class="pal-swatch${light?' light':''}" style="background:${col.c}">${col.n}</div>`;
+      btn.onclick=()=>{ freeColor=col.c; buildPaletteUI(); beep(500,.05,'sine',.1); };
+      pal.appendChild(btn);
+    });
+  }
+}
+function paintCell(cell,x,y){
+  if(colorMode==='otehon'){
+    const v=current.grid[y][x];
+    if(otehonIdx === v-1){
+      const c=current.palette[otehonIdx];
+      cell.style.background=c; cell.textContent='';
+      cell.classList.remove('pop'); void cell.offsetWidth; cell.classList.add('pop');
+      paintState[y][x]=true; paintColors[y][x]=c;
+      sPaint(); updateColorProgress();
+      checkOtehonDone();
+    } else {
+      // ちがう番号の色 → セルを振動させて教える
+      cell.classList.remove('shake'); void cell.offsetWidth; cell.classList.add('shake');
+      beep(200,.12,'square',.12);
+    }
+  } else {
+    const erase=(freeColor==='#ffffff');
+    cell.style.background = erase ? '#f1f5f9' : freeColor;
+    cell.classList.remove('pop'); void cell.offsetWidth; cell.classList.add('pop');
+    paintState[y][x] = !erase;
+    paintColors[y][x] = erase ? null : freeColor;
+    sPaint(); updateColorProgress();
+  }
+}
+function checkOtehonDone(){
+  let total=0,done=0;
+  current.grid.forEach((row,y)=>row.forEach((v,x)=>{ if(v!==0){ total++; if(paintState[y][x]) done++; } }));
+  if(done===total) setTimeout(()=>finishColoring(), 400);
+}
+function updateColorProgress(){
+  let total=0,done=0;
+  current.grid.forEach((row,y)=>row.forEach((v,x)=>{ if(v!==0){ total++; if(paintState[y][x]) done++; } }));
+  document.getElementById('progress-bar').style.width=(total?Math.round(done/total*100):100)+'%';
+}
+function clearColoring(){
+  resetColoring(); beep(300,.1,'sine',.1);
+}
+function finishColoring(){
+  if(finishedThis) return;
+  finishedThis=true;
+  cleared.add(curIdx); persistCleared();
+  addToGallery();
+  sClear(); launchConfetti();
+  document.getElementById('clear-emoji').textContent=current.label.split(' ')[0];
+  // 完成直後の なまえ入力欄をセット（入力すると即保存）
+  const ti=document.getElementById('clear-title-input');
+  ti.value=''; ti.placeholder=current.label;
+  ti.oninput=()=>setWorkTitle(lastSavedId, ti.value);
+  setTimeout(()=>document.getElementById('clear-overlay').classList.add('show'),300);
+}
+
+// ═══════════════ さくひんギャラリー ═══════════════
+let lastSavedId=null, viewerId=null;
+function getGallery(){
+  let g;
+  try { g=JSON.parse(localStorage.getItem('nurieGallery')||'[]'); } catch(e){ return []; }
+  // 旧データに id / title が無ければ補完（マイグレーション）
+  let changed=false;
+  g.forEach((w,i)=>{
+    if(w.id==null){ w.id=Date.now()-i; changed=true; }
+    if(w.title==null){ w.title=''; changed=true; }
+  });
+  if(changed){ try { localStorage.setItem('nurieGallery', JSON.stringify(g)); } catch(e){} }
+  return g;
+}
+function saveGalleryData(g){ try { localStorage.setItem('nurieGallery', JSON.stringify(g)); } catch(e){} }
+function addToGallery(){
+  const g=getGallery();
+  const id=Date.now();
+  lastSavedId=id;
+  g.unshift({ id, label:current.label, title:'', date:new Date().toLocaleDateString('ja-JP'), colors:paintColors });
+  while(g.length>20) g.pop();   // 最大20作品（古いものから削除）
+  saveGalleryData(g);
+}
+// 作品名の表示：なまえがあればそれを、なければ絵柄ラベルを使う
+function displayName(w){ return (w.title && w.title.trim()) ? w.title : w.label; }
+function setWorkTitle(id, title){
+  const g=getGallery();
+  const w=g.find(x=>x.id===id);
+  if(w){ w.title=title; saveGalleryData(g); }
+}
+// 作品データを canvas に描画
+function drawWork(ctx, size, colors){
+  const G=colors.length, cs=size/G;
+  ctx.fillStyle='#f8fafc'; ctx.fillRect(0,0,size,size);
+  for(let y=0;y<G;y++) for(let x=0;x<G;x++){
+    const col=colors[y][x];
+    if(col){ ctx.fillStyle=col; ctx.fillRect(x*cs,y*cs,cs-0.4,cs-0.4); }
+  }
+}
+function openGallery(){
+  showScreen('gallery-screen');
+  buildGallery();
+}
+function buildGallery(){
+  const wrap=document.getElementById('gallery-grid'); wrap.innerHTML='';
+  const g=getGallery();
+  if(!g.length){
+    wrap.innerHTML='<div class="gallery-empty">まだ さくひんが ないよ。<br>ぬりえを かんせいさせよう！🎨</div>';
+    return;
+  }
+  g.forEach((w)=>{
+    const card=document.createElement('div'); card.className='gallery-card';
+    const cv=document.createElement('canvas'); cv.width=140; cv.height=140;
+    drawWork(cv.getContext('2d'), 140, w.colors);
+    cv.onclick=()=>openViewer(w.id);          // タップで拡大表示
+    card.appendChild(cv);
+    const lb=document.createElement('div'); lb.className='gallery-label'; lb.textContent=displayName(w);
+    const dt=document.createElement('div'); dt.className='gallery-date'; dt.textContent=w.date;
+    const del=document.createElement('button'); del.className='gallery-del'; del.textContent='✕';
+    del.onclick=(e)=>{ e.stopPropagation();
+      const g2=getGallery(); const idx=g2.findIndex(x=>x.id===w.id);
+      if(idx>=0){ g2.splice(idx,1); saveGalleryData(g2); buildGallery(); } };
+    card.appendChild(lb); card.appendChild(dt); card.appendChild(del);
+    wrap.appendChild(card);
+  });
+}
+// ═══════════════ 拡大ビューア（タップで開く・なまえ変更可）═══════════════
+function openViewer(id){
+  const g=getGallery(); const w=g.find(x=>x.id===id);
+  if(!w) return;
+  viewerId=id;
+  const cv=document.getElementById('viewer-canvas');
+  drawWork(cv.getContext('2d'), cv.width, w.colors);
+  const ti=document.getElementById('viewer-title-input');
+  ti.value=w.title||''; ti.placeholder=w.label;
+  ti.oninput=()=>setWorkTitle(id, ti.value);
+  document.getElementById('viewer-date').textContent=w.date||'';
+  document.getElementById('viewer-overlay').classList.add('show');
+}
+function closeViewer(){
+  document.getElementById('viewer-overlay').classList.remove('show');
+  viewerId=null;
+  // ギャラリー表示中なら、変更したなまえを反映
+  if(document.getElementById('gallery-screen').style.display!=='none') buildGallery();
+}
+
+function backToSelect(){
+  document.getElementById('clear-overlay').classList.remove('show');
+  closeDiffModal(); showScreen('select-screen'); buildSelect();
+}
+function replaySame(){
+  document.getElementById('clear-overlay').classList.remove('show');
+  startJigsaw(N);
+}
+function launchConfetti(){
+  const E=['🎉','⭐','✨','🌈','💛','💖','🎊'];
+  for(let i=0;i<40;i++){ const c=document.createElement('div'); c.className='confetti';
+    c.textContent=E[Math.floor(Math.random()*E.length)];
+    c.style.left=Math.random()*100+'vw'; c.style.animationDuration=(1.5+Math.random()*1.5)+'s';
+    c.style.animationDelay=(Math.random()*0.5)+'s'; document.body.appendChild(c);
+    setTimeout(()=>c.remove(),3500);
+  }
+}
+function toggleMute(){
+  muted = !muted;
+  const btn = document.getElementById('mute-btn');
+  btn.textContent = muted ? '🔇' : '🔊';
+  // BGMも連動してON/OFF
+  if(muted){ stopBGM(); bgmOn=false; }
+  else{ bgmOn=true; startBGM(); }
+}
+
+// ═══════════════ BGM ═══════════════
+let bgmOn=true, bgmTimer=null, nextNoteTime=0, step=0;
+const BPM=150, STEP=60/BPM/2;
+const LEAD=[659.25,783.99,880.00,783.99, 659.25,587.33,523.25,587.33,
+            659.25,783.99,1046.50,880.00, 783.99,659.25,587.33,523.25];
+const BASS=[130.81,98.00,110.00,87.31];
+function playTone(freq,t,dur,type,vol){
+  const c=actx(),o=c.createOscillator(),g=c.createGain();
+  o.type=type; o.frequency.value=freq; o.connect(g); g.connect(c.destination);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur+0.02);
+}
+function playHat(t){
+  const c=actx(); const b=c.createBuffer(1,1024,c.sampleRate); const d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/120);
+  const s=c.createBufferSource(); s.buffer=b; const g=c.createGain(); g.gain.value=0.06;
+  s.connect(g); g.connect(c.destination); s.start(t);
+}
+function scheduleStep(s,t){
+  playTone(LEAD[s%LEAD.length],t,STEP*0.9,'triangle',0.10);
+  if(s%4===0) playTone(BASS[(Math.floor(s/4))%BASS.length],t,STEP*3.6,'square',0.07);
+  if(s%2===1) playHat(t);
+}
+function bgmScheduler(){
+  const c=actx();
+  while(nextNoteTime < c.currentTime+0.12){
+    if(!muted) scheduleStep(step,nextNoteTime);
+    nextNoteTime+=STEP; step=(step+1)%LEAD.length;
+  }
+}
+function startBGM(){
+  if(!bgmOn||bgmTimer) return;
+  const c=actx(); if(c.state==='suspended') c.resume();
+  nextNoteTime=c.currentTime+0.1; step=0; bgmTimer=setInterval(bgmScheduler,25);
+}
+function stopBGM(){ if(bgmTimer){ clearInterval(bgmTimer); bgmTimer=null; } }
+// toggleMusic は toggleMute に統合
+document.addEventListener('pointerdown', function once(){
+  try{ actx().resume(); }catch(e){}
+  startBGM();
+  document.removeEventListener('pointerdown', once);
+}, { once:true });
+
+buildSelect();
+</script>
+</body>
+</html>

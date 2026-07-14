@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>まなびのゲーム</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Hiragino Maru Gothic Pro', 'BIZ UDPGothic', 'Rounded Mplus 1c', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    overflow-x: hidden;
+    transition: background 0.5s;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 600px;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  #home-screen { width: 100%; text-align: center; }
+
+  .game-title {
+    font-size: clamp(32px, 10vw, 56px);
+    color: #fff;
+    text-shadow:
+      -2px -2px 0 #c2410c,
+       2px -2px 0 #c2410c,
+      -2px  2px 0 #c2410c,
+       2px  2px 0 #c2410c,
+       4px  4px 0 #9a3412,
+       6px  6px 8px rgba(0,0,0,0.2);
+    margin-bottom: 10px;
+    animation: bounce 2s infinite;
+  }
+
+  .game-subtitle {
+    font-size: clamp(14px, 4vw, 18px);
+    color: #7c2d12;
+    font-weight: bold;
+    margin-bottom: 30px;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .cat-btn {
+    background: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 20px 10px;
+    font-size: clamp(14px, 4vw, 18px);
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+    transition: transform 0.1s, box-shadow 0.1s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-height: 100px;
+    color: #444;
+    font-weight: bold;
+  }
+
+  .cat-btn .cat-emoji { font-size: clamp(28px, 8vw, 40px); }
+  .cat-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.15); }
+  .cat-btn.cat-hiragana { border-top: 6px solid #f87171; }
+  .cat-btn.cat-katakana { border-top: 6px solid #38bdf8; }
+  .cat-btn.cat-number   { border-top: 6px solid #fb923c; }
+  .cat-btn.cat-color    { border-top: 6px solid #facc15; }
+  .cat-btn.cat-animal   { border-top: 6px solid #4ade80; }
+  .cat-btn.cat-vege     { border-top: 6px solid #34d399; }
+  .cat-btn.cat-calc     { border-top: 6px solid #60a5fa; }
+  .cat-btn.cat-english  { border-top: 6px solid #a78bfa; }
+  .cat-btn.cat-review   { border-top: 6px solid #f472b6; min-height: 70px; flex-direction: row; justify-content: center; }
+
+  /* ごほうびスタンプバッジ */
+  .cat-stars {
+    font-size: clamp(11px, 3vw, 14px);
+    color: #f59e0b;
+    font-weight: bold;
+    min-height: 16px;
+  }
+
+  /* コンボ表示 */
+  .combo-text {
+    font-size: clamp(15px, 4.2vw, 20px);
+    font-weight: bold;
+    color: #f97316;
+    margin-top: 4px;
+    animation: comboPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes comboPop {
+    from { transform: scale(0.3); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  /* ゴール画面 スタンプ獲得表示 */
+  #goal-stamp {
+    display: none;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 3px solid #f59e0b;
+    border-radius: 16px;
+    padding: 10px 22px;
+    margin: 10px auto;
+    font-size: clamp(15px, 4.2vw, 19px);
+    font-weight: bold;
+    color: #92400e;
+    max-width: 320px;
+    animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+  }
+
+  /* トースト通知 */
+  #toast {
+    display: none;
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(31,41,55,0.92);
+    color: #fff;
+    border-radius: 999px;
+    padding: 14px 28px;
+    font-size: clamp(14px, 4vw, 17px);
+    font-weight: bold;
+    z-index: 300;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    animation: popIn 0.3s ease;
+    text-align: center;
+  }
+
+  #game-screen { width: 100%; display: none; }
+
+  .game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .back-btn {
+    background: rgba(255,255,255,0.8);
+    border: none;
+    border-radius: 50%;
+    width: 48px; height: 48px;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .back-btn:active { transform: translateY(2px); }
+
+  .score-display {
+    background: rgba(255,255,255,0.85);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: clamp(13px, 3.5vw, 16px);
+    font-weight: bold;
+    color: #555;
+  }
+
+  .progress-bar-wrap {
+    width: 100%;
+    background: rgba(255,255,255,0.4);
+    border-radius: 10px;
+    height: 12px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+    border-radius: 10px;
+    transition: width 0.4s;
+  }
+
+  .question-area {
+    background: rgba(255,255,255,0.9);
+    border-radius: 24px;
+    padding: 28px 20px;
+    text-align: center;
+    margin-bottom: 24px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .question-area.tappable {
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .question-area.tappable:active { transform: scale(0.97); }
+
+  .question-label {
+    font-size: clamp(14px, 4vw, 18px);
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .question-main {
+    font-size: clamp(60px, 20vw, 120px);
+    line-height: 1.1;
+    color: #333;
+  }
+
+  .question-emoji-row {
+    font-size: clamp(24px, 7vw, 36px);
+    line-height: 1.4;
+    word-break: break-all;
+    max-width: 100%;
+  }
+
+  .shape-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 160px;
+    height: 160px;
+    margin: 0 auto;
+  }
+
+  .shape-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+  }
+
+  .shape-square {
+    width: 130px;
+    height: 130px;
+    border-radius: 8px;
+  }
+
+  .shape-triangle {
+    width: 0;
+    height: 0;
+    border-left: 70px solid transparent;
+    border-right: 70px solid transparent;
+    border-bottom: 130px solid currentColor;
+    background: transparent !important;
+  }
+
+  .shape-star {
+    position: relative;
+    display: inline-block;
+    width: 140px;
+    height: 140px;
+  }
+  .shape-star::before {
+    content: '★';
+    font-size: 120px;
+    line-height: 140px;
+    display: block;
+    text-align: center;
+  }
+
+  .subject-emoji {
+    font-size: clamp(90px, 25vw, 140px);
+    line-height: 1;
+  }
+
+  .tap-hint {
+    font-size: clamp(10px, 2.8vw, 13px);
+    color: #aaa;
+    margin-top: 4px;
+  }
+
+  .choices-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .choice-btn {
+    background: #fff;
+    border: 3px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 16px 10px;
+    font-size: clamp(18px, 5vw, 24px);
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.12);
+    transition: transform 0.1s, box-shadow 0.1s;
+    min-height: 80px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    word-break: break-all;
+  }
+
+  .choice-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.12); }
+
+  .choice-btn.correct {
+    background: #d1fae5;
+    border-color: #34d399;
+    animation: correctPulse 0.5s ease;
+    box-shadow: 0 5px 0 #059669, 0 0 20px rgba(52,211,153,0.5);
+  }
+
+  .choice-btn.wrong {
+    background: #fee2e2;
+    border-color: #f87171;
+    animation: shake 0.5s ease;
+    box-shadow: 0 5px 0 #dc2626;
+  }
+
+  @keyframes correctPulse {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+
+  .feedback-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 100;
+    background: rgba(0,0,0,0.15);
+  }
+
+  .feedback-popup {
+    background: #fff;
+    border-radius: 24px;
+    padding: 28px 40px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: all;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  .feedback-emoji { font-size: 56px; }
+  .feedback-text  { font-size: clamp(20px, 6vw, 28px); font-weight: bold; margin-top: 8px; }
+  .feedback-correct .feedback-text { color: #059669; }
+  .feedback-wrong   .feedback-text { color: #dc2626; }
+
+  .difficulty-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .diff-btn {
+    background: rgba(255,255,255,0.8);
+    border: 3px solid rgba(255,255,255,0.6);
+    border-radius: 30px;
+    padding: 10px 18px;
+    font-size: clamp(13px, 3.5vw, 16px);
+    font-family: inherit;
+    cursor: pointer;
+    font-weight: bold;
+    color: #555;
+    transition: all 0.2s;
+  }
+
+  .diff-btn.active {
+    background: #fff;
+    border-color: #60a5fa;
+    color: #2563eb;
+    box-shadow: 0 4px 0 #93c5fd;
+  }
+
+  body.theme-english .diff-btn.active {
+    border-color: #a78bfa;
+    color: #7c3aed;
+    box-shadow: 0 4px 0 #c4b5fd;
+  }
+
+  .question-calc {
+    font-size: clamp(36px, 12vw, 64px);
+    font-weight: bold;
+    color: #1e3a8a;
+    letter-spacing: 4px;
+  }
+
+  #goal-screen { display: none; width: 100%; text-align: center; }
+
+  .goal-title {
+    font-size: clamp(32px, 10vw, 52px);
+    color: #fff;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+    animation: bounce 1.5s infinite;
+  }
+
+  .goal-score {
+    background: rgba(255,255,255,0.9);
+    border-radius: 20px;
+    padding: 20px 30px;
+    margin: 16px auto;
+    display: inline-block;
+    font-size: clamp(20px, 6vw, 28px);
+    font-weight: bold;
+    color: #555;
+  }
+
+  .goal-score span { font-size: clamp(36px, 10vw, 52px); color: #f59e0b; }
+
+  /* ゴール画面 塗り絵エリア */
+  #goal-coloring {
+    background: rgba(255,255,255,0.85);
+    border-radius: 22px;
+    padding: 16px 20px 12px;
+    margin: 14px auto;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  #goal-coloring-label {
+    font-size: clamp(13px, 3.5vw, 16px);
+    font-weight: bold;
+    color: #666;
+  }
+
+  #goal-coloring-img {
+    max-width: 200px;
+    max-height: 180px;
+    object-fit: contain;
+    border-radius: 10px;
+    animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s both;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.12));
+  }
+
+  .goal-btns { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+
+  .goal-btn {
+    background: #fff;
+    border: none;
+    border-radius: 18px;
+    padding: 16px 32px;
+    font-size: clamp(16px, 4.5vw, 20px);
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.12);
+    width: 100%;
+    max-width: 320px;
+    color: #444;
+    transition: transform 0.1s;
+  }
+  .goal-btn:active { transform: translateY(3px); }
+
+  /* 全問正解アニメーション */
+  @keyframes rainbowText {
+    0%   { color: #f87171; }
+    17%  { color: #fb923c; }
+    33%  { color: #fbbf24; }
+    50%  { color: #4ade80; }
+    67%  { color: #60a5fa; }
+    83%  { color: #a78bfa; }
+    100% { color: #f87171; }
+  }
+  @keyframes perfectPulse {
+    0%, 100% { transform: scale(1) rotate(-2deg); }
+    50%       { transform: scale(1.08) rotate(2deg); }
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-80px) scale(1.5); opacity: 0; }
+  }
+
+  #goal-screen.perfect .goal-title {
+    animation: bounce 0.6s infinite, rainbowText 1.2s linear infinite;
+    text-shadow: 0 0 20px rgba(255,255,255,0.8);
+  }
+
+  #goal-screen.perfect #goal-coloring {
+    animation: perfectPulse 1s ease-in-out infinite;
+    box-shadow: 0 0 0 4px #fbbf24, 0 0 24px rgba(251,191,36,0.5);
+  }
+
+  .perfect-float {
+    position: fixed;
+    font-size: 28px;
+    pointer-events: none;
+    z-index: 60;
+    animation: floatUp 1.5s ease-out forwards;
+  }
+
+  .stars-container {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 50;
+    overflow: hidden;
+  }
+
+  .falling-star {
+    position: absolute;
+    animation: fallStar linear forwards;
+    top: -40px;
+  }
+
+  @keyframes fallStar {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  body.theme-hiragana { background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%); }
+  body.theme-katakana { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%); }
+  body.theme-review   { background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #f9a8d4 100%); }
+  body.theme-number   { background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 50%, #fdba74 100%); }
+  body.theme-color    { background: linear-gradient(135deg, #fffbeb 0%, #fde68a 50%, #fcd34d 100%); }
+  body.theme-animal   { background: linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 50%, #86efac 100%); }
+  body.theme-vege     { background: linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 50%, #6ee7b7 100%); }
+  body.theme-calc     { background: linear-gradient(135deg, #eff6ff 0%, #bfdbfe 50%, #93c5fd 100%); }
+  body.theme-english  { background: linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 50%, #a78bfa 100%); }
+  body.theme-home     { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+
+  @keyframes screenFlash {
+    0%   { opacity: 0; }
+    15%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @keyframes fireworkPop {
+    0%   { transform: translate(-50%,-50%) scale(0); opacity: 1; }
+    60%  { opacity: 1; }
+    100% { transform: translate(-50%,-50%) scale(1.4); opacity: 0; }
+  }
+
+  #mute-btn {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 200;
+    background: rgba(255,255,255,0.85);
+    border: none;
+    border-radius: 50%;
+    width: 46px;
+    height: 46px;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s;
+  }
+  #mute-btn:active { transform: scale(0.9); }
+
+  /* ─── おじさんおんな リワード オーバーレイ ─── */
+  #ojisan-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0,0,0,0.72);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  #ojisan-overlay.show {
+    display: flex;
+    animation: ojisanFadeIn 0.5s ease;
+  }
+  @keyframes ojisanFadeIn {
+    from { opacity: 0; transform: scale(0.7); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  #ojisan-overlay img {
+    max-width: min(88vw, 520px);
+    max-height: 60vh;
+    border-radius: 18px;
+    box-shadow: 0 0 0 5px #fbbf24, 0 0 40px rgba(251,191,36,0.8), 0 8px 32px rgba(0,0,0,0.5);
+    animation: ojisanPop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
+  }
+  @keyframes ojisanPop {
+    from { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+    to   { transform: scale(1)   rotate(0deg);  opacity: 1; }
+  }
+  #ojisan-overlay .ojisan-label {
+    margin-top: 14px;
+    font-size: clamp(16px, 4vw, 22px);
+    font-weight: bold;
+    color: #fbbf24;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    animation: ojisanFadeIn 0.4s ease 0.4s both;
+  }
+  #ojisan-close-btn {
+    margin-top: 16px;
+    padding: 10px 32px;
+    font-size: clamp(14px, 3.5vw, 18px);
+    font-weight: bold;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: ojisanFadeIn 0.4s ease 0.6s both;
+  }
+  #ojisan-close-btn:hover { filter: brightness(1.15); }
+
+  /* ─── フィードバック いらすとや画像 ─── */
+  .feedback-img {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 6px;
+    border-radius: 8px;
+  }
+
+  /* ─── フレーズ問題表示 ─── */
+  .question-phrase {
+    font-size: clamp(17px, 4.8vw, 24px);
+    font-weight: bold;
+    color: #1e3a8a;
+    line-height: 1.5;
+    text-align: center;
+    padding: 4px 8px;
+    word-break: break-word;
+  }
+  .choice-btn.phrase-choice {
+    font-size: clamp(10px, 2.6vw, 13px);
+    line-height: 1.35;
+    word-break: break-word;
+    padding: 10px 6px;
+  }
+
+  /* ─── ゴール画面 いらすとや ─── */
+  #goal-irasutoya { text-align: center; margin: 6px 0 2px; }
+  #goal-irasutoya img {
+    max-height: 110px;
+    max-width: 160px;
+    object-fit: contain;
+    border-radius: 12px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+    animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
+  }
+  #goal-irasutoya-label {
+    font-size: clamp(12px, 3.2vw, 15px);
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body class="theme-home">
+
+<!-- LINE IAB 警告バナー -->
+<div id="line-iab-banner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999;
+  background:#06c755; color:#fff; padding:18px 16px 14px; text-align:center;
+  font-family:'Hiragino Maru Gothic Pro','BIZ UDPGothic',sans-serif; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+  <div style="font-size:17px; font-weight:bold; margin-bottom:6px;">⚠️ LINEブラウザでは音声・BGMが使えません</div>
+  <div style="font-size:13px; margin-bottom:12px; opacity:0.92;">Chromeなどのブラウザで開くと全機能が使えます</div>
+  <button onclick="openInExternalBrowser()"
+    style="background:#fff; color:#06c755; border:none; border-radius:24px;
+           padding:11px 28px; font-size:15px; font-weight:bold; cursor:pointer;
+           box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+    🌐 ブラウザで開く
+  </button>
+  <div style="font-size:11px; margin-top:10px; opacity:0.8;">
+    自動で開かない場合は右上の「…」→「ブラウザで開く」を選択してください
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- ホーム画面 -->
+  <div id="home-screen">
+    <div class="game-title">まなびのゲーム</div>
+    <div class="game-subtitle">すきなのをえらんでね！</div>
+    <div class="category-grid">
+      <button class="cat-btn cat-hiragana" data-cat="hiragana" onclick="startGame('hiragana')">
+        <span class="cat-emoji">🔤</span>ひらがな
+      </button>
+      <button class="cat-btn cat-katakana" data-cat="katakana" onclick="startGame('katakana')">
+        <span class="cat-emoji">🅰</span>カタカナ
+      </button>
+      <button class="cat-btn cat-number" data-cat="number" onclick="startGame('number')">
+        <span class="cat-emoji">🔢</span>すうじ
+      </button>
+      <button class="cat-btn cat-color" data-cat="color" onclick="startGame('color')">
+        <span class="cat-emoji">🎨</span>いろ・かたち
+      </button>
+      <button class="cat-btn cat-animal" data-cat="animal" onclick="startGame('animal')">
+        <span class="cat-emoji">🐘</span>どうぶつ
+      </button>
+      <button class="cat-btn cat-vege" data-cat="vege" onclick="startGame('vege')">
+        <span class="cat-emoji">🥕</span>やさい・くだもの
+      </button>
+      <button class="cat-btn cat-calc" data-cat="calc" onclick="startGame('calc')">
+        <span class="cat-emoji">➕</span>けいさん
+      </button>
+      <button class="cat-btn cat-english" data-cat="english" onclick="startGame('english')">
+        <span class="cat-emoji">🇬🇧</span>えいご
+      </button>
+      <button class="cat-btn cat-review" data-cat="review" onclick="startGame('review')" style="grid-column: 1 / -1;">
+        <span class="cat-emoji">💪</span>にがてふくしゅう
+      </button>
+    </div>
+  </div>
+
+  <!-- ゲーム画面 -->
+  <div id="game-screen">
+    <div class="game-header">
+      <button class="back-btn" onclick="goHome()">🏠</button>
+      <div class="score-display" id="score-display">0 / 10もん</div>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+    </div>
+
+    <div id="difficulty-area" style="display:none;">
+      <div class="difficulty-row" id="difficulty-row">
+        <button class="diff-btn active" id="diff-3" onclick="setDifficulty('easy')">3〜5さい</button>
+        <button class="diff-btn" id="diff-6" onclick="setDifficulty('mid')">6〜8さい</button>
+        <button class="diff-btn" id="diff-9" onclick="setDifficulty('hard')">9〜10さい</button>
+        <button class="diff-btn" id="diff-phrase" onclick="setDifficulty('phrase')" style="display:none;">フレーズ</button>
+      </div>
+    </div>
+
+    <div class="question-area" id="question-area"></div>
+    <div class="choices-grid" id="choices-grid"></div>
+  </div>
+
+  <!-- ゴール画面 -->
+  <div id="goal-screen">
+    <div class="goal-title">🎉 すごい！！</div>
+    <div class="goal-score">
+      <span id="final-score">10</span>もん せいかい！
+    </div>
+    <div id="goal-stamp"></div>
+    <!-- いらすとやキャラ（成績に応じて変わる） -->
+    <div id="goal-irasutoya">
+      <img id="goal-irasutoya-img" src="" alt="">
+      <div id="goal-irasutoya-label"></div>
+    </div>
+    <!-- 成績いらすとや（スコアに応じて変わる） -->
+    <div id="goal-coloring">
+      <div id="goal-coloring-label"></div>
+      <img id="goal-coloring-img" src="" alt="">
+    </div>
+    <div class="goal-btns">
+      <button class="goal-btn" onclick="retryGame()">🔄 もういちど</button>
+      <button class="goal-btn" onclick="goHome()">🏠 ホームへ</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- おじさんおんな リワード オーバーレイ（全問正解25%で表示） -->
+<div id="ojisan-overlay" role="dialog" aria-modal="true">
+  <img id="onepiece-img" src="" alt="ワンピース スペシャル！" />
+  <div class="ojisan-label" id="onepiece-label">⭐ スペシャルとうじょう！ ⭐</div>
+  <button id="ojisan-close-btn" onclick="closeOjisanOverlay()">✨ とじる</button>
+</div>
+
+<div class="feedback-overlay" id="feedback-overlay" style="display:none;">
+  <div class="feedback-popup" id="feedback-popup">
+    <img class="feedback-img" id="feedback-img" src="" alt="">
+    <div class="feedback-text" id="feedback-text"></div>
+  </div>
+</div>
+
+<div class="stars-container" id="stars-container"></div>
+
+<button id="mute-btn" onclick="toggleMute()" title="おとのON/OFF">🔊</button>
+
+<div id="toast"></div>
+
+<script>
+// =============================================
+//  いらすとや 画像 URL
+// =============================================
+const IRASUTOYA_CORRECT = [
+  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh6Vkn9SVcOoTd4QO8lZahKJH6bweNX8QPcgJKlolKlzmARQN-KFpqMHIUuapLUG3dH8mXVpcFY569PHNSAClHJOP1WV-TeNzlj44YxmtLA6wKcNU3TD4iWh_CPLFP5OgHQm2RennIAPzSg/s400/gutspose_man.png',
+  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhYfcZJYeC7UfwWM60-5LqIJ3XIc9qutvSFAQxyXmsBEUiuICCSlr0fPb-VFB1gC-WglMkIEwiIBXIvFlQiAxwBfXSqDd3B1CHEL_lhicXfZvnxDjiSxSWoBFoj8ISL5c78WbABA0PeY5EneBQTgMWCuTtDc6lhuv99Twcm_jz1BskZCY0nhtu_hWtAUoBx/s400/genki_pose_schoolboy.png',
+  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjajaaUfv2mgXcRHaohkf1_-EBB6LMvBbhZ-M69ED8ADIDqJh9Kl2kSnLYKkBmcLPpo1ZVIUs3R5-zJBM4PcRwT9RDU31J5fEN5X4B5wuAA4n5KiS5-ArYOws7MwxCazdVmCBTbOg4lGxgPEqbx_vhsCmmlZrYpCTIjJDCjp5lepSA8QB1bMiZYITKexRSG/s400/genki_pose_schoolgirl.png',
+];
+const IRASUTOYA_WRONG = [
+  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGJhe_pZIttmovcJodE-d8D8QrZUns_9thKpf9sFLsOzmF-q1uNPMEwG0xyGAgpMcPCJ1rtaCyN8ZpEhZbJb3UM2eJSDJn-OpGIzfjb7Jkn7fPeGGU2JKv-KqSBF8qYHCPyljPtd-LwETT/s400/study_wakaranai_girl.png',
+];
+const IRASUTOYA_GOAL = [
+  { minScore:10, url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgnOQfLfhILjCYNS7aPxa-M65p2n1XhRty5dj6HiBIw5OudpVmgP93sgu_mYvTjeZpQzzBrx166lnB09hUmcZMuXMCG9F40jxAVhBzTWtfleUhfkR_JX1wv68QyzKn5ltkIksupr7_rIpo/s400/test100.png', label:'100てん！やったね！🏆' },
+  { minScore:7,  url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh6Vkn9SVcOoTd4QO8lZahKJH6bweNX8QPcgJKlolKlzmARQN-KFpqMHIUuapLUG3dH8mXVpcFY569PHNSAClHJOP1WV-TeNzlj44YxmtLA6wKcNU3TD4iWh_CPLFP5OgHQm2RennIAPzSg/s400/gutspose_man.png', label:'よくできたね！💪' },
+  { minScore:0,  url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGJhe_pZIttmovcJodE-d8D8QrZUns_9thKpf9sFLsOzmF-q1uNPMEwG0xyGAgpMcPCJ1rtaCyN8ZpEhZbJb3UM2eJSDJn-OpGIzfjb7Jkn7fPeGGU2JKv-KqSBF8qYHCPyljPtd-LwETT/s400/study_wakaranai_girl.png', label:'もういちどやってみよう！' },
+];
+
+// =============================================
+//  ONEPIECE いらすとや キャラURL（全20種）
+// =============================================
+const ONEPIECE_CHARS = [
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiPJVChEetoejp4E_ARlr9RzNZjTiFkDK8800AWMOFwpmjlAox7mhH2JLR0Qxr0p0cBVWa2j7wUPpK-9XewWFlf0Jht0xMy7EL0JeWd_BCsZpfVE5FIZrqrFJLSwAkIXq2sRnDk64COSjH3/s200/onepiece01_luffy.png', name:'ルフィ' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgkZ57Udi7AA5MRw4uzcx9M4R0J8PK03fIjZaaRlCLWBW5gBtnZpuCWLbao925kYGJy0HNcxEf9NcfbHFyuraKrY-4WhkFV01Ufut5cDeRpuiZ5cewk8CCQUD2v178dm67n_DqoHUrr_s-K/s200/onepiece02_zoro_bandana.png', name:'ゾロ' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgtRfZsghuLTIyRzywbowxR_q3dtXJn33kub2lS7_pDSVeNlHKveWnsHjGOikcQlg6pgZT63i43SgAcJosU2mES_ZKK-f6G9qWvDViXOtBiDRMEDjQJOGghw-ZSUFYXZ1P01l5ZN0gkANI-/s200/onepiece03_nami.png', name:'ナミ' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjtPsAfN0IE2qpCnMIXr9CPKgJkLqiVE0VLh74Ohler_hT4-mosvVlNOraDvmLAJVz65EXKbODKXTheOL1o-IbEBWbZGvuWsxCbMpJeM7u6XbehkLDP8r21lAGu2Q3ZS_5lg0-nO09mxZJ1/s200/onepiece04_usopp_sogeking.png', name:'ウソップ' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjb915nunoRAuBcf2adDTT6Fr8_1ZDE01Ub0VKqNROZTAF-6hAt_f-1MZZxBfa3-OOIbxPvP3-3d3hBJdofYgYtysdgEZHVVkOEORkGoHxeYiU75aESvdKnxIuzZCr4RsjHe2SoUMfS3PEo/s200/onepiece05_sanji.png', name:'サンジ' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjwXhPLNdUe6H1e8X7CvW3edgE1BqK7sNHFIbSLw9Y9sOzNrJFJig-sz9B2IRqsgYWXl-TKRpL99sggcD2qfcN82T5-MxZKdQtMDnjDF7luEIzsB9J41XFUMIN4SUzmCjXwMyuYh1dCkqn0/s200/onepiece06_chopper.png', name:'チョッパー' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgb_FkfaAWLeM3alcb5YOVmXPC2jsBEuuTQ8mplw5B-cnvd8LlExSr_3u7ybNGyT2TRzckrJSLOaY88DIuP6PVCCXxnMCY-a8b1SurHeEhWijrpmRnRpCWV6bw9LRiQghkECdemI4l2oebS/s200/onepiece07_robin.png', name:'ロビン' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEibyeQ970m83yM43EI4t_wfvMdgoP_wqk6pkG8OiwxUJxxqVqPxq8o1pcQaphSepqt2oM1P5cmxTAlhpJRmt3_0JuYKNggM5qIdNFQwzp0RP8xqEzglhuYTIrG-9aBB-fm2iXT_Qejf5rUJ/s200/onepiece08_franky.png', name:'フランキー' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEicPjQ7rvpZ7J4AdwOQLeidTouchG8itU6LzqT3nrNqBLdajXOB2MiFyWoVqYOnLx4ZGLqIKyejQ3kb0t0C_lU6buhcyJ6_svhzZl-NuaEcSUBR2XCj4xbZbZxg-nYWEVhIe8BEBOyrqpS-/s200/onepiece09_brook.png', name:'ブルック' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjiuM-JEUz8mI_zQIxSoV8WjSM3w6N-GFMBYEpb8C7EapguTAX_2rtwHjASJVujRmsxzcsMegLSMx7d9xWkc_tdZKJ3zbHXEd_Jngvvy3pRKiYQjeilI12n9CDomgFXFXyi6rfdFb5JWDNv/s200/onepiece10_jinbe.png', name:'ジンベエ' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGU6Mm_kPvex9hOrvf8-DoAeWQZTL9-1SO-1k2wCLfvV8XTQ2Iu0zwIBtwvgGak4can9FDiFRV6cidcGV94fgx9c0dZNeO1TCANkp7Nxdq_f6-Ph1CliaxJLLlTWt-RoWMjPcR0YufaHGb/s200/onepiece11_arlong.png', name:'アーロン' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEguclVUy3ZqT87uuA3v-T8cwnYHnlz1V5yZlLRMjTUOEwOtqQCExPQM83ZQoNNFPlMhL3gQyWtmZEnVoDtIfUB3iiaZE88UDFCGI0vtBX4SsZUcyn4mCSSY1rHZ8HTGqhr-Dka_T84bL9q_/s200/onepiece12_buggy.png', name:'バギー' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhb5cRnvUOeieTiPUR6Cfe2ZOuJVsRx7K91hyPPVPSfedJQ8A1yrtHq8izGtnYRREwl9TOV_ekM6llbX5bOpyfcprmxH4R1kPaIYKl5zVIehFyhZhtsuzqRaoaVsA_WCbJyTacoUQubXQJs/s200/onepiece13_crocodile.png', name:'クロコダイル' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjTBUDIYA3NqI3GndowHTh-oZf4TAm99PEgmUl09jar-wkO4DPM9FX8sPOQeH5VN7uBKmG8qpkaNiS4NDZlBCLiyoGsTS8TUuw36gMtMcA0kF83EY7tIyS3yqAegpe9yv1YEqXV0bINz0WX/s200/onepiece14_enel.png', name:'エネル' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh8HMVDGjxdwSbuwJyZm6miCx3XZkOXJlysf3c-3GHLXfq6mxpu7uSNmnta6gvdKzS34EECdpuYOzt-s9i8JuFBYG0tAmzFdy5AelwVUFKRIR1F059z086rxJY47BRuzdUyZyzR5ug4G0lC/s200/onepiece15_lucci.png', name:'ルッチ' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg8FDaPQyv5Ru-BQMKNgAfhdeC0mB6K2hXCVqryjuJnC9EDgNVaayxrRXJfFPhFp99aPTsLXGo_I6J2PANaCDaI_CPciUH4rYzv7Y0QiQeYZB-MYVIFxCZWA7YpTsYa3WUBMP5gJE3DPbnC/s200/onepiece16_moria.png', name:'モリア' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEidO5vwwLm34AaQMo2TVuu5Shvp3oXKv2ZaTQUB_LxV9fl5vvPcLMUexO5iFbuk-53lljprPLbdOxIMPgfNePqxndeC9HsZs2cxs5VJ_3gIiYE8LfQmPWYTwizFr3bD2gTgrZofEIc2mEVO/s200/onepiece17_doflamingo.png', name:'ドフラミンゴ' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh8v_HjCvRoh3UssgZFoJdUjFoQHpWLt3YQejUT3C3lwJN3k-gHaslqdPUY-rG3_n8J9G5e6yQLcOWeqGDXQMD3xD8HL7ERldtL3joAaw9KI3CSLlrRdbzX35UE-UjvJcclz0uPpBoNhBvi/s200-c/onepiece18_linlin_kaido.png', name:'ビッグマム&カイドウ' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgJamOZbJE8_UY0oTV_kgtpwa3tdoKtgH21U8F3B2k-7YgxRKSvKkzCyRFMfQ73_oAzYc5fe863l1EUuVQkwz-04SDD_cpHjqzUDfrGAJyiaXJezQXDopzlFy5pYHRXwH_fUcT7xG1zMDIm/s200/onepiece19_kurohige_teach2.png', name:'黒ひげ' },
+  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiT5_y_GQUjG04b62izbowYZU8UWbZrc3Rmbai1L2FuT1YcdHSWtRF9ili2UaMANjFaQYFYeFRN1rePW8Hos7tI20vKaVZGgmf4QgtyckfQ5z84qFJt-WsgDOYXKIdrsxPyw_GddpsFXISL/s200-c/onepiece20_santaisyou.png', name:'三大将' },
+];
+
+// =============================================
+//  ゴール画面 成績別 いらすとや（旧塗り絵の差し替え）
+// =============================================
+const IRASUTOYA_COLORING = [
+  { minScore:10, url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgc70N3oZ9mx5s0RbHaDrYFXGAy8UI6JdBcXBF8mEA7zrjBzAe89o4ezG91IeieTzbM-UxZYSsO71B4s13-P67AMxLKZEQZagy9oCB6i3vPQrXQUtg8F7Lga-KA0OBAqMsKCYmcR_zD5LtP/s400/banzai_school.png',       label:'まんてん！かんぺきです！🎊' },
+  { minScore:7,  url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh5Vk9xeHsq-_KpxJ8S7zFeGNH22J2vQEUqxF-4TL4sGC1S0X2x4SQnr5a2Lwd5Sh8NKZtV9GaJ4CKLqEbH8W8hWh7mEkGwk3aH-gI68Xk6r6RWugtWefmoWsPWsvolt4BhESQ5zEOaOpu6/s400/happy_schoolboy.png',       label:'すごいね！よくできました！👏' },
+  { minScore:4,  url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjajaaUfv2mgXcRHaohkf1_-EBB6LMvBbhZ-M69ED8ADIDqJh9Kl2kSnLYKkBmcLPpo1ZVIUs3R5-zJBM4PcRwT9RDU31J5fEN5X4B5wuAA4n5KiS5-ArYOws7MwxCazdVmCBTbOg4lGxgPEqbx_vhsCmmlZrYpCTIjJDCjp5lepSA8QB1bMiZYITKexRSG/s400/genki_pose_schoolgirl.png', label:'よくがんばりました！👍' },
+  { minScore:0,  url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGJhe_pZIttmovcJodE-d8D8QrZUns_9thKpf9sFLsOzmF-q1uNPMEwG0xyGAgpMcPCJ1rtaCyN8ZpEhZbJb3UM2eJSDJn-OpGIzfjb7Jkn7fPeGGU2JKv-KqSBF8qYHCPyljPtd-LwETT/s400/study_wakaranai_girl.png', label:'もっとれんしゅうしよう！💪' },
+];
+
+// =============================================
+//  画像プリロード（初回表示を瞬時にする）
+// =============================================
+function preloadImages(urls) {
+  urls.forEach(u => { const im = new Image(); im.src = u; });
+}
+window.addEventListener('load', () => {
+  preloadImages([
+    ...IRASUTOYA_CORRECT,
+    ...IRASUTOYA_WRONG,
+    ...IRASUTOYA_GOAL.map(g => g.url),
+    ...IRASUTOYA_COLORING.map(c => c.url),
+    ...SECRET_IMAGES,
+  ]);
+});
+
+// =============================================
+//  英語データ
+// =============================================
+const ENGLISH_EASY = [
+  {emoji:'🐶', word:'dog'},{emoji:'🐱', word:'cat'},{emoji:'🍎', word:'apple'},
+  {emoji:'🍌', word:'banana'},{emoji:'🐰', word:'rabbit'},{emoji:'🐻', word:'bear'},
+  {emoji:'🚗', word:'car'},{emoji:'🏠', word:'house'},{emoji:'⭐', word:'star'},
+  {emoji:'🌙', word:'moon'},{emoji:'🐟', word:'fish'},{emoji:'🐦', word:'bird'},
+  {emoji:'🌸', word:'flower'},{emoji:'🎂', word:'cake'},{emoji:'☀️', word:'sun'},
+  {emoji:'🐸', word:'frog'},{emoji:'🐮', word:'cow'},{emoji:'🐷', word:'pig'},
+  {emoji:'🍊', word:'orange'},{emoji:'🍇', word:'grape'},{emoji:'✏️', word:'pencil'},
+  {emoji:'🎒', word:'bag'},{emoji:'🥛', word:'milk'},{emoji:'🧀', word:'cheese'},
+  {emoji:'🌷', word:'tulip'},
+];
+
+const ENGLISH_MID = [
+  {emoji:'🐘', word:'elephant'},{emoji:'🦁', word:'lion'},{emoji:'🐧', word:'penguin'},
+  {emoji:'🍓', word:'strawberry'},{emoji:'🍉', word:'watermelon'},{emoji:'✈️', word:'airplane'},
+  {emoji:'🚂', word:'train'},{emoji:'📚', word:'book'},{emoji:'🎸', word:'guitar'},
+  {emoji:'🌊', word:'ocean'},{emoji:'⛰️', word:'mountain'},{emoji:'🎵', word:'music'},
+  {emoji:'🍕', word:'pizza'},{emoji:'🌈', word:'rainbow'},{emoji:'🎈', word:'balloon'},
+  {emoji:'🦊', word:'fox'},{emoji:'🐢', word:'turtle'},{emoji:'🐙', word:'octopus'},
+  {emoji:'🍦', word:'ice cream'},{emoji:'🌻', word:'sunflower'},{emoji:'🚁', word:'helicopter'},
+  {emoji:'🎀', word:'ribbon'},{emoji:'🔑', word:'key'},{emoji:'⚓', word:'anchor'},
+  {emoji:'🌺', word:'hibiscus'},
+];
+
+const ENGLISH_HARD = [
+  {emoji:'🦒', word:'giraffe'},{emoji:'🦋', word:'butterfly'},{emoji:'🌵', word:'cactus'},
+  {emoji:'🚀', word:'rocket'},{emoji:'🏆', word:'trophy'},{emoji:'🎯', word:'target'},
+  {emoji:'🦜', word:'parrot'},{emoji:'🌍', word:'earth'},{emoji:'🔭', word:'telescope'},
+  {emoji:'🧪', word:'experiment'},{emoji:'🎪', word:'circus'},{emoji:'🏰', word:'castle'},
+  {emoji:'🌋', word:'volcano'},{emoji:'🦈', word:'shark'},{emoji:'🎺', word:'trumpet'},
+  {emoji:'🦑', word:'squid'},{emoji:'🦩', word:'flamingo'},{emoji:'⚡', word:'lightning'},
+  {emoji:'🧲', word:'magnet'},{emoji:'🎭', word:'theater'},{emoji:'🧁', word:'cupcake'},
+  {emoji:'🐊', word:'crocodile'},{emoji:'🌡️', word:'thermometer'},{emoji:'🔮', word:'crystal ball'},
+  {emoji:'🌠', word:'shooting star'},
+];
+
+// =============================================
+//  えいご フレーズデータ
+// =============================================
+const ENGLISH_PHRASE = [
+  {phrase:'Good morning!',     mean:'おはよう！'},
+  {phrase:'Good night!',       mean:'おやすみ！'},
+  {phrase:'Thank you!',        mean:'ありがとう！'},
+  {phrase:"You're welcome!",   mean:'どういたしまして！'},
+  {phrase:"I'm sorry.",        mean:'ごめんなさい。'},
+  {phrase:'Excuse me.',        mean:'すみません。'},
+  {phrase:'How are you?',      mean:'げんきですか？'},
+  {phrase:"I'm fine.",         mean:'げんきです。'},
+  {phrase:"Let's play!",       mean:'あそびましょう！'},
+  {phrase:'I love you.',       mean:'だいすきだよ。'},
+  {phrase:'See you later!',    mean:'またね！'},
+  {phrase:"What's your name?", mean:'なまえはなんですか？'},
+  {phrase:"I'm hungry.",       mean:'おなかがすいた。'},
+  {phrase:"I'm sleepy.",       mean:'ねむい。'},
+  {phrase:'Help me!',          mean:'たすけて！'},
+  {phrase:"That's great!",     mean:'すごいね！'},
+  {phrase:'No problem!',       mean:'だいじょうぶ！'},
+  {phrase:'Happy birthday!',   mean:'たんじょうびおめでとう！'},
+  {phrase:'Good luck!',        mean:'がんばれ！'},
+  {phrase:'Be careful!',       mean:'きをつけて！'},
+];
+
+// =============================================
+//  ひらがな・どうぶつ・やさい・いろデータ
+// =============================================
+const HIRAGANA_DATA = [
+  {char:'あ',read:'あ'},{char:'い',read:'い'},{char:'う',read:'う'},
+  {char:'え',read:'え'},{char:'お',read:'お'},
+  {char:'か',read:'か'},{char:'き',read:'き'},{char:'く',read:'く'},
+  {char:'け',read:'け'},{char:'こ',read:'こ'},
+  {char:'さ',read:'さ'},{char:'し',read:'し'},{char:'す',read:'す'},
+  {char:'せ',read:'せ'},{char:'そ',read:'そ'},
+  {char:'た',read:'た'},{char:'ち',read:'ち'},{char:'つ',read:'つ'},
+  {char:'て',read:'て'},{char:'と',read:'と'},
+  {char:'な',read:'な'},{char:'に',read:'に'},{char:'ぬ',read:'ぬ'},
+  {char:'ね',read:'ね'},{char:'の',read:'の'},
+  {char:'は',read:'は'},{char:'ひ',read:'ひ'},{char:'ふ',read:'ふ'},
+  {char:'へ',read:'へ'},{char:'ほ',read:'ほ'},
+  {char:'ま',read:'ま'},{char:'み',read:'み'},{char:'む',read:'む'},
+  {char:'め',read:'め'},{char:'も',read:'も'},
+  {char:'や',read:'や'},{char:'ゆ',read:'ゆ'},{char:'よ',read:'よ'},
+  {char:'ら',read:'ら'},{char:'り',read:'り'},{char:'る',read:'る'},
+  {char:'れ',read:'れ'},{char:'ろ',read:'ろ'},
+  {char:'わ',read:'わ'},{char:'を',read:'を'},{char:'ん',read:'ん'},
+];
+
+const KATAKANA_DATA = [
+  {char:'ア',read:'あ'},{char:'イ',read:'い'},{char:'ウ',read:'う'},
+  {char:'エ',read:'え'},{char:'オ',read:'お'},
+  {char:'カ',read:'か'},{char:'キ',read:'き'},{char:'ク',read:'く'},
+  {char:'ケ',read:'け'},{char:'コ',read:'こ'},
+  {char:'サ',read:'さ'},{char:'シ',read:'し'},{char:'ス',read:'す'},
+  {char:'セ',read:'せ'},{char:'ソ',read:'そ'},
+  {char:'タ',read:'た'},{char:'チ',read:'ち'},{char:'ツ',read:'つ'},
+  {char:'テ',read:'て'},{char:'ト',read:'と'},
+  {char:'ナ',read:'な'},{char:'ニ',read:'に'},{char:'ヌ',read:'ぬ'},
+  {char:'ネ',read:'ね'},{char:'ノ',read:'の'},
+  {char:'ハ',read:'は'},{char:'ヒ',read:'ひ'},{char:'フ',read:'ふ'},
+  {char:'ヘ',read:'へ'},{char:'ホ',read:'ほ'},
+  {char:'マ',read:'ま'},{char:'ミ',read:'み'},{char:'ム',read:'む'},
+  {char:'メ',read:'め'},{char:'モ',read:'も'},
+  {char:'ヤ',read:'や'},{char:'ユ',read:'ゆ'},{char:'ヨ',read:'よ'},
+  {char:'ラ',read:'ら'},{char:'リ',read:'り'},{char:'ル',read:'る'},
+  {char:'レ',read:'れ'},{char:'ロ',read:'ろ'},
+  {char:'ワ',read:'わ'},{char:'ヲ',read:'を'},{char:'ン',read:'ん'},
+];
+
+const ANIMAL_DATA = [
+  {emoji:'🐶',name:'いぬ'},{emoji:'🐱',name:'ねこ'},{emoji:'🐘',name:'ぞう'},
+  {emoji:'🦁',name:'らいおん'},{emoji:'🐼',name:'ぱんだ'},{emoji:'🐰',name:'うさぎ'},
+  {emoji:'🐵',name:'さる'},{emoji:'🐻',name:'くま'},{emoji:'🦒',name:'きりん'},
+  {emoji:'🐧',name:'ぺんぎん'},
+  {emoji:'🦊',name:'きつね'},{emoji:'🦓',name:'しまうま'},{emoji:'🐬',name:'いるか'},
+  {emoji:'🦅',name:'わし'},{emoji:'🦉',name:'ふくろう'},{emoji:'🐊',name:'わに'},
+  {emoji:'🐸',name:'かえる'},{emoji:'🐮',name:'うし'},{emoji:'🐷',name:'ぶた'},
+  {emoji:'🦔',name:'はりねずみ'},
+];
+
+const VEGE_DATA = [
+  {emoji:'🥕',name:'にんじん'},{emoji:'🥦',name:'ブロッコリー'},{emoji:'🍅',name:'トマト'},
+  {emoji:'🥒',name:'きゅうり'},{emoji:'🧅',name:'たまねぎ'},{emoji:'🥔',name:'じゃがいも'},
+  {emoji:'🍆',name:'なす'},{emoji:'🌽',name:'とうもろこし'},{emoji:'🍎',name:'りんご'},
+  {emoji:'🍌',name:'バナナ'},{emoji:'🍓',name:'いちご'},{emoji:'🍊',name:'みかん'},
+  {emoji:'🍇',name:'ぶどう'},{emoji:'🍉',name:'すいか'},{emoji:'🍑',name:'もも'},
+  {emoji:'🍋',name:'れもん'},
+  {emoji:'🥝',name:'キウイ'},{emoji:'🍍',name:'パイナップル'},{emoji:'🥭',name:'マンゴー'},
+  {emoji:'🍐',name:'なし'},{emoji:'🍒',name:'さくらんぼ'},{emoji:'🥬',name:'レタス'},
+  {emoji:'🧄',name:'にんにく'},{emoji:'🫐',name:'ブルーベリー'},
+];
+
+const COLOR_DATA = [
+  {name:'あか',    css:'#ef4444'},{name:'あお',    css:'#3b82f6'},
+  {name:'きいろ',  css:'#eab308'},{name:'みどり',  css:'#22c55e'},
+  {name:'むらさき',css:'#a855f7'},{name:'オレンジ',css:'#f97316'},
+  {name:'ピンク',  css:'#ec4899'},{name:'ちゃいろ',css:'#92400e'},
+];
+
+const SHAPE_DATA = [
+  {name:'まる',    type:'circle'},{name:'しかく',  type:'square'},
+  {name:'さんかく',type:'triangle'},{name:'ほし',  type:'star'},
+];
+
+// =============================================
+//  すうじ 絵柄リスト
+// =============================================
+const NUMBER_EMOJIS = [
+  '🍎','🍌','🍓','🍊','🍇','⭐','🌸','🎈','🐶','🐱',
+  '🐰','🐻','🎂','🌙','🦋','🚂','🌈','🍕','🎵','🏆'
+];
+
+// =============================================
+//  ゲーム変数
+// =============================================
+let currentCategory = '';
+let currentDifficulty = 'easy';
+let questions = [];
+let currentQIndex = 0;
+let correctCount = 0;
+let answered = false;
+let totalQuestions = 10;
+let streak = 0;  // れんぞくせいかい数
+
+// カテゴリ表示名
+const CAT_LABELS = {
+  hiragana:'ひらがな', katakana:'カタカナ', number:'すうじ', color:'いろ・かたち',
+  animal:'どうぶつ', vege:'やさい・くだもの', calc:'けいさん', english:'えいご',
+  review:'ふくしゅう',
+};
+
+// =============================================
+//  ごほうびスタンプ帳（localStorage）
+// =============================================
+function getStamps() {
+  try { return JSON.parse(localStorage.getItem('kidsStamps') || '{}'); }
+  catch(e) { return {}; }
+}
+function saveStamps(s) {
+  try { localStorage.setItem('kidsStamps', JSON.stringify(s)); } catch(e) {}
+}
+function updateStampBadges() {
+  const s = getStamps();
+  document.querySelectorAll('.cat-btn[data-cat]').forEach(btn => {
+    const cat = btn.dataset.cat;
+    let badge = btn.querySelector('.cat-stars');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'cat-stars';
+      btn.appendChild(badge);
+    }
+    const n = s[cat] || 0;
+    badge.textContent = n > 0 ? `⭐×${n}` : '';
+  });
+}
+
+// =============================================
+//  トースト通知
+// =============================================
+function showToast(msg, ms) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(showToast._tid);
+  showToast._tid = setTimeout(() => { t.style.display = 'none'; }, ms || 2200);
+}
+
+// =============================================
+//  ユーティリティ
+// =============================================
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function pickRandom(arr, n) {
+  return shuffle(arr).slice(0, n);
+}
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// =============================================
+//  まちがえ履歴（localStorage）
+// =============================================
+function getWrongHistory() {
+  try { return JSON.parse(localStorage.getItem('kidsWrongHistory') || '{}'); }
+  catch(e) { return {}; }
+}
+function saveWrongHistory(h) {
+  try { localStorage.setItem('kidsWrongHistory', JSON.stringify(h)); } catch(e) {}
+}
+function recordWrong(cat, key) {
+  const h = getWrongHistory();
+  if (!h[cat]) h[cat] = {};
+  h[cat][key] = (h[cat][key] || 0) + 1;
+  saveWrongHistory(h);
+}
+function recordCorrect(cat, key) {
+  const h = getWrongHistory();
+  if (h[cat] && h[cat][key] > 0) {
+    h[cat][key]--;
+    if (h[cat][key] === 0) delete h[cat][key];
+    saveWrongHistory(h);
+  }
+}
+function getDataItemKey(item) {
+  return item.char || item.read || item.emoji || item.name || item.word || item.phrase || String(item);
+}
+function getQuestionKey(q) {
+  if (q.type === 'hiragana' || q.type === 'katakana') return q.question;
+  if (q.type === 'english' && q.mode === 'phrase') return q.display; // 英語フレーズをキーに
+  if (q.type === 'animal' || q.type === 'vege' || q.type === 'english') return q.emoji;
+  return q.answer;
+}
+// 履歴記録先カテゴリ（ふくしゅう中は元のカテゴリへ記録）
+function getRecordCat(q) {
+  if (q.origCat) return q.origCat;
+  if (q.type === 'english' && q.mode === 'phrase') return 'english_phrase';
+  return currentCategory;
+}
+function biasedPickRandom(arr, n, catWeights) {
+  const pool = [];
+  arr.forEach(item => {
+    const key = getDataItemKey(item);
+    const w = 1 + Math.min(3, catWeights[key] || 0);
+    for (let i = 0; i < w; i++) pool.push(item);
+  });
+  const seen = new Set();
+  const result = [];
+  for (const item of shuffle(pool)) {
+    const key = getDataItemKey(item);
+    if (!seen.has(key)) { seen.add(key); result.push(item); }
+    if (result.length >= n) break;
+  }
+  if (result.length < n) {
+    for (const item of shuffle(arr)) {
+      const key = getDataItemKey(item);
+      if (!seen.has(key)) { seen.add(key); result.push(item); }
+      if (result.length >= n) break;
+    }
+  }
+  return result;
+}
+
+// =============================================
+//  音声読み上げ（SpeechSynthesis）
+// =============================================
+function speakText(text, lang) {
+  if (!window.speechSynthesis) return;
+  if (isMuted) return;  // ミュート中は音声読み上げもスキップ
+  // cancel()→即speak()：setTimeoutを使わないことでAndroidのユーザージェスチャー
+  // コンテキストを維持する（setTimeoutを挟むとAndroidはspeak()を拒否する）
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = lang || 'ja-JP';
+  utt.rate = 0.85;
+  utt.volume = 1;
+  window.speechSynthesis.speak(utt);
+}
+
+// =============================================
+//  画面制御
+// =============================================
+function showScreen(name) {
+  document.getElementById('home-screen').style.display = name === 'home' ? 'block' : 'none';
+  document.getElementById('game-screen').style.display = name === 'game' ? 'block' : 'none';
+  document.getElementById('goal-screen').style.display = name === 'goal' ? 'block' : 'none';
+}
+
+function setTheme(cat) {
+  document.body.className = 'theme-' + cat;
+}
+
+function goHome() {
+  setTheme('home');
+  showScreen('home');
+  clearStars();
+  updateStampBadges();
+}
+
+// 初期表示時にもスタンプバッジを反映
+document.addEventListener('DOMContentLoaded', updateStampBadges);
+
+// =============================================
+//  問題生成
+// =============================================
+function generateQuestions(cat) {
+  const qs = [];
+  const wrongHistory = getWrongHistory();
+
+  if (cat === 'hiragana') {
+    const catW = wrongHistory[cat] || {};
+    const picked = biasedPickRandom(HIRAGANA_DATA, 10, catW);
+    picked.forEach(item => {
+      const wrongs = shuffle(HIRAGANA_DATA.filter(h => h.read !== item.read)).slice(0,3).map(h=>h.read);
+      const choices = shuffle([item.read, ...wrongs]);
+      qs.push({ type:'hiragana', question:item.char, answer:item.read, choices });
+    });
+  }
+
+  else if (cat === 'katakana') {
+    const catW = wrongHistory[cat] || {};
+    const picked = biasedPickRandom(KATAKANA_DATA, 10, catW);
+    picked.forEach(item => {
+      const wrongs = shuffle(KATAKANA_DATA.filter(h => h.read !== item.read)).slice(0,3).map(h=>h.read);
+      const choices = shuffle([item.read, ...wrongs]);
+      qs.push({ type:'katakana', question:item.char, answer:item.read, choices });
+    });
+  }
+
+  else if (cat === 'review') {
+    // 全カテゴリの間違え履歴から再出題（間違えた回数が多い順）
+    const entries = [];
+    const reviewable = [
+      { cat:'hiragana', data:HIRAGANA_DATA, find:(d,k)=>d.find(x=>x.char===k) },
+      { cat:'katakana', data:KATAKANA_DATA, find:(d,k)=>d.find(x=>x.char===k) },
+      { cat:'animal',   data:ANIMAL_DATA,   find:(d,k)=>d.find(x=>x.emoji===k) },
+      { cat:'vege',     data:VEGE_DATA,     find:(d,k)=>d.find(x=>x.emoji===k) },
+      { cat:'english',  data:[...ENGLISH_EASY, ...ENGLISH_MID, ...ENGLISH_HARD], find:(d,k)=>d.find(x=>x.emoji===k) },
+      { cat:'english_phrase', data:ENGLISH_PHRASE, find:(d,k)=>d.find(x=>x.phrase===k) },
+    ];
+    reviewable.forEach(rv => {
+      const hist = wrongHistory[rv.cat] || {};
+      Object.keys(hist).forEach(key => {
+        const item = rv.find(rv.data, key);
+        if (item) entries.push({ cat:rv.cat, item, count:hist[key] });
+      });
+    });
+    entries.sort((a,b) => b.count - a.count);
+    const targets = entries.slice(0, 10);
+
+    targets.forEach(t => {
+      if (t.cat === 'hiragana' || t.cat === 'katakana') {
+        const data = t.cat === 'hiragana' ? HIRAGANA_DATA : KATAKANA_DATA;
+        const wrongs = shuffle(data.filter(h => h.read !== t.item.read)).slice(0,3).map(h=>h.read);
+        qs.push({ type:t.cat, question:t.item.char, answer:t.item.read,
+                  choices: shuffle([t.item.read, ...wrongs]), origCat:t.cat });
+      } else if (t.cat === 'animal' || t.cat === 'vege') {
+        const data = t.cat === 'animal' ? ANIMAL_DATA : VEGE_DATA;
+        const wrongs = shuffle(data.filter(a=>a.name!==t.item.name)).slice(0,3).map(a=>a.name);
+        qs.push({ type:t.cat, emoji:t.item.emoji, answer:t.item.name,
+                  choices: shuffle([t.item.name, ...wrongs]), origCat:t.cat });
+      } else if (t.cat === 'english') {
+        const pool = [...ENGLISH_EASY, ...ENGLISH_MID, ...ENGLISH_HARD];
+        const wrongs = shuffle(pool.filter(e => e.word !== t.item.word)).slice(0,3).map(e=>e.word);
+        qs.push({ type:'english', mode:'word', emoji:t.item.emoji, answer:t.item.word,
+                  choices: shuffle([t.item.word, ...wrongs]), origCat:'english' });
+      } else if (t.cat === 'english_phrase') {
+        const wrongs = shuffle(ENGLISH_PHRASE.filter(p => p.mean !== t.item.mean)).slice(0,3).map(p=>p.mean);
+        qs.push({ type:'english', mode:'phrase', dir:'en2ja', display:t.item.phrase, answer:t.item.mean,
+                  choices: shuffle([t.item.mean, ...wrongs]), origCat:'english_phrase' });
+      }
+    });
+    return shuffle(qs);
+  }
+
+  else if (cat === 'number') {
+    // 1〜10をシャッフルして重複なし
+    const nums = shuffle([1,2,3,4,5,6,7,8,9,10]);
+    // 絵柄も毎問異なるものをシャッフルして割り当て
+    const emojis = shuffle([...NUMBER_EMOJIS]).slice(0, 10);
+    nums.forEach((n, idx) => {
+      const wrongs = [];
+      while (wrongs.length < 3) {
+        const w = randInt(1, 10);
+        if (w !== n && !wrongs.includes(w)) wrongs.push(w);
+      }
+      const choices = shuffle([n, ...wrongs]).map(String);
+      qs.push({ type:'number', count:n, emoji:emojis[idx], answer:String(n), choices });
+    });
+  }
+
+  else if (cat === 'color') {
+    let lastAnswer = null;
+    for (let i = 0; i < 10; i++) {
+      let question;
+      let attempts = 0;
+      // 連続して同じ回答にならないようにリトライ
+      do {
+        const mode = Math.random() < 0.5 ? 'color' : 'shape';
+        if (mode === 'color') {
+          const color = COLOR_DATA[randInt(0, COLOR_DATA.length-1)];
+          const shape = SHAPE_DATA[randInt(0, SHAPE_DATA.length-1)];
+          const wrongs = shuffle(COLOR_DATA.filter(c=>c.name!==color.name)).slice(0,3).map(c=>c.name);
+          const choices = shuffle([color.name, ...wrongs]);
+          question = { type:'color', mode:'color', shapeType:shape.type, colorCss:color.css, answer:color.name, choices };
+        } else {
+          const shape = SHAPE_DATA[randInt(0, SHAPE_DATA.length-1)];
+          const color = COLOR_DATA[randInt(0, COLOR_DATA.length-1)];
+          const wrongs = shuffle(SHAPE_DATA.filter(s=>s.name!==shape.name)).slice(0,3).map(s=>s.name);
+          const choices = shuffle([shape.name, ...wrongs]);
+          question = { type:'color', mode:'shape', shapeType:shape.type, colorCss:color.css, answer:shape.name, choices };
+        }
+        attempts++;
+      } while (question.answer === lastAnswer && attempts < 20);
+      lastAnswer = question.answer;
+      qs.push(question);
+    }
+  }
+
+  else if (cat === 'animal') {
+    const catW = wrongHistory[cat] || {};
+    const picked = biasedPickRandom(ANIMAL_DATA, 10, catW);
+    picked.forEach(item => {
+      const wrongs = shuffle(ANIMAL_DATA.filter(a=>a.name!==item.name)).slice(0,3).map(a=>a.name);
+      const choices = shuffle([item.name, ...wrongs]);
+      qs.push({ type:'animal', emoji:item.emoji, answer:item.name, choices });
+    });
+  }
+
+  else if (cat === 'vege') {
+    const catW = wrongHistory[cat] || {};
+    const picked = biasedPickRandom(VEGE_DATA, 10, catW);
+    picked.forEach(item => {
+      const wrongs = shuffle(VEGE_DATA.filter(v=>v.name!==item.name)).slice(0,3).map(v=>v.name);
+      const choices = shuffle([item.name, ...wrongs]);
+      qs.push({ type:'vege', emoji:item.emoji, answer:item.name, choices });
+    });
+  }
+
+  else if (cat === 'calc') {
+    for (let i = 0; i < 10; i++) {
+      qs.push(generateCalcQuestion(currentDifficulty));
+    }
+  }
+
+  else if (cat === 'english') {
+    if (currentDifficulty === 'phrase') {
+      // フレーズモード
+      const catW = wrongHistory[cat + '_phrase'] || {};
+      const picked = biasedPickRandom(ENGLISH_PHRASE, 10, catW);
+      picked.forEach(item => {
+        // 英→日のみ：英語フレーズを見て日本語の意味を選ぶ
+        const wrongs = shuffle(ENGLISH_PHRASE.filter(p => p.mean !== item.mean)).slice(0,3).map(p=>p.mean);
+        const choices = shuffle([item.mean, ...wrongs]);
+        qs.push({ type:'english', mode:'phrase', dir:'en2ja', display:item.phrase, answer:item.mean, choices });
+      });
+    } else {
+      let pool;
+      if (currentDifficulty === 'easy')      pool = ENGLISH_EASY;
+      else if (currentDifficulty === 'mid')  pool = [...ENGLISH_EASY, ...ENGLISH_MID];
+      else                                   pool = [...ENGLISH_EASY, ...ENGLISH_MID, ...ENGLISH_HARD];
+      const catW = wrongHistory[cat] || {};
+      const picked = biasedPickRandom(pool, 10, catW);
+      picked.forEach(item => {
+        const wrongs = shuffle(pool.filter(e => e.word !== item.word)).slice(0, 3).map(e => e.word);
+        const choices = shuffle([item.word, ...wrongs]);
+        qs.push({ type:'english', mode:'word', emoji:item.emoji, answer:item.word, choices });
+      });
+    }
+  }
+
+  return qs;
+}
+
+function generateCalcQuestion(diff) {
+  let a, b, op, answer;
+  // 均等な四則演算
+  if (diff === 'easy') {
+    // easy: ＋ と − を均等に
+    op = Math.random() < 0.5 ? '+' : '-';
+    if (op === '+') { a = randInt(1,5); b = randInt(1,5); answer = a+b; }
+    else            { a = randInt(2,9); b = randInt(1,a); answer = a-b; }
+  } else if (diff === 'mid') {
+    // mid: ＋ − × を均等に
+    const r = Math.floor(Math.random() * 3);
+    if (r === 0)      { op='+'; a=randInt(1,10); b=randInt(1,10); answer=a+b; }
+    else if (r === 1) { op='-'; a=randInt(2,15); b=randInt(1,a);  answer=a-b; }
+    else              { op='×'; a=randInt(1,6);  b=randInt(1,6);  answer=a*b; }
+  } else {
+    // hard: ＋ − × ÷ を均等に
+    const r = Math.floor(Math.random() * 4);
+    if (r === 0)      { op='+'; a=randInt(1,20); b=randInt(1,20); answer=a+b; }
+    else if (r === 1) { op='-'; a=randInt(2,20); b=randInt(1,a);  answer=a-b; }
+    else if (r === 2) { op='×'; a=randInt(1,9);  b=randInt(1,9);  answer=a*b; }
+    else              { op='÷'; b=randInt(2,9);  answer=randInt(1,9); a=b*answer; }
+  }
+
+  const maxDelta = (op==='×' || op==='÷') ? 6 : 4;
+  const wrongs = [];
+  while (wrongs.length < 3) {
+    const delta = (Math.random()<0.5 ? 1 : -1) * randInt(1, maxDelta);
+    const w = answer + delta;
+    if (w !== answer && w > 0 && !wrongs.includes(w)) wrongs.push(w);
+  }
+  const choices = shuffle([answer, ...wrongs]).map(String);
+  const opChar = op==='+' ? '＋' : op==='-' ? '−' : op==='×' ? '×' : '÷';
+  return { type:'calc', display:`${a} ${opChar} ${b} ＝ ？`, answer:String(answer), choices };
+}
+
+// =============================================
+//  ゲーム開始
+// =============================================
+function startGame(cat) {
+  // ふくしゅう：履歴がない場合はホームに留まる
+  if (cat === 'review') {
+    const testQs = generateQuestions('review');
+    if (testQs.length === 0) {
+      showToast('まちがえた もんだいは ないよ！すごい！🎉');
+      return;
+    }
+  }
+
+  currentCategory = cat;
+  currentQIndex = 0;
+  correctCount = 0;
+  answered = false;
+  streak = 0;
+  setTheme(cat);
+  showScreen('game');
+
+  if (cat === 'calc' || cat === 'english') {
+    document.getElementById('difficulty-area').style.display = 'block';
+    currentDifficulty = 'easy';
+    document.getElementById('diff-3').classList.add('active');
+    document.getElementById('diff-6').classList.remove('active');
+    document.getElementById('diff-9').classList.remove('active');
+    document.getElementById('diff-phrase').classList.remove('active');
+    // えいごのみフレーズボタンを表示
+    document.getElementById('diff-phrase').style.display = cat === 'english' ? '' : 'none';
+  } else {
+    document.getElementById('difficulty-area').style.display = 'none';
+    document.getElementById('diff-phrase').style.display = 'none';
+  }
+
+  questions = generateQuestions(cat);
+  totalQuestions = questions.length;
+  renderQuestion();
+}
+
+function retryGame() {
+  clearStars();
+  startGame(currentCategory);
+}
+
+function setDifficulty(diff) {
+  currentDifficulty = diff;
+  document.getElementById('diff-3').classList.toggle('active', diff==='easy');
+  document.getElementById('diff-6').classList.toggle('active', diff==='mid');
+  document.getElementById('diff-9').classList.toggle('active', diff==='hard');
+  document.getElementById('diff-phrase').classList.toggle('active', diff==='phrase');
+  currentQIndex = 0;
+  correctCount = 0;
+  answered = false;
+  streak = 0;
+  questions = generateQuestions(currentCategory);
+  totalQuestions = questions.length;
+  renderQuestion();
+}
+
+// =============================================
+//  問題レンダリング
+// =============================================
+function renderQuestion() {
+  const q = questions[currentQIndex];
+
+  document.getElementById('score-display').textContent = `${correctCount} / ${totalQuestions}もん`;
+  document.getElementById('progress-bar').style.width = `${(currentQIndex / totalQuestions) * 100}%`;
+
+  const qa = document.getElementById('question-area');
+  qa.innerHTML = '';
+  qa.onclick = null;
+  qa.classList.remove('tappable');
+
+  const labelEl = document.createElement('div');
+  labelEl.className = 'question-label';
+  const mainEl = document.createElement('div');
+
+  if (q.type === 'hiragana' || q.type === 'katakana') {
+    labelEl.textContent = 'なんという おと？';
+    mainEl.className = 'question-main';
+    mainEl.textContent = q.question;
+
+  } else if (q.type === 'number') {
+    labelEl.textContent = 'いくつ ある？';
+    mainEl.className = 'question-emoji-row';
+    let rows = '';
+    const icon = q.emoji || '🍎';
+    for (let i = 0; i < q.count; i++) {
+      rows += icon;
+      if ((i+1) % 5 === 0 && i+1 < q.count) rows += '\n';
+    }
+    mainEl.style.whiteSpace = 'pre-line';
+    mainEl.textContent = rows;
+
+  } else if (q.type === 'color') {
+    labelEl.textContent = q.mode === 'color' ? 'なにいろ？' : 'どんなかたち？';
+    mainEl.className = 'shape-display';
+    renderShape(mainEl, q.shapeType, q.colorCss);
+
+  } else if (q.type === 'animal') {
+    labelEl.textContent = 'なんという どうぶつ？';
+    mainEl.className = 'subject-emoji';
+    mainEl.textContent = q.emoji;
+
+  } else if (q.type === 'vege') {
+    labelEl.textContent = 'これはなに？';
+    mainEl.className = 'subject-emoji';
+    mainEl.textContent = q.emoji;
+
+  } else if (q.type === 'calc') {
+    labelEl.textContent = 'こたえは？';
+    mainEl.className = 'question-calc';
+    mainEl.textContent = q.display;
+
+  } else if (q.type === 'english' && q.mode === 'phrase') {
+    labelEl.textContent = 'どんないみかな？';
+    mainEl.className = 'question-phrase';
+    mainEl.textContent = q.display;
+  } else if (q.type === 'english') {
+    labelEl.textContent = 'えいごで なんという？';
+    mainEl.className = 'subject-emoji';
+    mainEl.textContent = q.emoji;
+  }
+
+  qa.appendChild(labelEl);
+  qa.appendChild(mainEl);
+
+  // ひらがな・カタカナ・えいごはタップで音声
+  if (q.type === 'hiragana' || q.type === 'katakana' || q.type === 'english') {
+    qa.classList.add('tappable');
+    const hintEl = document.createElement('div');
+    hintEl.className = 'tap-hint';
+    hintEl.textContent = '👆 タップして音声を聞く';
+    qa.appendChild(hintEl);
+    qa.onclick = () => {
+      if (q.type === 'hiragana' || q.type === 'katakana') speakText(q.question, 'ja-JP');
+      else if (q.mode === 'phrase') {
+        // フレーズ: 英語フレーズをそのまま英語で読み上げ
+        speakText(q.display, 'en-US');
+      }
+      else speakText(q.answer, 'en-US');
+    };
+  }
+
+  const grid = document.getElementById('choices-grid');
+  grid.innerHTML = '';
+  const isPhraseQ = (q.type === 'english' && q.mode === 'phrase');
+  q.choices.forEach(choice => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn' + (isPhraseQ ? ' phrase-choice' : '');
+    btn.textContent = choice;
+    btn.addEventListener('click', () => checkAnswer(choice, btn));
+    grid.appendChild(btn);
+  });
+
+  answered = false;
+}
+
+function renderShape(container, type, color) {
+  container.innerHTML = '';
+  if (type === 'circle') {
+    const el = document.createElement('div');
+    el.className = 'shape-circle';
+    el.style.background = color;
+    container.appendChild(el);
+  } else if (type === 'square') {
+    const el = document.createElement('div');
+    el.className = 'shape-square';
+    el.style.background = color;
+    container.appendChild(el);
+  } else if (type === 'triangle') {
+    const el = document.createElement('div');
+    el.className = 'shape-triangle';
+    el.style.borderBottomColor = color;
+    container.appendChild(el);
+  } else if (type === 'star') {
+    const el = document.createElement('div');
+    el.className = 'shape-star';
+    el.style.color = color;
+    container.appendChild(el);
+  }
+}
+
+// =============================================
+//  回答チェック
+// =============================================
+function checkAnswer(choice, btn) {
+  if (answered) return;
+  answered = true;
+
+  const q = questions[currentQIndex];
+  const isCorrect = (choice === q.answer);
+
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.style.pointerEvents = 'none';
+  });
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    correctCount++;
+    streak++;
+    recordCorrect(getRecordCat(q), getQuestionKey(q));
+    playCorrectSound();
+    showFeedback(true);
+    setTimeout(() => {
+      hideFeedback();
+      currentQIndex++;
+      if (currentQIndex >= totalQuestions) showGoal();
+      else renderQuestion();
+    }, 1200);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.choice-btn').forEach(b => {
+      if (b.textContent === q.answer) b.classList.add('correct');
+    });
+    streak = 0;
+    recordWrong(getRecordCat(q), getQuestionKey(q));
+    playWrongSound();
+    showFeedback(false);
+    // 間違えたら次の問題へ進む
+    setTimeout(() => {
+      hideFeedback();
+      currentQIndex++;
+      if (currentQIndex >= totalQuestions) showGoal();
+      else renderQuestion();
+    }, 1400);
+  }
+}
+
+function showFeedback(isCorrect) {
+  const overlay = document.getElementById('feedback-overlay');
+  const popup   = document.getElementById('feedback-popup');
+  popup.className = 'feedback-popup ' + (isCorrect ? 'feedback-correct' : 'feedback-wrong');
+  const pool = isCorrect ? IRASUTOYA_CORRECT : IRASUTOYA_WRONG;
+  document.getElementById('feedback-img').src = pool[Math.floor(Math.random() * pool.length)];
+  document.getElementById('feedback-text').textContent = isCorrect ? 'やったー！' : 'ざんねん…';
+
+  // れんぞくせいかいコンボ表示（3連続以上）
+  const oldCombo = popup.querySelector('.combo-text');
+  if (oldCombo) oldCombo.remove();
+  if (isCorrect && streak >= 3) {
+    const comboEl = document.createElement('div');
+    comboEl.className = 'combo-text';
+    comboEl.textContent = `🔥 ${streak}れんぞく せいかい！`;
+    popup.appendChild(comboEl);
+  }
+
+  overlay.style.display = 'flex';
+}
+
+function hideFeedback() {
+  document.getElementById('feedback-overlay').style.display = 'none';
+}
+
+// =============================================
+//  ゴール画面
+// =============================================
+function showGoal() {
+  document.getElementById('final-score').textContent = correctCount;
+  showScreen('goal');
+  setTheme(currentCategory);
+
+  // ふくしゅう等で問題数が10未満の場合は10点満点に換算して判定
+  const normScore = totalQuestions > 0 ? Math.round(correctCount * 10 / totalQuestions) : 0;
+
+  // いらすとやキャラ（成績に応じて変わる）
+  const goalData = IRASUTOYA_GOAL.find(g => normScore >= g.minScore) || IRASUTOYA_GOAL[IRASUTOYA_GOAL.length - 1];
+  document.getElementById('goal-irasutoya-img').src = goalData.url;
+  document.getElementById('goal-irasutoya-label').textContent = goalData.label;
+
+  // 成績いらすとや（スコアに応じて変わる）
+  const colorData = IRASUTOYA_COLORING.find(c => normScore >= c.minScore) || IRASUTOYA_COLORING[IRASUTOYA_COLORING.length - 1];
+  document.getElementById('goal-coloring-label').textContent = colorData.label;
+  document.getElementById('goal-coloring-img').src = colorData.url;
+
+  // ごほうびスタンプ（8割以上正解で1個獲得）
+  const stampEl = document.getElementById('goal-stamp');
+  if (normScore >= 8) {
+    const s = getStamps();
+    s[currentCategory] = (s[currentCategory] || 0) + 1;
+    saveStamps(s);
+    stampEl.textContent = `⭐ スタンプゲット！（${CAT_LABELS[currentCategory] || ''}：${s[currentCategory]}こめ）`;
+    stampEl.style.display = 'block';
+  } else {
+    stampEl.style.display = 'none';
+  }
+
+  // 全問正解なら豪華演出、それ以外は通常演出
+  const goalEl = document.getElementById('goal-screen');
+  if (correctCount === totalQuestions && totalQuestions > 0) {
+    goalEl.classList.add('perfect');
+    flashScreen();                        // ゴールドフラッシュ
+    launchPerfectFloats();                // 中央から浮かぶアイコン
+    setTimeout(() => launchFireworks(), 200);  // 少し遅らせて花火バースト
+    setTimeout(() => launchStars(),     400);  // さらに星も降らせる
+    playPerfectFanfare();                 // 豪華ファンファーレ
+
+    // 30% の確率でONEPIECEキャラをランダム表示（画像は先に読み込んでおく）
+    if (Math.random() < 0.30) {
+      const reward = pickRewardImage();
+      setTimeout(() => showOjisanOverlay(reward), 1800);
+    }
+  } else {
+    goalEl.classList.remove('perfect');
+    launchStars();
+    playGoalSound();
+  }
+}
+
+
+// =============================================
+//  全問正解 豪華演出
+// =============================================
+
+// 画面ゴールドフラッシュ
+// ─── おじさんおんな リワード オーバーレイ ───────────────
+// シークレット画像リスト（手書き版・デジタル版）
+const SECRET_IMAGES = [
+  'ojisan_reward.jpg',   // 手書き版（圧縮版）
+  'ojisan_reward2.jpg',  // デジタル版（圧縮版）
+];
+
+// ご褒美画像を先に選んでプリロード（オーバーレイ表示を瞬時にする）
+function pickRewardImage() {
+  let reward;
+  // 50%でシークレット（2種ランダム）、50%でONEPIECEキャラをランダム選択
+  if (Math.random() < 0.50) {
+    const url = SECRET_IMAGES[Math.floor(Math.random() * SECRET_IMAGES.length)];
+    reward = { src: url, label: '✨ シークレット とうじょう！ ✨' };
+  } else {
+    const chara = ONEPIECE_CHARS[Math.floor(Math.random() * ONEPIECE_CHARS.length)];
+    reward = { src: chara.url, label: `⭐ ${chara.name} とうじょう！ ⭐` };
+  }
+  const im = new Image();
+  im.src = reward.src;
+  return reward;
+}
+
+function showOjisanOverlay(reward) {
+  const ov = document.getElementById('ojisan-overlay');
+  if (!ov) return;
+  if (!reward) reward = pickRewardImage();
+  document.getElementById('onepiece-img').src = reward.src;
+  document.getElementById('onepiece-label').textContent = reward.label;
+  ov.classList.add('show');
+  // スペースキー・Enterでも閉じられるように
+  document.addEventListener('keydown', _ojisanKeyClose);
+}
+function closeOjisanOverlay() {
+  const ov = document.getElementById('ojisan-overlay');
+  if (!ov) return;
+  ov.classList.remove('show');
+  document.removeEventListener('keydown', _ojisanKeyClose);
+}
+function _ojisanKeyClose(e) {
+  if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+    closeOjisanOverlay();
+  }
+}
+
+function flashScreen() {
+  const el = document.createElement('div');
+  el.style.cssText = `
+    position:fixed; inset:0;
+    background:radial-gradient(ellipse at center, rgba(255,220,50,0.75) 0%, rgba(255,160,0,0.45) 60%, transparent 100%);
+    pointer-events:none; z-index:80;
+    animation: screenFlash 0.8s ease-out forwards;
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+// 花火バースト（放射状に絵文字が広がる）
+function launchFireworks() {
+  const icons = ['🎆','🎇','✨','🌟','💥','🎊','🎉','⭐','💫','🌈','🏆','👑','🎀','🥇'];
+  const bursts = 10;
+  for (let b = 0; b < bursts; b++) {
+    setTimeout(() => {
+      const cx = 10 + Math.random() * 80; // 画面上の爆発位置(%)
+      const cy = 8  + Math.random() * 68;
+      const numRays = 8;
+      // 中心フラッシュ
+      const center = document.createElement('div');
+      center.style.cssText = `
+        position:fixed; left:${cx}%; top:${cy}%;
+        font-size:${30+Math.random()*18}px;
+        pointer-events:none; z-index:76;
+        animation: fireworkPop 0.6s ease-out forwards;
+      `;
+      center.textContent = icons[Math.floor(Math.random() * icons.length)];
+      document.body.appendChild(center);
+      setTimeout(() => center.remove(), 700);
+      // 放射粒子
+      for (let i = 0; i < numRays; i++) {
+        const angle = (i / numRays) * Math.PI * 2;
+        const dist  = 55 + Math.random() * 55;
+        const p = document.createElement('div');
+        p.style.cssText = `
+          position:fixed; left:${cx}%; top:${cy}%;
+          font-size:${16+Math.random()*14}px;
+          pointer-events:none; z-index:75;
+          transform:translate(-50%,-50%);
+          opacity:1;
+          transition:transform 0.75s ease-out, opacity 0.75s ease-out;
+        `;
+        p.textContent = icons[Math.floor(Math.random() * icons.length)];
+        document.body.appendChild(p);
+        // 次フレームで移動開始（transitionを効かせるため）
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          p.style.transform = `translate(calc(-50% + ${(Math.cos(angle)*dist).toFixed(1)}px),`
+                             + ` calc(-50% + ${(Math.sin(angle)*dist).toFixed(1)}px)) scale(0.2)`;
+          p.style.opacity = '0';
+        }));
+        setTimeout(() => p.remove(), 850);
+      }
+    }, b * 260);
+  }
+}
+
+function launchPerfectFloats() {
+  const icons = ['🌟','💖','✨','🎊','🏆','💫','🎉','🌈'];
+  for (let i = 0; i < 12; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'perfect-float';
+      el.textContent = icons[randInt(0, icons.length-1)];
+      el.style.left = randInt(5, 90) + '%';
+      el.style.top  = randInt(30, 80) + '%';
+      el.style.animationDuration = (1000 + randInt(0, 800)) + 'ms';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2000);
+    }, i * 150);
+  }
+}
+
+function launchStars() {
+  const container = document.getElementById('stars-container');
+  container.innerHTML = '';
+  const starChars = ['⭐','🌟','✨','💫','🎊','🎉','🌈','🦋'];
+  for (let i = 0; i < 35; i++) {
+    setTimeout(() => {
+      const star = document.createElement('div');
+      star.className = 'falling-star';
+      star.textContent = starChars[randInt(0, starChars.length-1)];
+      star.style.left = randInt(0, 95) + '%';
+      star.style.fontSize = randInt(18, 38) + 'px';
+      const dur = randInt(2000, 5000);
+      star.style.animationDuration = dur + 'ms';
+      container.appendChild(star);
+      setTimeout(() => star.remove(), dur + 200);
+    }, i * 130);
+  }
+}
+
+function clearStars() {
+  document.getElementById('stars-container').innerHTML = '';
+}
+
+// =============================================
+//  オーディオ（Web Audio API）— 音量80%削減
+// =============================================
+let audioCtx = null;
+let bgmNodes = [];
+let isMuted = false;
+let bgmStarted = false;
+let bgmScheduled = false;
+let bgmLoopId = 0;   // BGMループ世代管理（重複防止）
+
+const NOTE = {
+  C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, B4:493.88,
+  C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880.00, B5:987.77,
+  C6:1046.50, D6:1174.66, E6:1318.51, G6:1567.98,
+};
+
+const BGM_MELODY = [
+  [NOTE.C5,0.25],[NOTE.E5,0.25],[NOTE.G5,0.25],[NOTE.C6,0.5],
+  [NOTE.B5,0.25],[NOTE.G5,0.25],[NOTE.E5,0.25],[NOTE.C5,0.25],
+  [NOTE.D5,0.25],[NOTE.F5,0.25],[NOTE.A5,0.25],[NOTE.F5,0.5],
+  [NOTE.E5,0.25],[NOTE.C5,0.25],[NOTE.G4,0.25],[NOTE.C5,0.5],
+  [NOTE.E5,0.25],[NOTE.G5,0.25],[NOTE.E5,0.25],[NOTE.D5,0.25],
+  [NOTE.C5,0.25],[NOTE.D5,0.25],[NOTE.E5,0.25],[NOTE.C5,0.5],
+  [NOTE.F5,0.25],[NOTE.A5,0.25],[NOTE.F5,0.25],[NOTE.E5,0.25],
+  [NOTE.D5,0.25],[NOTE.C5,0.5 ],[NOTE.C5,0.5 ],
+];
+
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // Android Chrome対策: タブ切替等でsuspendedになった場合に自動再開
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(freq, startTime, duration, volume=0.036, type='sine', ctx=null) {
+  const ac = ctx || getCtx();
+  const osc  = ac.createOscillator();
+  const gain = ac.createGain();
+  osc.connect(gain);
+  gain.connect(ac.destination);
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, startTime);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+  gain.gain.setValueAtTime(volume, startTime + duration - 0.05);
+  gain.gain.linearRampToValueAtTime(0, startTime + duration);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.01);
+  return osc;
+}
+
+function startBGM() {
+  if (isMuted || bgmScheduled) return;
+  bgmScheduled = true;
+  bgmLoopId++;
+  const id = bgmLoopId;
+  const ac = getCtx();
+  // AudioContextがsuspended状態の場合はresumeの完了を待ってからスケジュール
+  // （resume()は非同期のため、待たないと音符が全てスキップされる）
+  if (ac.state === 'suspended') {
+    ac.resume().then(() => {
+      if (!isMuted && id === bgmLoopId) scheduleBGMLoop(id);
+      else bgmScheduled = false;
+    });
+  } else {
+    scheduleBGMLoop(id);
+  }
+}
+
+function scheduleBGMLoop(loopId) {
+  // 自分の世代IDが現在のものと一致しない場合は古いループなので終了
+  if (isMuted || loopId !== bgmLoopId) { bgmScheduled = false; return; }
+  const ac = getCtx();
+  let t = ac.currentTime + 0.05;
+  bgmNodes = [];
+  BGM_MELODY.forEach(([freq, dur]) => {
+    const osc = playTone(freq, t, dur * 0.9, 0.012, 'sine', ac);
+    bgmNodes.push(osc);
+    t += dur;
+  });
+  const loopDuration = BGM_MELODY.reduce((s, [,d]) => s + d, 0);
+  setTimeout(() => {
+    if (!isMuted && loopId === bgmLoopId) scheduleBGMLoop(loopId);
+    else bgmScheduled = false;
+  }, loopDuration * 1000 - 100);
+}
+
+function stopBGM() {
+  bgmLoopId++;          // IDを進めて既存のループを全て無効化
+  bgmScheduled = false;
+  bgmNodes.forEach(n => { try { n.stop(); } catch(e){} });
+  bgmNodes = [];
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  document.getElementById('mute-btn').textContent = isMuted ? '🔇' : '🔊';
+  if (isMuted) {
+    stopBGM();
+  } else {
+    bgmScheduled = false;
+    startBGM();
+  }
+}
+
+function initAudio() {
+  if (bgmStarted) return;
+  bgmStarted = true;
+  startBGM();
+  if (window.speechSynthesis) {
+    // Android Chrome: 音声エンジンをウォームアップ（getVoicesで初期化を促す）
+    window.speechSynthesis.getVoices();
+    // iOS Safari: 最初のユーザー操作で無音発話してspeechSynthesisをアンロック
+    // ※ unlock完了後すぐcancel()するためspeaking状態は最小限に抑える
+    const unlock = new SpeechSynthesisUtterance('');
+    unlock.volume = 0;
+    unlock.onend = () => window.speechSynthesis.cancel();
+    unlock.onerror = () => {};
+    window.speechSynthesis.speak(unlock);
+  }
+}
+
+// 正解音
+function playCorrectSound() {
+  if (isMuted) return;
+  const ac = getCtx();
+  const t = ac.currentTime;
+  [[NOTE.C5,0],[NOTE.E5,0.08],[NOTE.G5,0.16],[NOTE.C6,0.24]].forEach(([f,d]) => {
+    playTone(f, t+d, 0.18, 0.044, 'sine', ac);
+  });
+}
+
+// 不正解音
+function playWrongSound() {
+  if (isMuted) return;
+  const ac = getCtx();
+  const t = ac.currentTime;
+  playTone(NOTE.G4 * 0.5, t,      0.15, 0.04, 'sawtooth', ac);
+  playTone(NOTE.E4 * 0.5, t+0.12, 0.2,  0.03, 'sawtooth', ac);
+}
+
+// 全問正解ファンファーレ（トランペット風 square波）
+function playPerfectFanfare() {
+  if (isMuted) return;
+  const ac = getCtx();
+  const t  = ac.currentTime;
+
+  // メインメロディ（square波でブラス感）
+  [
+    [NOTE.C5,0.00,0.11],[NOTE.C5,0.12,0.11],[NOTE.C5,0.24,0.11],
+    [NOTE.E5,0.40,0.22],[NOTE.G5,0.63,0.22],[NOTE.C6,0.86,0.44],
+    [NOTE.B5,1.35,0.13],[NOTE.A5,1.49,0.13],[NOTE.G5,1.63,0.13],
+    [NOTE.A5,1.77,0.13],[NOTE.B5,1.91,0.13],[NOTE.C6,2.05,0.38],
+    [NOTE.C5,2.50,0.10],[NOTE.E5,2.61,0.10],[NOTE.G5,2.72,0.10],
+    [NOTE.C6,2.83,1.10],
+  ].forEach(([f,d,dur]) => playTone(f, t+d, dur, 0.07, 'square', ac));
+
+  // 和音（sine波でふくよかさを補強）
+  [
+    [NOTE.E4,0.86,0.44],[NOTE.G4,0.86,0.44],
+    [NOTE.E5,2.05,0.38],[NOTE.G5,2.05,0.38],
+    [NOTE.E4,2.83,1.10],[NOTE.G4,2.83,1.10],[NOTE.E5,2.83,1.10],
+  ].forEach(([f,d,dur]) => playTone(f, t+d, dur, 0.022, 'sine', ac));
+
+  // ドラムロール（sawtooth でアタック感）
+  for (let i = 0; i < 14; i++) {
+    playTone(60 + i * 18, t + i * 0.045, 0.038, 0.012, 'sawtooth', ac);
+  }
+}
+
+// ゴール音
+function playGoalSound() {
+  if (isMuted) return;
+  const ac = getCtx();
+  const t = ac.currentTime;
+  const seq = [
+    [NOTE.C5,0,0.12],[NOTE.E5,0.12,0.12],[NOTE.G5,0.24,0.12],
+    [NOTE.C6,0.36,0.25],[NOTE.G5,0.62,0.12],[NOTE.C6,0.75,0.5],
+  ];
+  seq.forEach(([f,d,dur]) => playTone(f, t+d, dur, 0.044, 'sine', ac));
+}
+
+document.addEventListener('click',      initAudio, { once: true });
+document.addEventListener('touchstart', initAudio, { once: true });
+
+// =============================================
+//  LINE IAB（アプリ内ブラウザ）検出 → 外部ブラウザへ誘導
+// =============================================
+function openInExternalBrowser() {
+  // LINEの openExternalBrowser=1 パラメータでシステムブラウザを強制起動
+  const url = new URL(location.href);
+  url.searchParams.set('openExternalBrowser', '1');
+  location.href = url.toString();
+}
+
+(function detectLineIAB() {
+  const ua = navigator.userAgent;
+  // LINE IAB の判定（iOS / Android 共通）
+  if (!/Line\//i.test(ua)) return;
+
+  // すでに openExternalBrowser=1 パラメータがある場合は処理不要
+  if (new URL(location.href).searchParams.has('openExternalBrowser')) return;
+
+  // バナー表示
+  document.getElementById('line-iab-banner').style.display = 'block';
+  // body の上部に余白を追加してバナーに隠れないようにする
+  document.getElementById('app').style.paddingTop = '130px';
+
+  // 少し待ってから自動リダイレクト試行
+  // （バナーを一瞬見せてから LINE が自動でシステムブラウザを起動する）
+  setTimeout(openInExternalBrowser, 800);
+})();
+
+// Android Chrome: voiceschangedイベントで音声リストを確実にロード
+if (window.speechSynthesis) {
+  window.speechSynthesis.addEventListener('voiceschanged', () => {
+    window.speechSynthesis.getVoices();
+  });
+}
+
+// バックグラウンド移行時にBGMを停止・復帰時に再開
+// visibilitychange: 通常ブラウザ・Android Chrome
+// pagehide: LINE IAB など visibilitychange が発火しない環境
+// blur/focus: LINE IAB でアプリが非表示になる場合の補完
+function onPageHide() {
+  if (!audioCtx) return;
+  stopBGM();
+  audioCtx.suspend();
+  // 音声読み上げも止める
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+}
+function onPageShow() {
+  if (!audioCtx || isMuted) return;
+  audioCtx.resume().then(() => {
+    if (!isMuted && !bgmScheduled) startBGM();
+  });
+}
+document.addEventListener('visibilitychange', () => {
+  document.hidden ? onPageHide() : onPageShow();
+});
+window.addEventListener('pagehide',  onPageHide);
+window.addEventListener('blur',      onPageHide);
+window.addEventListener('focus',     onPageShow);
+</script>
+</body>
+</html>
