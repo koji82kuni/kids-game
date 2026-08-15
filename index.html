@@ -904,6 +904,7 @@ const GROWTH_SERIES = [
   {
     id: 'tree',
     name: 'き',
+    maxLabel: 'りっぱな きに そだったね！',   // 5段階目まで育てたあとに出る言葉
     stages: [
       { label: 'たねを まいたよ', svg: `
         <ellipse cx="60" cy="102" rx="44" ry="12" fill="#d9b183"/>
@@ -946,6 +947,7 @@ const GROWTH_SERIES = [
   {
     id: 'chick',
     name: 'ひよこ',
+    maxLabel: 'りっぱな にわとりに なったね！',
     stages: [
       { label: 'たまごが あるよ', svg: `
         <ellipse cx="60" cy="106" rx="30" ry="7" fill="rgba(0,0,0,0.10)"/>
@@ -994,6 +996,7 @@ const GROWTH_SERIES = [
   {
     id: 'butterfly',
     name: 'ちょうちょ',
+    maxLabel: 'きれいな ちょうちょに なったね！',
     stages: [
       { label: 'はっぱの たまご', svg: `
         <path d="M18 84 q42 -30 84 0 q-42 22 -84 0z" fill="#7cc043"/>
@@ -1821,7 +1824,7 @@ function checkAnswer(choice, btn) {
       currentQIndex++;
       if (currentQIndex >= totalQuestions) showGoal();
       else renderQuestion();
-    }, 1200);
+    }, 2000);   // そだつイラストをゆっくり見られるように長めにしている
   } else {
     btn.classList.add('wrong');
     document.querySelectorAll('.choice-btn').forEach(b => {
@@ -1831,13 +1834,13 @@ function checkAnswer(choice, btn) {
     recordWrong(getRecordCat(q), getQuestionKey(q));
     playWrongSound();
     showFeedback(false);
-    // 間違えたら次の問題へ進む
+    // 間違えたら次の問題へ進む（正しい答えを見る時間をとるため正解時より少し長め）
     setTimeout(() => {
       hideFeedback();
       currentQIndex++;
       if (currentQIndex >= totalQuestions) showGoal();
       else renderQuestion();
-    }, 1400);
+    }, 2400);
   }
 }
 
@@ -1868,7 +1871,7 @@ function showFeedback(isCorrect) {
       growArt.classList.add('grow-up');
     }
     growLbl.textContent = grewUp ? stage.label
-                                 : (isMax ? `${currentGrowth.name}は もう まんかい！` : stage.label);
+                                 : (isMax ? currentGrowth.maxLabel : stage.label);
     lastGrowthStage = stageIdx;
   } else {
     // まちがえたら いらすとやの残念イラストに戻し、そだちも最初から
