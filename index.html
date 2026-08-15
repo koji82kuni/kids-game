@@ -651,6 +651,35 @@
     border-radius: 8px;
   }
 
+  /* ─── れんぞくせいかいで そだつイラスト ─── */
+  .growth-box { margin-bottom: 4px; }
+  .growth-art {
+    width: 108px;
+    height: 108px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #eaf6ff 0%, #f6fbe9 100%);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .growth-art svg { width: 100%; height: 100%; display: block; }
+  /* 段階が上がったときだけ ぽよんと弾ませる */
+  .growth-art.grow-up { animation: growUp 0.62s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes growUp {
+    0%   { transform: scale(0.72) rotate(-5deg); }
+    55%  { transform: scale(1.14) rotate(3deg); }
+    100% { transform: scale(1)    rotate(0deg); }
+  }
+  .growth-label {
+    font-size: clamp(12px, 3.4vw, 15px);
+    font-weight: bold;
+    color: #2563eb;
+    margin-top: 5px;
+  }
+  .growth-art.grow-up + .growth-label { color: #d97706; }
+
   /* ─── フレーズ問題表示 ─── */
   .question-phrase {
     font-size: clamp(17px, 4.8vw, 24px);
@@ -801,6 +830,10 @@
 <div class="feedback-overlay" id="feedback-overlay" style="display:none;">
   <div class="feedback-popup" id="feedback-popup">
     <img class="feedback-img" id="feedback-img" src="" alt="">
+    <div class="growth-box" id="growth-box" style="display:none;">
+      <div class="growth-art" id="growth-art"></div>
+      <div class="growth-label" id="growth-label"></div>
+    </div>
     <div class="feedback-text" id="feedback-text"></div>
   </div>
 </div>
@@ -815,11 +848,8 @@
 // =============================================
 //  いらすとや 画像 URL
 // =============================================
-const IRASUTOYA_CORRECT = [
-  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh6Vkn9SVcOoTd4QO8lZahKJH6bweNX8QPcgJKlolKlzmARQN-KFpqMHIUuapLUG3dH8mXVpcFY569PHNSAClHJOP1WV-TeNzlj44YxmtLA6wKcNU3TD4iWh_CPLFP5OgHQm2RennIAPzSg/s400/gutspose_man.png',
-  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhYfcZJYeC7UfwWM60-5LqIJ3XIc9qutvSFAQxyXmsBEUiuICCSlr0fPb-VFB1gC-WglMkIEwiIBXIvFlQiAxwBfXSqDd3B1CHEL_lhicXfZvnxDjiSxSWoBFoj8ISL5c78WbABA0PeY5EneBQTgMWCuTtDc6lhuv99Twcm_jz1BskZCY0nhtu_hWtAUoBx/s400/genki_pose_schoolboy.png',
-  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjajaaUfv2mgXcRHaohkf1_-EBB6LMvBbhZ-M69ED8ADIDqJh9Kl2kSnLYKkBmcLPpo1ZVIUs3R5-zJBM4PcRwT9RDU31J5fEN5X4B5wuAA4n5KiS5-ArYOws7MwxCazdVmCBTbOg4lGxgPEqbx_vhsCmmlZrYpCTIjJDCjp5lepSA8QB1bMiZYITKexRSG/s400/genki_pose_schoolgirl.png',
-];
+// ※ 正解時のイラストは「そだつイラスト（SVG）」に置き換えたため、
+//    以前ここにあった IRASUTOYA_CORRECT は廃止した（同じ絵はゴール画面で使用中）
 const IRASUTOYA_WRONG = [
   'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGJhe_pZIttmovcJodE-d8D8QrZUns_9thKpf9sFLsOzmF-q1uNPMEwG0xyGAgpMcPCJ1rtaCyN8ZpEhZbJb3UM2eJSDJn-OpGIzfjb7Jkn7fPeGGU2JKv-KqSBF8qYHCPyljPtd-LwETT/s400/study_wakaranai_girl.png',
 ];
@@ -866,6 +896,164 @@ const IRASUTOYA_COLORING = [
 ];
 
 // =============================================
+//  れんぞくせいかいで そだつ イラスト（SVG）
+//  ─ 正解するたびに次の段階へ進み、まちがえると最初の段階に戻る
+//  ─ 外部画像を使わないので、通信が遅くても必ず表示される
+// =============================================
+const GROWTH_SERIES = [
+  {
+    id: 'tree',
+    name: 'き',
+    stages: [
+      { label: 'たねを まいたよ', svg: `
+        <ellipse cx="60" cy="102" rx="44" ry="12" fill="#d9b183"/>
+        <ellipse cx="60" cy="96" rx="10" ry="12" fill="#8b5a2b"/>
+        <ellipse cx="56" cy="91" rx="3" ry="4" fill="#b07b45"/>` },
+      { label: 'めが でた！', svg: `
+        <ellipse cx="60" cy="102" rx="44" ry="12" fill="#d9b183"/>
+        <path d="M60 100 V72" stroke="#4d9c26" stroke-width="5" stroke-linecap="round"/>
+        <ellipse cx="45" cy="70" rx="14" ry="9" fill="#7cc043" transform="rotate(-18 45 70)"/>
+        <ellipse cx="76" cy="70" rx="14" ry="9" fill="#8fd455" transform="rotate(18 76 70)"/>` },
+      { label: 'はっぱが ふえた！', svg: `
+        <ellipse cx="60" cy="102" rx="44" ry="12" fill="#d9b183"/>
+        <path d="M60 100 V56" stroke="#8b5a2b" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="60" cy="46" r="22" fill="#7cc043"/>
+        <circle cx="42" cy="58" r="14" fill="#8fd455"/>
+        <circle cx="78" cy="58" r="14" fill="#6cb437"/>` },
+      { label: 'はなが さいた！', svg: `
+        <ellipse cx="60" cy="104" rx="46" ry="12" fill="#d9b183"/>
+        <path d="M60 102 V48" stroke="#8b5a2b" stroke-width="9" stroke-linecap="round"/>
+        <circle cx="60" cy="38" r="26" fill="#7cc043"/>
+        <circle cx="36" cy="52" r="17" fill="#8fd455"/>
+        <circle cx="84" cy="52" r="17" fill="#6cb437"/>
+        <circle cx="47" cy="34" r="7" fill="#ff8fb1"/><circle cx="47" cy="34" r="2.5" fill="#fff0a5"/>
+        <circle cx="72" cy="30" r="7" fill="#ffa8c6"/><circle cx="72" cy="30" r="2.5" fill="#fff0a5"/>
+        <circle cx="60" cy="52" r="6" fill="#ff8fb1"/><circle cx="60" cy="52" r="2" fill="#fff0a5"/>` },
+      { label: 'おおきな きに なった！', svg: `
+        <ellipse cx="60" cy="106" rx="48" ry="12" fill="#d9b183"/>
+        <path d="M60 104 V52" stroke="#7a4a22" stroke-width="12" stroke-linecap="round"/>
+        <path d="M60 74 L44 62 M60 68 L78 58" stroke="#7a4a22" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="60" cy="34" r="30" fill="#6cb437"/>
+        <circle cx="30" cy="50" r="19" fill="#7cc043"/>
+        <circle cx="90" cy="50" r="19" fill="#5aa02c"/>
+        <circle cx="45" cy="26" r="6" fill="#ef4444"/>
+        <circle cx="74" cy="34" r="6" fill="#ef4444"/>
+        <circle cx="60" cy="52" r="6" fill="#ef4444"/>
+        <path d="M16 22 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#ffd93d"/>
+        <path d="M104 16 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5z" fill="#ffd93d"/>` },
+    ],
+  },
+  {
+    id: 'chick',
+    name: 'ひよこ',
+    stages: [
+      { label: 'たまごが あるよ', svg: `
+        <ellipse cx="60" cy="106" rx="30" ry="7" fill="rgba(0,0,0,0.10)"/>
+        <ellipse cx="60" cy="68" rx="30" ry="36" fill="#fffaf0" stroke="#e6d5b0" stroke-width="2"/>
+        <ellipse cx="50" cy="56" rx="7" ry="10" fill="#fff" opacity="0.8"/>` },
+      { label: 'ひびが はいった！', svg: `
+        <ellipse cx="60" cy="106" rx="30" ry="7" fill="rgba(0,0,0,0.10)"/>
+        <ellipse cx="60" cy="68" rx="30" ry="36" fill="#fffaf0" stroke="#e6d5b0" stroke-width="2"/>
+        <path d="M32 62 L44 55 L38 70 L52 63 L46 78 L60 70 L54 85"
+              stroke="#c9b285" stroke-width="3.5" fill="none" stroke-linejoin="round"/>` },
+      { label: 'かおを だしたよ！', svg: `
+        <ellipse cx="60" cy="106" rx="30" ry="7" fill="rgba(0,0,0,0.10)"/>
+        <path d="M30 78 a30 30 0 0 0 60 0 z" fill="#fffaf0" stroke="#e6d5b0" stroke-width="2"/>
+        <path d="M30 78 L40 70 L48 78 L58 70 L68 78 L78 70 L90 78" fill="#fffaf0" stroke="#e6d5b0" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="60" cy="54" r="20" fill="#ffd93d"/>
+        <circle cx="53" cy="50" r="2.8" fill="#3b2b12"/><circle cx="67" cy="50" r="2.8" fill="#3b2b12"/>
+        <path d="M56 58 L60 63 L64 58z" fill="#ff9f1c"/>
+        <ellipse cx="47" cy="58" rx="4" ry="2.5" fill="#ffb3c6" opacity="0.7"/>
+        <ellipse cx="73" cy="58" rx="4" ry="2.5" fill="#ffb3c6" opacity="0.7"/>` },
+      { label: 'ひよこに なった！', svg: `
+        <ellipse cx="60" cy="106" rx="26" ry="6" fill="rgba(0,0,0,0.10)"/>
+        <ellipse cx="60" cy="76" rx="26" ry="23" fill="#ffd93d"/>
+        <circle cx="60" cy="46" r="20" fill="#ffe45e"/>
+        <circle cx="53" cy="43" r="3" fill="#3b2b12"/><circle cx="67" cy="43" r="3" fill="#3b2b12"/>
+        <path d="M55 51 L60 57 L65 51z" fill="#ff9f1c"/>
+        <ellipse cx="46" cy="51" rx="4.5" ry="3" fill="#ffb3c6" opacity="0.7"/>
+        <ellipse cx="74" cy="51" rx="4.5" ry="3" fill="#ffb3c6" opacity="0.7"/>
+        <ellipse cx="36" cy="76" rx="9" ry="12" fill="#ffe45e" transform="rotate(-20 36 76)"/>
+        <path d="M52 98 L52 104 M50 104 h6 M68 98 L68 104 M66 104 h6" stroke="#ff9f1c" stroke-width="3" stroke-linecap="round"/>` },
+      { label: 'おおきく そだった！', svg: `
+        <ellipse cx="62" cy="108" rx="30" ry="6" fill="rgba(0,0,0,0.10)"/>
+        <ellipse cx="62" cy="78" rx="30" ry="25" fill="#fff3c4"/>
+        <path d="M88 64 q19 7 15 28 q-11 -11 -19 -11z" fill="#ffd93d"/>
+        <circle cx="56" cy="44" r="20" fill="#fffaf0"/>
+        <path d="M45 27 q4 -9 8 -1 q4 -9 8 -1 q4 -8 7 2" fill="#ef4444"/>
+        <circle cx="50" cy="42" r="3" fill="#3b2b12"/><circle cx="63" cy="42" r="3" fill="#3b2b12"/>
+        <path d="M53 50 L44 54 L53 58z" fill="#ff9f1c"/>
+        <ellipse cx="56" cy="62" rx="3.5" ry="5" fill="#ef4444"/>
+        <ellipse cx="46" cy="52" rx="4" ry="2.5" fill="#ffb3c6" opacity="0.6"/>
+        <ellipse cx="68" cy="52" rx="4" ry="2.5" fill="#ffb3c6" opacity="0.6"/>
+        <path d="M52 100 L52 107 M49 107 h7 M72 100 L72 107 M69 107 h7" stroke="#ff9f1c" stroke-width="3" stroke-linecap="round"/>
+        <path d="M14 24 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#ffd93d"/>
+        <path d="M106 20 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5z" fill="#ffd93d"/>` },
+    ],
+  },
+  {
+    id: 'butterfly',
+    name: 'ちょうちょ',
+    stages: [
+      { label: 'はっぱの たまご', svg: `
+        <path d="M18 84 q42 -30 84 0 q-42 22 -84 0z" fill="#7cc043"/>
+        <path d="M18 84 q42 -14 84 0" stroke="#5aa02c" stroke-width="2.5" fill="none"/>
+        <ellipse cx="60" cy="72" rx="7" ry="9" fill="#fff6c9" stroke="#e0cf8a" stroke-width="2"/>` },
+      { label: 'あおむしに なった！', svg: `
+        <path d="M14 92 q46 -26 92 0 q-46 20 -92 0z" fill="#7cc043"/>
+        <circle cx="34" cy="66" r="11" fill="#8fd455"/>
+        <circle cx="50" cy="63" r="12" fill="#7cc043"/>
+        <circle cx="67" cy="63" r="12" fill="#8fd455"/>
+        <circle cx="84" cy="66" r="13" fill="#6cb437"/>
+        <circle cx="80" cy="62" r="2.6" fill="#2f4f13"/><circle cx="89" cy="62" r="2.6" fill="#2f4f13"/>
+        <path d="M80 50 q-2 -8 -7 -10 M90 50 q2 -8 7 -10" stroke="#4d9c26" stroke-width="2.5" fill="none" stroke-linecap="round"/>` },
+      { label: 'さなぎに なった！', svg: `
+        <path d="M10 24 q40 6 66 4" stroke="#8b5a2b" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M64 28 q-3 8 -2 12" stroke="#a9a9a9" stroke-width="2.5" fill="none"/>
+        <ellipse cx="62" cy="66" rx="20" ry="30" fill="#9ad46a"/>
+        <path d="M50 52 q12 8 24 0 M48 66 q14 9 28 0 M52 80 q10 7 20 0"
+              stroke="#6cb437" stroke-width="2.5" fill="none"/>
+        <ellipse cx="54" cy="48" rx="5" ry="7" fill="#b6e28f" opacity="0.8"/>` },
+      { label: 'はねが でてきた！', svg: `
+        <path d="M10 22 q40 6 66 4" stroke="#8b5a2b" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <ellipse cx="62" cy="62" rx="17" ry="26" fill="#c8e6a0"/>
+        <path d="M62 52 q-26 -14 -34 6 q16 12 34 4z" fill="#ffb3c6"/>
+        <path d="M62 60 q-22 4 -24 22 q18 2 26 -12z" fill="#ff8fb1"/>
+        <circle cx="42" cy="58" r="3.5" fill="#fff0a5"/>
+        <ellipse cx="62" cy="40" rx="6" ry="8" fill="#6b4b2a"/>
+        <path d="M59 33 q-3 -8 -8 -10 M65 33 q3 -8 8 -10" stroke="#6b4b2a" stroke-width="2.5" fill="none" stroke-linecap="round"/>` },
+      { label: 'ちょうちょに なった！', svg: `
+        <path d="M60 44 q-34 -26 -48 -2 q-8 22 14 26 q22 4 34 -14z" fill="#ff8fb1"/>
+        <path d="M60 44 q34 -26 48 -2 q8 22 -14 26 q-22 4 -34 -14z" fill="#ffa8c6"/>
+        <path d="M60 58 q-26 6 -30 26 q22 12 34 -8z" fill="#ffc2d6"/>
+        <path d="M60 58 q26 6 30 26 q-22 12 -34 -8z" fill="#ffb3c6"/>
+        <circle cx="30" cy="36" r="5" fill="#fff0a5"/><circle cx="90" cy="36" r="5" fill="#fff0a5"/>
+        <circle cx="36" cy="76" r="4" fill="#fff0a5"/><circle cx="84" cy="76" r="4" fill="#fff0a5"/>
+        <ellipse cx="60" cy="62" rx="6" ry="26" fill="#6b4b2a"/>
+        <circle cx="60" cy="38" r="7" fill="#5a3f22"/>
+        <path d="M56 32 q-4 -10 -11 -12 M64 32 q4 -10 11 -12" stroke="#5a3f22" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M14 20 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#ffd93d"/>
+        <path d="M106 18 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5z" fill="#ffd93d"/>` },
+    ],
+  },
+];
+
+// このゲーム中に育てるシリーズ（startGameで抽選）
+let currentGrowth = GROWTH_SERIES[0];
+let lastGrowthStage = -1;
+
+function pickGrowthSeries() {
+  currentGrowth = GROWTH_SERIES[Math.floor(Math.random() * GROWTH_SERIES.length)];
+  lastGrowthStage = -1;
+}
+
+// れんぞく正解数 → 育ちの段階（5段階目に達したらそのまま維持）
+function growthStageOf(n) {
+  const max = currentGrowth.stages.length - 1;
+  return Math.min(Math.max(n - 1, 0), max);
+}
+
+// =============================================
 //  画像プリロード（初回表示を瞬時にする）
 // =============================================
 function preloadImages(urls) {
@@ -873,12 +1061,12 @@ function preloadImages(urls) {
 }
 window.addEventListener('load', () => {
   preloadImages([
-    ...IRASUTOYA_CORRECT,
     ...IRASUTOYA_WRONG,
     ...IRASUTOYA_GOAL.map(g => g.url),
     ...IRASUTOYA_COLORING.map(c => c.url),
     ...SECRET_IMAGES,
   ]);
+  refreshSpecialImages();   // special/ に増えた絵を取り込む
 });
 
 // =============================================
@@ -1175,7 +1363,7 @@ function biasedPickRandom(arr, n, catWeights) {
 // =============================================
 //  音声読み上げ（SpeechSynthesis）
 // =============================================
-function speakText(text, lang) {
+function speakText(text, lang, rate) {
   if (!window.speechSynthesis) return;
   if (isMuted) return;  // ミュート中は音声読み上げもスキップ
   // cancel()→即speak()：setTimeoutを使わないことでAndroidのユーザージェスチャー
@@ -1183,7 +1371,7 @@ function speakText(text, lang) {
   window.speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = lang || 'ja-JP';
-  utt.rate = 0.85;
+  utt.rate = (typeof rate === 'number') ? rate : 0.85;
   utt.volume = 1;
   window.speechSynthesis.speak(utt);
 }
@@ -1436,6 +1624,7 @@ function startGame(cat) {
   correctCount = 0;
   answered = false;
   streak = 0;
+  pickGrowthSeries();   // 今回そだてるイラスト（き／ひよこ／ちょうちょ）を抽選
   setTheme(cat);
   showScreen('game');
 
@@ -1473,6 +1662,7 @@ function setDifficulty(diff) {
   correctCount = 0;
   answered = false;
   streak = 0;
+  lastGrowthStage = -1;   // むずかしさを変えたら そだちも最初から
   questions = generateQuestions(currentCategory);
   totalQuestions = questions.length;
   renderQuestion();
@@ -1546,8 +1736,9 @@ function renderQuestion() {
   qa.appendChild(labelEl);
   qa.appendChild(mainEl);
 
-  // ひらがな・カタカナ・えいごはタップで音声
-  if (q.type === 'hiragana' || q.type === 'katakana' || q.type === 'english') {
+  // ひらがな・カタカナ・えいご・どうぶつ・やさいはタップで音声
+  if (q.type === 'hiragana' || q.type === 'katakana' || q.type === 'english'
+      || q.type === 'animal' || q.type === 'vege') {
     qa.classList.add('tappable');
     const hintEl = document.createElement('div');
     hintEl.className = 'tap-hint';
@@ -1555,6 +1746,8 @@ function renderQuestion() {
     qa.appendChild(hintEl);
     qa.onclick = () => {
       if (q.type === 'hiragana' || q.type === 'katakana') speakText(q.question, 'ja-JP');
+      // どうぶつ・やさいは 日本語をゆっくりめ（rate 0.7）で読み上げる
+      else if (q.type === 'animal' || q.type === 'vege') speakText(q.answer, 'ja-JP', 0.7);
       else if (q.mode === 'phrase') {
         // フレーズ: 英語フレーズをそのまま英語で読み上げ
         speakText(q.display, 'en-US');
@@ -1652,8 +1845,39 @@ function showFeedback(isCorrect) {
   const overlay = document.getElementById('feedback-overlay');
   const popup   = document.getElementById('feedback-popup');
   popup.className = 'feedback-popup ' + (isCorrect ? 'feedback-correct' : 'feedback-wrong');
-  const pool = isCorrect ? IRASUTOYA_CORRECT : IRASUTOYA_WRONG;
-  document.getElementById('feedback-img').src = pool[Math.floor(Math.random() * pool.length)];
+
+  const imgEl    = document.getElementById('feedback-img');
+  const growBox  = document.getElementById('growth-box');
+  const growArt  = document.getElementById('growth-art');
+  const growLbl  = document.getElementById('growth-label');
+
+  if (isCorrect) {
+    // 正解のときは「そだつイラスト」を出す（いらすとや画像は隠す）
+    imgEl.style.display = 'none';
+    growBox.style.display = 'block';
+
+    const stageIdx = growthStageOf(streak);
+    const stage    = currentGrowth.stages[stageIdx];
+    const grewUp   = stageIdx > lastGrowthStage;   // 段階が上がった瞬間だけ演出する
+    const isMax    = stageIdx === currentGrowth.stages.length - 1;
+
+    growArt.innerHTML = `<svg viewBox="0 0 120 120" aria-hidden="true">${stage.svg}</svg>`;
+    growArt.classList.remove('grow-up');
+    if (grewUp) {
+      void growArt.offsetWidth;          // アニメーションを確実に再生させる
+      growArt.classList.add('grow-up');
+    }
+    growLbl.textContent = grewUp ? stage.label
+                                 : (isMax ? `${currentGrowth.name}は もう まんかい！` : stage.label);
+    lastGrowthStage = stageIdx;
+  } else {
+    // まちがえたら いらすとやの残念イラストに戻し、そだちも最初から
+    growBox.style.display = 'none';
+    imgEl.style.display = 'block';
+    imgEl.src = IRASUTOYA_WRONG[Math.floor(Math.random() * IRASUTOYA_WRONG.length)];
+    lastGrowthStage = -1;
+  }
+
   document.getElementById('feedback-text').textContent = isCorrect ? 'やったー！' : 'ざんねん…';
 
   // れんぞくせいかいコンボ表示（3連続以上）
@@ -1735,11 +1959,35 @@ function showGoal() {
 
 // 画面ゴールドフラッシュ
 // ─── おじさんおんな リワード オーバーレイ ───────────────
-// シークレット画像リスト（手書き版・デジタル版）
-const SECRET_IMAGES = [
-  'ojisan_reward.jpg',   // 手書き版（圧縮版）
-  'ojisan_reward2.jpg',  // デジタル版（圧縮版）
+// ─── スペシャル画像 ────────────────────────────────
+// 画像は special/ フォルダにまとめている。
+// 新しい絵を増やすときは special/ に画像ファイルを置くだけでよい
+// （GitHubへpushすると、下のfetchがフォルダの中身を読んで自動で仲間入りする）。
+// ネットが不調でフォルダを読めなかったときは、この内蔵リストが使われる。
+let SECRET_IMAGES = [
+  'special/ojisan_tegaki.jpg',    // 手書き版
+  'special/ojisan_digital.jpg',   // デジタル版
+  'special/machi_to_tori.jpg',    // まちと とり
+  'special/nitto_girl.jpg',       // ニットぼうの おんなのこ
 ];
+
+// special/ フォルダの中身を読み取って SECRET_IMAGES を最新にする
+function refreshSpecialImages() {
+  fetch('https://api.github.com/repos/koji82kuni/kids-game/contents/special')
+    .then(r => (r.ok ? r.json() : null))
+    .then(list => {
+      if (!Array.isArray(list)) return;
+      const found = list
+        .filter(f => f.type === 'file' && /\.(jpe?g|png|webp|gif)$/i.test(f.name))
+        .map(f => 'special/' + f.name)
+        .sort();
+      if (found.length) {
+        SECRET_IMAGES = found;
+        preloadImages(found);
+      }
+    })
+    .catch(() => { /* 読めなくても内蔵リストで動くので何もしない */ });
+}
 
 // ご褒美画像を先に選んでプリロード（オーバーレイ表示を瞬時にする）
 function pickRewardImage() {
