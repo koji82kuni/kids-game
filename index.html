@@ -1330,6 +1330,18 @@ const VEGE_DATA = [
   {emoji:'🍏',name:'あおりんご'},
 ];
 
+// どうぶつ・やさいくだものの しゃしん（なまえ → ファイル名）
+// しゃしんは photos/animal/ と photos/vege/ に ある。のっていない ものは えもじで だす。
+// さつえいしゃ・ライセンスは flowers/credits.html に のせている。
+const PHOTO_IDS = {
+  animal: {'いぬ':'inu', 'ねこ':'neko', 'ぞう':'zou', 'らいおん':'lion', 'ぱんだ':'panda', 'うさぎ':'usagi', 'さる':'saru', 'くま':'kuma', 'きりん':'kirin', 'ぺんぎん':'penguin', 'きつね':'kitsune', 'しまうま':'shimauma', 'いるか':'iruka', 'わし':'washi', 'ふくろう':'fukurou', 'わに':'wani', 'かえる':'kaeru', 'うし':'ushi', 'ぶた':'buta', 'はりねずみ':'harinezumi', 'こあら':'koala', 'とら':'tora', 'かんがるー':'kangaroo', 'はむすたー':'hamster', 'かば':'kaba', 'さい':'sai', 'りす':'risu', 'ねずみ':'nezumi', 'にわとり':'niwatori', 'あひる':'ahiru', 'かめ':'kame', 'へび':'hebi', 'かに':'kani', 'たこ':'tako', 'くじら':'kujira', 'さめ':'same', 'ひつじ':'hitsuji', 'うま':'uma', 'やぎ':'yagi', 'しか':'shika', 'ごりら':'gorilla', 'はち':'hachi', 'てんとうむし':'tentoumushi', 'ちょうちょ':'chouchou'},
+  vege:   {'にんじん':'ninjin', 'ブロッコリー':'broccoli', 'トマト':'tomato', 'きゅうり':'kyuuri', 'たまねぎ':'tamanegi', 'じゃがいも':'jagaimo', 'なす':'nasu', 'とうもろこし':'toumorokoshi', 'りんご':'ringo', 'バナナ':'banana', 'いちご':'ichigo', 'みかん':'mikan', 'ぶどう':'budou', 'すいか':'suika', 'もも':'momo', 'れもん':'lemon', 'キウイ':'kiwi', 'パイナップル':'pineapple', 'マンゴー':'mango', 'なし':'nashi', 'さくらんぼ':'sakuranbo', 'レタス':'lettuce', 'にんにく':'ninniku', 'ブルーベリー':'blueberry', 'とうがらし':'tougarashi', 'さつまいも':'satsumaimo', 'ココナッツ':'coconut', 'メロン':'melon', 'アボカド':'avocado', 'きのこ':'kinoko', 'ピーナッツ':'peanut', 'くり':'kuri', 'かぼちゃ':'kabocha', 'あおりんご':'aoringo'},
+};
+function photoOf(cat, name) {
+  const id = PHOTO_IDS[cat] && PHOTO_IDS[cat][name];
+  return id ? `photos/${cat}/${id}.jpg` : null;
+}
+
 const COLOR_DATA = [
   {name:'あか',    css:'#ef4444'},{name:'あお',    css:'#3b82f6'},
   {name:'きいろ',  css:'#eab308'},{name:'みどり',  css:'#22c55e'},
@@ -1748,7 +1760,7 @@ function generateQuestions(cat) {
       } else if (t.cat === 'animal' || t.cat === 'vege') {
         const data = t.cat === 'animal' ? ANIMAL_DATA : VEGE_DATA;
         const wrongs = shuffle(data.filter(a=>a.name!==t.item.name)).slice(0,3).map(a=>a.name);
-        qs.push({ type:t.cat, emoji:t.item.emoji, answer:t.item.name,
+        qs.push({ type:t.cat, emoji:t.item.emoji, img:photoOf(t.cat, t.item.name), answer:t.item.name,
                   choices: shuffle([t.item.name, ...wrongs]), origCat:t.cat });
       } else if (t.cat === 'english') {
         const pool = [...ENGLISH_EASY, ...ENGLISH_MID, ...ENGLISH_HARD];
@@ -1827,7 +1839,7 @@ function generateQuestions(cat) {
     picked.forEach(item => {
       const wrongs = shuffle(ANIMAL_DATA.filter(a=>a.name!==item.name)).slice(0,3).map(a=>a.name);
       const choices = shuffle([item.name, ...wrongs]);
-      qs.push({ type:'animal', emoji:item.emoji, answer:item.name, choices });
+      qs.push({ type:'animal', emoji:item.emoji, img:photoOf('animal', item.name), answer:item.name, choices });
     });
   }
 
@@ -1837,7 +1849,7 @@ function generateQuestions(cat) {
     picked.forEach(item => {
       const wrongs = shuffle(VEGE_DATA.filter(v=>v.name!==item.name)).slice(0,3).map(v=>v.name);
       const choices = shuffle([item.name, ...wrongs]);
-      qs.push({ type:'vege', emoji:item.emoji, answer:item.name, choices });
+      qs.push({ type:'vege', emoji:item.emoji, img:photoOf('vege', item.name), answer:item.name, choices });
     });
   }
 
@@ -2162,15 +2174,21 @@ function renderQuestion() {
     mainEl.className = 'shape-display';
     renderShape(mainEl, q.shapeType, q.colorCss);
 
-  } else if (q.type === 'animal') {
-    labelEl.textContent = 'なんという どうぶつ？';
-    mainEl.className = 'subject-emoji';
-    mainEl.textContent = q.emoji;
-
-  } else if (q.type === 'vege') {
-    labelEl.textContent = 'これはなに？';
-    mainEl.className = 'subject-emoji';
-    mainEl.textContent = q.emoji;
+  } else if (q.type === 'animal' || q.type === 'vege') {
+    labelEl.textContent = q.type === 'animal' ? 'なんという どうぶつ？' : 'これはなに？';
+    if (q.img) {
+      // しゃしんで だす。よみこめなかったときは えもじに きりかえる
+      mainEl.className = 'photo-box';
+      const img = document.createElement('img');
+      img.className = 'flower-photo';
+      img.src = q.img;
+      img.alt = 'しゃしん';
+      img.onerror = () => { mainEl.className = 'subject-emoji'; mainEl.textContent = q.emoji; };
+      mainEl.appendChild(img);
+    } else {
+      mainEl.className = 'subject-emoji';
+      mainEl.textContent = q.emoji;
+    }
 
   } else if (q.type === 'calc' && q.picture) {
     labelEl.textContent = 'ぜんぶで いくつ？';
