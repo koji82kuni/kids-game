@@ -286,10 +286,29 @@
     line-height: 1;
   }
 
+  /* 「おすと こえが でるよ」：ボタンに みえるように こい あおで ぬる */
   .tap-hint {
-    font-size: clamp(10px, 2.8vw, 13px);
-    color: #aaa;
-    margin-top: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: clamp(15px, 4.4vw, 19px);
+    font-weight: bold;
+    color: #fff;
+    background: #2563eb;
+    border-radius: 999px;
+    padding: 8px 18px;
+    margin-top: 6px;
+    box-shadow: 0 3px 0 #1e40af;
+    letter-spacing: 0.05em;
+    animation: tapHintPulse 1.8s ease-in-out infinite;
+  }
+  .tap-hint .tap-hint-icon { font-size: 1.25em; line-height: 1; }
+  @keyframes tapHintPulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tap-hint { animation: none; }
   }
 
   .choices-grid {
@@ -1342,6 +1361,31 @@ function photoOf(cat, name) {
   return id ? `photos/${cat}/${id}.jpg` : null;
 }
 
+// えいごの しゃしん（たんご → ファイル。どうぶつ・やさい・はなの しゃしんも つかう）
+// star と music は しゃしんに しにくいので えもじの まま。
+const ENGLISH_PHOTOS = {/*ENGLISH_PHOTOS*/'dog':'photos/animal/inu', 'cat':'photos/animal/neko', 'apple':'photos/vege/ringo', 'banana':'photos/vege/banana', 'rabbit':'photos/animal/usagi', 'bear':'photos/animal/kuma', 'frog':'photos/animal/kaeru', 'cow':'photos/animal/ushi', 'pig':'photos/animal/buta', 'grape':'photos/vege/budou', 'tulip':'flowers/tulip', 'flower':'flowers/sakura', 'chicken':'photos/animal/niwatori', 'horse':'photos/animal/uma', 'mouse':'photos/animal/nezumi', 'lemon':'photos/vege/lemon', 'elephant':'photos/animal/zou', 'lion':'photos/animal/lion', 'penguin':'photos/animal/penguin', 'strawberry':'photos/vege/ichigo', 'watermelon':'photos/vege/suika', 'fox':'photos/animal/kitsune', 'turtle':'photos/animal/kame', 'octopus':'photos/animal/tako', 'sunflower':'flowers/himawari', 'hibiscus':'flowers/hibiscus', 'koala':'photos/animal/koala', 'tiger':'photos/animal/tora', 'whale':'photos/animal/kujira', 'carrot':'photos/vege/ninjin', 'tomato':'photos/vege/tomato', 'giraffe':'photos/animal/kirin', 'butterfly':'photos/animal/chouchou', 'shark':'photos/animal/same', 'crocodile':'photos/animal/wani', 'hedgehog':'photos/animal/harinezumi', 'broccoli':'photos/vege/broccoli', 'pineapple':'photos/vege/pineapple', 'avocado':'photos/vege/avocado', 'car':'photos/english/car', 'house':'photos/english/house', 'moon':'photos/english/moon', 'fish':'photos/english/fish', 'bird':'photos/english/bird', 'cake':'photos/english/cake', 'orange':'photos/english/orange', 'pencil':'photos/english/pencil', 'bag':'photos/english/bag', 'milk':'photos/english/milk', 'cheese':'photos/english/cheese', 'bread':'photos/english/bread', 'egg':'photos/english/egg', 'bus':'photos/english/bus', 'ball':'photos/english/ball', 'rice':'photos/english/rice', 'shoes':'photos/english/shoes', 'tree':'photos/english/tree', 'airplane':'photos/english/airplane', 'train':'photos/english/train', 'book':'photos/english/book', 'guitar':'photos/english/guitar', 'ocean':'photos/english/ocean', 'mountain':'photos/english/mountain', 'pizza':'photos/english/pizza', 'rainbow':'photos/english/rainbow', 'balloon':'photos/english/balloon', 'ice cream':'photos/english/icecream', 'helicopter':'photos/english/helicopter', 'ribbon':'photos/english/ribbon', 'key':'photos/english/key', 'anchor':'photos/english/anchor', 'hamburger':'photos/english/hamburger', 'bicycle':'photos/english/bicycle', 'clock':'photos/english/clock', 'umbrella':'photos/english/umbrella', 'teddy bear':'photos/english/teddybear', 'piano':'photos/english/piano', 'school':'photos/english/school', 'cactus':'photos/english/cactus', 'rocket':'photos/english/rocket', 'trophy':'photos/english/trophy', 'parrot':'photos/english/parrot', 'earth':'photos/english/earth', 'telescope':'photos/english/telescope', 'experiment':'photos/english/experiment', 'circus':'photos/english/circus', 'castle':'photos/english/castle', 'volcano':'photos/english/volcano', 'trumpet':'photos/english/trumpet', 'squid':'photos/english/squid', 'flamingo':'photos/english/flamingo', 'lightning':'photos/english/lightning', 'magnet':'photos/english/magnet', 'theater':'photos/english/theater', 'cupcake':'photos/english/cupcake', 'thermometer':'photos/english/thermometer', 'crystal ball':'photos/english/crystalball', 'otter':'photos/english/otter', 'peacock':'photos/english/peacock', 'fire engine':'photos/english/fireengine', 'ambulance':'photos/english/ambulance', 'microscope':'photos/english/microscope', 'compass':'photos/english/compass', 'island':'photos/english/island', 'dinosaur':'photos/english/dinosaur'};
+function englishPhotoOf(word) {
+  const p = ENGLISH_PHOTOS[word];
+  return p ? `${p}.jpg` : null;
+}
+
+// しゃしんだと どちらも せいかいに みえる くみあわせは、まちがいの せんたくしに ださない
+// （れい：フラミンゴの しゃしんに bird と flamingo が ならぶ）
+const ENGLISH_SIMILAR = [
+  ['flower', 'tulip', 'sunflower', 'hibiscus'],
+  ['bird', 'parrot', 'penguin', 'chicken', 'flamingo', 'peacock'],
+  ['fish', 'shark'],
+  ['cake', 'cupcake'],
+  ['star', 'shooting star'],
+  ['ocean', 'island'],
+  ['mountain', 'volcano'],
+];
+function englishWrongs(item, pool) {
+  const group = ENGLISH_SIMILAR.find(g => g.includes(item.word)) || [];
+  return shuffle(pool.filter(e => e.word !== item.word && !group.includes(e.word)))
+    .slice(0, 3).map(e => e.word);
+}
+
 const COLOR_DATA = [
   {name:'あか',    css:'#ef4444'},{name:'あお',    css:'#3b82f6'},
   {name:'きいろ',  css:'#eab308'},{name:'みどり',  css:'#22c55e'},
@@ -1764,8 +1808,8 @@ function generateQuestions(cat) {
                   choices: shuffle([t.item.name, ...wrongs]), origCat:t.cat });
       } else if (t.cat === 'english') {
         const pool = [...ENGLISH_EASY, ...ENGLISH_MID, ...ENGLISH_HARD];
-        const wrongs = shuffle(pool.filter(e => e.word !== t.item.word)).slice(0,3).map(e=>e.word);
-        qs.push({ type:'english', mode:'word', emoji:t.item.emoji, answer:t.item.word,
+        const wrongs = englishWrongs(t.item, pool);
+        qs.push({ type:'english', mode:'word', emoji:t.item.emoji, img:englishPhotoOf(t.item.word), answer:t.item.word,
                   choices: shuffle([t.item.word, ...wrongs]), origCat:'english' });
       } else if (t.cat === 'english_phrase') {
         const wrongs = shuffle(ENGLISH_PHRASE.filter(p => p.mean !== t.item.mean)).slice(0,3).map(p=>p.mean);
@@ -1894,9 +1938,9 @@ function generateQuestions(cat) {
       const catW = wrongHistory[cat] || {};
       const picked = biasedPickRandom(pool, 10, catW);
       picked.forEach(item => {
-        const wrongs = shuffle(pool.filter(e => e.word !== item.word)).slice(0, 3).map(e => e.word);
+        const wrongs = englishWrongs(item, pool);
         const choices = shuffle([item.word, ...wrongs]);
-        qs.push({ type:'english', mode:'word', emoji:item.emoji, answer:item.word, choices });
+        qs.push({ type:'english', mode:'word', emoji:item.emoji, img:englishPhotoOf(item.word), answer:item.word, choices });
       });
     }
   }
@@ -2176,19 +2220,7 @@ function renderQuestion() {
 
   } else if (q.type === 'animal' || q.type === 'vege') {
     labelEl.textContent = q.type === 'animal' ? 'なんという どうぶつ？' : 'これはなに？';
-    if (q.img) {
-      // しゃしんで だす。よみこめなかったときは えもじに きりかえる
-      mainEl.className = 'photo-box';
-      const img = document.createElement('img');
-      img.className = 'flower-photo';
-      img.src = q.img;
-      img.alt = 'しゃしん';
-      img.onerror = () => { mainEl.className = 'subject-emoji'; mainEl.textContent = q.emoji; };
-      mainEl.appendChild(img);
-    } else {
-      mainEl.className = 'subject-emoji';
-      mainEl.textContent = q.emoji;
-    }
+    showPhotoOrEmoji(mainEl, q);
 
   } else if (q.type === 'calc' && q.picture) {
     labelEl.textContent = 'ぜんぶで いくつ？';
@@ -2206,8 +2238,7 @@ function renderQuestion() {
     mainEl.textContent = q.display;
   } else if (q.type === 'english') {
     labelEl.textContent = 'えいごで なんという？';
-    mainEl.className = 'subject-emoji';
-    mainEl.textContent = q.emoji;
+    showPhotoOrEmoji(mainEl, q);
   }
 
   qa.appendChild(labelEl);
@@ -2219,7 +2250,7 @@ function renderQuestion() {
     qa.classList.add('tappable');
     const hintEl = document.createElement('div');
     hintEl.className = 'tap-hint';
-    hintEl.textContent = '👆 タップして音声を聞く';
+    hintEl.innerHTML = '<span class="tap-hint-icon">🔊</span>おすと こえが でるよ';
     qa.appendChild(hintEl);
     qa.onclick = () => {
       if ((q.type === 'hiragana' || q.type === 'katakana') && q.mode === 'first') speakText(q.word, 'ja-JP', 0.7);
@@ -2288,6 +2319,22 @@ function renderShape(container, type, color) {
 }
 
 // つぎの もんだいの しゃしんを さきに よみこんでおく（ひょうじを はやくする）
+// しゃしんで だす。しゃしんが ない・よみこめなかったときは えもじに きりかえる
+function showPhotoOrEmoji(mainEl, q) {
+  if (!q.img) {
+    mainEl.className = 'subject-emoji';
+    mainEl.textContent = q.emoji;
+    return;
+  }
+  mainEl.className = 'photo-box';
+  const img = document.createElement('img');
+  img.className = 'flower-photo';
+  img.src = q.img;
+  img.alt = 'しゃしん';
+  img.onerror = () => { mainEl.className = 'subject-emoji'; mainEl.textContent = q.emoji; };
+  mainEl.appendChild(img);
+}
+
 function preloadQuestionImages(qs) {
   qs.forEach(q => { if (q.img) { const im = new Image(); im.src = q.img; } });
 }
