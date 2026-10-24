@@ -913,6 +913,132 @@
     .qa-map.tappable .jmap-box.square { width: min(100%, calc(100dvh - 200px)); }
     .flower-photo { height: clamp(110px, calc(100dvh - 190px), 260px); }
   }
+
+  /* ─── まちがえた あとの かいせつ ─── */
+  #explain-overlay {
+    position: fixed; inset: 0; z-index: 150; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(15,23,42,0.45); padding: 12px;
+  }
+  #explain-overlay.show { display: flex; }
+  .explain-card {
+    background: #fff; border-radius: 24px; width: min(560px, 100%);
+    max-height: calc(100dvh - 24px); overflow: hidden;   /* ながい ときは なかみだけ スクロール（ボタンは いつも みえる） */
+    padding: 16px 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+  }
+  .explain-head { font-size: clamp(16px, 4.4vw, 19px); font-weight: bold; color: #b45309; }
+  .explain-answer { font-size: clamp(20px, 5.6vw, 26px); font-weight: bold; color: #334155; line-height: 1.6; }
+  .explain-answer b { color: #059669; font-size: 1.25em; }
+  .explain-answer rt, .explain-chosen rt { font-size: 0.5em; color: #475569; }
+  .explain-body {
+    width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    color: #334155; font-weight: bold; font-size: clamp(16px, 4.6vw, 20px); line-height: 1.5;
+    flex: 0 1 auto; min-height: 0; overflow-y: auto;
+  }
+  .explain-head, .explain-answer, .explain-chosen, .explain-btns { flex: none; }
+  .explain-chosen { font-size: clamp(14px, 3.8vw, 16px); font-weight: bold; color: #64748b; line-height: 1.7; }
+  .explain-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; width: 100%; }
+  .explain-btn {
+    position: relative; overflow: hidden;
+    font-family: inherit; font-weight: bold; font-size: clamp(16px, 4.6vw, 20px);
+    border: none; border-radius: 999px; padding: 12px 22px; cursor: pointer;
+  }
+  .explain-speak { background: #2563eb; color: #fff; box-shadow: 0 4px 0 #1e40af; }
+  .explain-next { background: #10b981; color: #fff; box-shadow: 0 4px 0 #047857; min-width: 140px; }
+  .explain-btn:active { transform: translateY(3px); box-shadow: none; }
+  .explain-next .auto-bar {
+    position: absolute; left: 0; bottom: 0; height: 5px; width: 100%;
+    background: rgba(255,255,255,0.75); animation: autoBar linear forwards;
+  }
+  @keyframes autoBar { from { width: 100%; } to { width: 0; } }
+
+  .ex-big { font-size: clamp(64px, 18vw, 96px); line-height: 1.1; color: #333; }
+  .ex-emoji { font-size: clamp(64px, 18vw, 96px); line-height: 1.1; }
+  .ex-word { font-size: clamp(22px, 6vw, 30px); }
+  .ex-hl { color: #dc2626; background: #fee2e2; border-radius: 8px; padding: 0 4px; }
+  .ex-count { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; max-width: 340px; }
+  .ex-count span { display: flex; flex-direction: column; align-items: center; font-size: clamp(26px, 7vw, 34px); line-height: 1.1; }
+  .ex-count small { font-size: 15px; color: #2563eb; }
+  .ex-count .ex-gone { opacity: 0.35; }
+  .ex-count .ex-gone small { color: #dc2626; }
+  .ex-line { display: flex; gap: 6px; }
+  .ex-line span { min-width: 2em; padding: 4px 6px; border-radius: 10px; background: #f1f5f9; font-size: clamp(22px, 6vw, 28px); }
+  .ex-line .ex-base { background: #dbeafe; }
+  .ex-question { font-size: clamp(22px, 6vw, 30px); color: #1e3a8a; }
+  .ex-steps { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 420px; text-align: left; color: #1e3a8a; }
+  .ex-steps div { background: #eff6ff; border-radius: 12px; padding: 6px 12px; }
+  .ex-note { font-size: clamp(14px, 3.8vw, 16px); color: #92400e; background: #fef3c7; border-radius: 12px; padding: 6px 12px; max-width: 420px; }
+  .ex-compare { display: flex; gap: 16px; justify-content: center; align-items: flex-end; }
+  .ex-compare figure { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .ex-compare .shape-display { zoom: 0.7; }
+  .ex-compare figcaption { font-size: clamp(16px, 4.6vw, 20px); }
+  .ex-photo img {
+    width: min(70vw, 280px); height: min(50vw, 200px); object-fit: cover; display: block;
+    border-radius: 16px; border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .ex-phrase { font-size: clamp(20px, 5.6vw, 26px); color: #1e3a8a; }
+  .ex-dialect { font-size: clamp(26px, 7vw, 36px); color: #92400e; }
+  .ex-map { width: 100%; display: flex; justify-content: center; }
+  .ex-map .jmap-box { width: min(100%, 420px, calc((100dvh - 330px) * 4 / 3)); min-width: 200px; }
+  .ex-map .jmap-box.square { width: min(100%, 340px, calc(100dvh - 330px)); }
+  .explain-card:has(.ex-hints) .ex-map .jmap-box { width: min(100%, 420px, calc((100dvh - 560px) * 4 / 3)); }
+  .ex-legend { font-size: 15px; color: #475569; display: flex; align-items: center; gap: 4px; }
+  .ex-sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; }
+  .hint-list.ex-hints { gap: 4px; }
+  .hint-list.ex-hints li { font-size: clamp(13px, 3.6vw, 16px); padding: 3px 10px; line-height: 1.35; }
+  .explain-card:has(.ex-hints) .ex-map .jmap-box { min-width: 160px; }
+
+  /* よこむき：ひだりに え・ちず、みぎに こたえと ボタン */
+  @media (orientation: landscape) and (min-width: 640px) {
+    .explain-card {
+      width: min(920px, 100%);
+      display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      column-gap: 20px; row-gap: 8px; align-items: center; align-content: center;
+    }
+    .explain-card > * { grid-column: 2; }
+    .explain-card > .explain-body { grid-column: 1; grid-row: 1 / span 5; max-height: calc(100dvh - 48px); }
+    .ex-photo img { width: min(100%, 340px); height: clamp(110px, calc(100dvh - 120px), 260px); }
+    .ex-map .jmap-box { width: min(100%, calc((100dvh - 110px) * 4 / 3)); }
+    .ex-map .jmap-box.square { width: min(100%, calc(100dvh - 110px)); }
+    .explain-card:has(.ex-hints) .ex-map .jmap-box { width: min(100%, calc((100dvh - 290px) * 4 / 3)); min-width: 180px; }
+  }
+  @media (orientation: landscape) and (min-width: 640px) and (max-height: 500px) {
+    .explain-card { padding: 10px 14px; }
+    .explain-body { gap: 6px; font-size: 16px; }
+    .ex-big, .ex-emoji { font-size: 64px; }
+    .ex-steps div { padding: 3px 10px; }
+    .explain-btn { padding: 8px 16px; font-size: 16px; }
+    .hint-list.ex-hints { gap: 3px; }
+    .hint-list.ex-hints li { font-size: 13px; padding: 2px 8px; line-height: 1.3; }
+  }
+
+  /* ─── せいせき（ゴール）がめん：よこむきは 2れつ ─── */
+  @media (orientation: landscape) and (min-width: 640px) {
+    #goal-screen { max-width: 1000px; }
+    .goal-wrap {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas: "title title" "score pics" "stamp pics" "btns pics";
+      grid-template-rows: auto auto auto 1fr;
+      column-gap: 24px; align-items: start;
+    }
+    .goal-title { grid-area: title; }
+    .goal-score { grid-area: score; justify-self: center; margin: 8px auto; }
+    #goal-stamp { grid-area: stamp; }
+    .goal-pics { grid-area: pics; align-self: center; }
+    .goal-btns { grid-area: btns; margin-top: 8px; }
+  }
+  @media (orientation: landscape) and (min-width: 640px) and (max-height: 500px) {
+    .goal-title { font-size: 34px; margin-bottom: 0; }
+    .goal-score { padding: 8px 22px; }
+    .goal-pics { display: flex; gap: 12px; align-items: center; justify-content: center; }
+    #goal-irasutoya img { max-height: 90px; }
+    #goal-coloring { margin: 0; padding: 10px 12px 8px; }
+    #goal-coloring-img { max-height: 120px; }
+    .goal-btns { gap: 10px; }
+    .goal-btn { padding: 12px 16px; }
+  }
 </style>
 </head>
 <body class="theme-home">
@@ -1014,11 +1140,14 @@
 
   <!-- ゴール画面 -->
   <div id="goal-screen">
+    <!-- よこむきの ときは ひだりに てんすう・ボタン、みぎに イラスト -->
+    <div class="goal-wrap">
     <div class="goal-title">🎉 すごい！！</div>
     <div class="goal-score">
       <span id="final-score">10</span>もん せいかい！
     </div>
     <div id="goal-stamp"></div>
+    <div class="goal-pics">
     <!-- いらすとやキャラ（成績に応じて変わる） -->
     <div id="goal-irasutoya">
       <img id="goal-irasutoya-img" src="" alt="">
@@ -1029,11 +1158,16 @@
       <div id="goal-coloring-label"></div>
       <img id="goal-coloring-img" src="" alt="">
     </div>
+    </div>
     <div class="goal-btns">
       <button class="goal-btn" onclick="retryGame()">🔄 もういちど</button>
       <button class="goal-btn" onclick="goHome()">📚 べつの もんだいを えらぶ</button>
     </div>
+    </div>
   </div>
+
+  <!-- まちがえた あとの かいせつ -->
+  <div id="explain-overlay" role="dialog" aria-modal="true" aria-label="かいせつ"></div>
 
 </div>
 
@@ -1517,6 +1651,29 @@ function englishPhotoOf(word) {
 
 // しゃしんだと どちらも せいかいに みえる くみあわせは、まちがいの せんたくしに ださない
 // （れい：フラミンゴの しゃしんに bird と flamingo が ならぶ）
+// えいごの ことばの いみ（まちがえた あとの かいせつで つかう）
+const ENGLISH_JA = {
+  'dog':'いぬ', 'cat':'ねこ', 'apple':'りんご', 'banana':'バナナ', 'rabbit':'うさぎ', 'bear':'くま',
+  'car':'くるま', 'house':'いえ', 'star':'ほし', 'moon':'つき', 'fish':'さかな', 'bird':'とり',
+  'flower':'はな', 'cake':'ケーキ', 'sun':'たいよう', 'frog':'かえる', 'cow':'うし', 'pig':'ぶた',
+  'orange':'オレンジ', 'grape':'ぶどう', 'pencil':'えんぴつ', 'bag':'かばん', 'milk':'ぎゅうにゅう', 'cheese':'チーズ',
+  'tulip':'チューリップ', 'chicken':'にわとり', 'horse':'うま', 'mouse':'ねずみ', 'bread':'パン', 'egg':'たまご',
+  'lemon':'レモン', 'bus':'バス', 'ball':'ボール', 'rice':'ごはん', 'shoes':'くつ', 'hat':'ぼうし',
+  'tree':'き', 'elephant':'ぞう', 'lion':'ライオン', 'penguin':'ペンギン', 'strawberry':'いちご', 'watermelon':'すいか',
+  'airplane':'ひこうき', 'train':'でんしゃ', 'book':'ほん', 'guitar':'ギター', 'ocean':'うみ', 'mountain':'やま',
+  'music':'おんがく', 'pizza':'ピザ', 'rainbow':'にじ', 'balloon':'ふうせん', 'fox':'きつね', 'turtle':'かめ',
+  'octopus':'たこ', 'ice cream':'アイスクリーム', 'sunflower':'ひまわり', 'helicopter':'ヘリコプター', 'ribbon':'リボン', 'key':'かぎ',
+  'anchor':'いかり', 'hibiscus':'ハイビスカス', 'koala':'コアラ', 'tiger':'とら', 'whale':'くじら', 'hamburger':'ハンバーガー',
+  'carrot':'にんじん', 'tomato':'トマト', 'bicycle':'じてんしゃ', 'clock':'とけい', 'umbrella':'かさ', 'teddy bear':'くまの ぬいぐるみ',
+  'piano':'ピアノ', 'school':'がっこう', 'giraffe':'きりん', 'butterfly':'ちょうちょ', 'cactus':'サボテン', 'rocket':'ロケット',
+  'trophy':'トロフィー', 'target':'まと', 'parrot':'オウム', 'earth':'ちきゅう', 'telescope':'ぼうえんきょう', 'experiment':'じっけん',
+  'circus':'サーカス', 'castle':'おしろ', 'volcano':'かざん', 'shark':'サメ', 'trumpet':'トランペット', 'squid':'いか',
+  'flamingo':'フラミンゴ', 'lightning':'かみなり', 'magnet':'じしゃく', 'theater':'げきじょう', 'cupcake':'カップケーキ', 'crocodile':'ワニ',
+  'thermometer':'おんどけい', 'crystal ball':'すいしょうだま', 'shooting star':'ながれぼし', 'hedgehog':'ハリネズミ', 'otter':'カワウソ', 'peacock':'クジャク',
+  'broccoli':'ブロッコリー', 'pineapple':'パイナップル', 'avocado':'アボカド', 'fire engine':'しょうぼうしゃ', 'ambulance':'きゅうきゅうしゃ', 'microscope':'けんびきょう',
+  'compass':'ほういじしん', 'island':'しま', 'dinosaur':'きょうりゅう',
+};
+
 const ENGLISH_SIMILAR = [
   ['flower', 'tulip', 'sunflower', 'hibiscus'],
   ['bird', 'parrot', 'penguin', 'chicken', 'flamingo', 'peacock'],
@@ -2402,9 +2559,11 @@ function makeFlowerQuestion(item, origCat) {
 // マイナスの かずは（−3）のように かっこを つける
 function sgn(n) { return n < 0 ? `(−${-n})` : String(n); }
 
+// ex＝まちがえた あとの かいせつ（steps：とちゅうの しき／note：きまり／kind・pic：えで みせる）
 function generateCalcQuestion(diff) {
-  let display, answer;
+  let display, answer, ex;
   const r = Math.random();
+  const f = n => (n < 0 ? `−${-n}` : String(n));
 
   if (diff === 'easy') {
     // 3〜5さい：たしざん・ひきざん（3わりは えで かぞえる たしざん）
@@ -2413,78 +2572,150 @@ function generateCalcQuestion(diff) {
       const icon = NUMBER_EMOJIS[randInt(0, NUMBER_EMOJIS.length - 1)];
       display = `${icon.repeat(a)} ＋ ${icon.repeat(b)}`;
       answer = a + b;
-      return finishCalc(display, answer, 3, { picture:true });
+      return finishCalc(display, answer, 3, { picture:true, ex:{ kind:'add', icon, a, b } });
     } else if (r < 0.65) {
       const a = randInt(1, 5), b = randInt(1, 5); display = `${a} ＋ ${b} ＝ ？`; answer = a + b;
+      ex = { kind:'add', a, b };
     } else {
       const a = randInt(2, 9), b = randInt(1, a); display = `${a} − ${b} ＝ ？`; answer = a - b;
+      ex = { kind:'sub', a, b };
     }
-    return finishCalc(display, answer, 4);
+    return finishCalc(display, answer, 4, { ex });
   }
 
   if (diff === 'mid') {
     // 6〜8さい：＋ − × と、□を もとめる もんだい、3つの かずの たしざん
-    if (r < 0.22)      { const a=randInt(1,10), b=randInt(1,10); display=`${a} ＋ ${b} ＝ ？`; answer=a+b; }
-    else if (r < 0.44) { const a=randInt(2,15), b=randInt(1,a);  display=`${a} − ${b} ＝ ？`; answer=a-b; }
-    else if (r < 0.66) { const a=randInt(1,9),  b=randInt(1,9);  display=`${a} × ${b} ＝ ？`; answer=a*b; }
-    else if (r < 0.83) { const a=randInt(1,9),  b=randInt(1,9);  display=`□ ＋ ${b} ＝ ${a+b}`; answer=a; }
-    else               { const a=randInt(1,9),  b=randInt(1,9), c=randInt(1,9); display=`${a} ＋ ${b} ＋ ${c} ＝ ？`; answer=a+b+c; }
-    return finishCalc(display, answer, 4);
+    if (r < 0.22) {
+      const a=randInt(1,10), b=randInt(1,10); display=`${a} ＋ ${b} ＝ ？`; answer=a+b;
+      if (answer <= 10) ex = { kind:'add', a, b };
+      else if (a < 10 && b < 10) {   // 10の まとまりを つくる
+        const p = 10 - a, q = b - p;
+        ex = { steps:[`${b} を ${p} と ${q} に わける`, `${a} ＋ ${p} ＝ 10`, `10 ＋ ${q} ＝ ${answer}`] };
+      } else ex = { steps:[`${a} ＋ ${b} ＝ ${answer}`] };
+    }
+    else if (r < 0.44) {
+      const a=randInt(2,15), b=randInt(1,a); display=`${a} − ${b} ＝ ？`; answer=a-b;
+      if (a <= 10) ex = { kind:'sub', a, b };
+      else if (a % 10 < b) {           // 10を つかって ひく
+        const p = a - 10, q = b - p;
+        ex = { steps:[`${b} を ${p} と ${q} に わける`, `${a} − ${p} ＝ 10`, `10 − ${q} ＝ ${answer}`] };
+      } else ex = { steps:[`いちの くらい：${a % 10} − ${b} ＝ ${a % 10 - b}`, `10 ＋ ${a % 10 - b} ＝ ${answer}`] };
+    }
+    else if (r < 0.66) {
+      const a=randInt(1,9), b=randInt(1,9); display=`${a} × ${b} ＝ ？`; answer=a*b;
+      ex = { steps: b <= 5
+        ? [`${a} × ${b} は ${a} を ${b}かい たす`, `${Array(b).fill(a).join(' ＋ ')} ＝ ${answer}`]
+        : [`${a} × ${b} は ${a} を ${b}かい たす`, `${a} × ${b - 1} ＝ ${a * (b - 1)}`, `${a * (b - 1)} ＋ ${a} ＝ ${answer}`] };
+    }
+    else if (r < 0.83) {
+      const a=randInt(1,9), b=randInt(1,9); display=`□ ＋ ${b} ＝ ${a+b}`; answer=a;
+      ex = { steps:[`□ ＝ ${a+b} − ${b}`, `${a+b} − ${b} ＝ ${a}`, `たしかめ：${a} ＋ ${b} ＝ ${a+b}`] };
+    }
+    else {
+      const a=randInt(1,9), b=randInt(1,9), c=randInt(1,9); display=`${a} ＋ ${b} ＋ ${c} ＝ ？`; answer=a+b+c;
+      ex = { steps:[`まえから じゅんに：${a} ＋ ${b} ＝ ${a+b}`, `${a+b} ＋ ${c} ＝ ${answer}`] };
+    }
+    return finishCalc(display, answer, 4, { ex });
   }
 
   if (diff === 'hard') {
     // 9〜10さい：2けたの たしひき・かけわり・□・かっこ
-    if (r < 0.18)      { const a=randInt(10,99), b=randInt(10,99); display=`${a} ＋ ${b} ＝ ？`; answer=a+b; }
-    else if (r < 0.36) { const a=randInt(20,99), b=randInt(10,a);  display=`${a} − ${b} ＝ ？`; answer=a-b; }
-    else if (r < 0.52) { const a=randInt(2,9),   b=randInt(2,9);   display=`${a} × ${b} ＝ ？`; answer=a*b; }
-    else if (r < 0.66) { const b=randInt(2,9); answer=randInt(2,9); display=`${b*answer} ÷ ${b} ＝ ？`; }
-    else if (r < 0.80) { const a=randInt(11,19), b=randInt(2,5);   display=`${a} × ${b} ＝ ？`; answer=a*b; }
-    else if (r < 0.90) { const a=randInt(2,9),   b=randInt(2,9);   display=`□ × ${b} ＝ ${a*b}`; answer=a; }
-    else               { const a=randInt(1,9),   b=randInt(1,9), c=randInt(2,5); display=`(${a} ＋ ${b}) × ${c} ＝ ？`; answer=(a+b)*c; }
-    return finishCalc(display, answer, 6);
+    if (r < 0.18) {
+      const a=randInt(10,99), b=randInt(10,99); display=`${a} ＋ ${b} ＝ ？`; answer=a+b;
+      const ta=a-a%10, tb=b-b%10;
+      ex = { steps:[`じゅうの くらい：${ta} ＋ ${tb} ＝ ${ta+tb}`, `いちの くらい：${a%10} ＋ ${b%10} ＝ ${a%10+b%10}`, `${ta+tb} ＋ ${a%10+b%10} ＝ ${answer}`] };
+    }
+    else if (r < 0.36) {
+      const a=randInt(20,99), b=randInt(10,a); display=`${a} − ${b} ＝ ？`; answer=a-b;
+      const tb=b-b%10;
+      ex = { steps: b % 10 === 0 ? [`${a} − ${b} ＝ ${answer}`]
+        : [`${b} を ${tb} と ${b%10} に わけて ひく`, `${a} − ${tb} ＝ ${a-tb}`, `${a-tb} − ${b%10} ＝ ${answer}`] };
+    }
+    else if (r < 0.52) {
+      const a=randInt(2,9), b=randInt(2,9); display=`${a} × ${b} ＝ ？`; answer=a*b;
+      ex = { steps:[`${a}の だん`, `${a} × ${b - 1} ＝ ${a * (b - 1)}`, `${a * (b - 1)} ＋ ${a} ＝ ${answer}`] };
+    }
+    else if (r < 0.66) {
+      const b=randInt(2,9); answer=randInt(2,9); display=`${b*answer} ÷ ${b} ＝ ？`;
+      ex = { steps:[`${b} × □ ＝ ${b*answer} の □ を さがす`, `${b} × ${answer} ＝ ${b*answer}`, `だから ${b*answer} ÷ ${b} ＝ ${answer}`] };
+    }
+    else if (r < 0.80) {
+      const a=randInt(11,19), b=randInt(2,5); display=`${a} × ${b} ＝ ？`; answer=a*b;
+      ex = { steps:[`${a} を 10 と ${a-10} に わける`, `10 × ${b} ＝ ${10*b}`, `${a-10} × ${b} ＝ ${(a-10)*b}`, `${10*b} ＋ ${(a-10)*b} ＝ ${answer}`] };
+    }
+    else if (r < 0.90) {
+      const a=randInt(2,9), b=randInt(2,9); display=`□ × ${b} ＝ ${a*b}`; answer=a;
+      ex = { steps:[`□ ＝ ${a*b} ÷ ${b}`, `${a*b} ÷ ${b} ＝ ${a}`, `たしかめ：${a} × ${b} ＝ ${a*b}`] };
+    }
+    else {
+      const a=randInt(1,9), b=randInt(1,9), c=randInt(2,5); display=`(${a} ＋ ${b}) × ${c} ＝ ？`; answer=(a+b)*c;
+      ex = { steps:[`かっこの なかを さきに：${a} ＋ ${b} ＝ ${a+b}`, `${a+b} × ${c} ＝ ${answer}`] };
+    }
+    return finishCalc(display, answer, 6, { ex });
   }
 
   // teen（11〜14さい）：せいふの かず・しきの じゅんばん・るいじょう・ほうていしき・わりあい
   const kind = randInt(0, 8);
+  const SAME = 'おなじ ふごうどうしは ＋、ちがう ふごうどうしは −';
   if (kind === 0) {        // せいふの かずの たしざん・ひきざん
     const a = randInt(-20, 20) || 7, b = randInt(-20, 20) || -4;
-    if (Math.random() < 0.5) { display = `${sgn(a)} ＋ ${sgn(b)} ＝ ？`; answer = a + b; }
-    else                     { display = `${sgn(a)} − ${sgn(b)} ＝ ？`; answer = a - b; }
+    if (Math.random() < 0.5) {
+      display = `${sgn(a)} ＋ ${sgn(b)} ＝ ？`; answer = a + b;
+      ex = { steps:[`${sgn(a)} ＋ ${sgn(b)} ＝ ${f(answer)}`],
+             note: (a < 0) === (b < 0) ? 'おなじ ふごうは ぜったいちを たして、その ふごうを つける'
+                                       : 'ちがう ふごうは ぜったいちの おおきい ほうから ちいさい ほうを ひき、おおきい ほうの ふごうを つける' };
+    } else {
+      display = `${sgn(a)} − ${sgn(b)} ＝ ？`; answer = a - b;
+      ex = { steps:[`${sgn(a)} − ${sgn(b)} ＝ ${sgn(a)} ＋ ${sgn(-b)}`, `＝ ${f(answer)}`], note:'ひくことは、ふごうを かえて たすことと おなじ' };
+    }
   } else if (kind === 1) { // せいふの かずの かけざん
     const a = randInt(2, 12) * (Math.random() < 0.5 ? -1 : 1), b = randInt(2, 9) * (Math.random() < 0.5 ? -1 : 1);
     display = `${sgn(a)} × ${sgn(b)} ＝ ？`; answer = a * b;
+    ex = { steps:[`かずだけ：${Math.abs(a)} × ${Math.abs(b)} ＝ ${Math.abs(answer)}`, `ふごう：${answer < 0 ? '−' : '＋'}`, `こたえ：${f(answer)}`], note:SAME };
   } else if (kind === 2) { // せいふの かずの わりざん
     const b = randInt(2, 9) * (Math.random() < 0.5 ? -1 : 1), q = randInt(2, 9) * (Math.random() < 0.5 ? -1 : 1);
     display = `${sgn(b * q)} ÷ ${sgn(b)} ＝ ？`; answer = q;
+    ex = { steps:[`かずだけ：${Math.abs(b*q)} ÷ ${Math.abs(b)} ＝ ${Math.abs(q)}`, `ふごう：${q < 0 ? '−' : '＋'}`, `こたえ：${f(q)}`], note:SAME };
   } else if (kind === 3) { // しきの じゅんばん（かけざんが さき）
     const a = randInt(2, 20), b = randInt(2, 9), c = randInt(2, 9);
-    if (Math.random() < 0.5) { display = `${a} ＋ ${b} × ${c} ＝ ？`; answer = a + b * c; }
-    else                     { display = `${b} × ${c} − ${a} ＝ ？`; answer = b * c - a; }
+    if (Math.random() < 0.5) { display = `${a} ＋ ${b} × ${c} ＝ ？`; answer = a + b * c;
+      ex = { steps:[`かけざんを さきに：${b} × ${c} ＝ ${b*c}`, `${a} ＋ ${b*c} ＝ ${answer}`], note:'＋・− より ×・÷ を さきに けいさんする' }; }
+    else { display = `${b} × ${c} − ${a} ＝ ？`; answer = b * c - a;
+      ex = { steps:[`かけざんを さきに：${b} × ${c} ＝ ${b*c}`, `${b*c} − ${a} ＝ ${f(answer)}`], note:'＋・− より ×・÷ を さきに けいさんする' }; }
   } else if (kind === 4) { // かっこの ある しき
     const a = randInt(2, 15), b = randInt(2, 15), c = randInt(2, 6);
     display = `(${a} − ${b}) × ${c} ＝ ？`; answer = (a - b) * c;
+    ex = { steps:[`かっこの なかを さきに：${a} − ${b} ＝ ${f(a-b)}`, `${sgn(a-b)} × ${c} ＝ ${f(answer)}`] };
   } else if (kind === 5) { // るいじょう（2じょう・3じょう）
     const t = randInt(0, 2);
-    if (t === 0)      { const n = randInt(2, 15); display = `${n}² ＝ ？`; answer = n * n; }
-    else if (t === 1) { const n = randInt(2, 5);  display = `${n}³ ＝ ？`; answer = n * n * n; }
-    else              { const n = randInt(2, 9);  display = `(−${n})² ＝ ？`; answer = n * n; }
+    if (t === 0)      { const n = randInt(2, 15); display = `${n}² ＝ ？`; answer = n * n;
+      ex = { steps:[`${n}² は ${n} を 2かい かける`, `${n} × ${n} ＝ ${answer}`] }; }
+    else if (t === 1) { const n = randInt(2, 5);  display = `${n}³ ＝ ？`; answer = n * n * n;
+      ex = { steps:[`${n}³ は ${n} を 3かい かける`, `${n} × ${n} × ${n} ＝ ${answer}`] }; }
+    else              { const n = randInt(2, 9);  display = `(−${n})² ＝ ？`; answer = n * n;
+      ex = { steps:[`(−${n})² ＝ (−${n}) × (−${n})`, `＝ ${answer}`], note:'− × − は ＋ に なる' }; }
   } else if (kind === 6) { // いちじ ほうていしき
     const x = randInt(-9, 12) || 5, a = randInt(2, 9), b = randInt(1, 20);
     const t = randInt(0, 2);
     // x の あたいを もとめる（しきと「x ＝ ？」を 2ぎょうに わける）
     const rhs = v => (v < 0 ? `−${-v}` : String(v));
-    if (t === 0)      { display = `x ＋ ${b} ＝ ${rhs(x + b)}\nx ＝ ？`; }
-    else if (t === 1) { display = `${a}x ＝ ${rhs(a * x)}\nx ＝ ？`; }
-    else              { display = `${a}x − ${b} ＝ ${rhs(a * x - b)}\nx ＝ ？`; }
+    if (t === 0)      { display = `x ＋ ${b} ＝ ${rhs(x + b)}\nx ＝ ？`;
+      ex = { steps:[`${b} を みぎへ うつすと −${b}`, `x ＝ ${rhs(x + b)} − ${b}`, `x ＝ ${f(x)}`] }; }
+    else if (t === 1) { display = `${a}x ＝ ${rhs(a * x)}\nx ＝ ？`;
+      ex = { steps:[`りょうほうを ${a} で わる`, `x ＝ ${rhs(a * x)} ÷ ${a}`, `x ＝ ${f(x)}`] }; }
+    else              { display = `${a}x − ${b} ＝ ${rhs(a * x - b)}\nx ＝ ？`;
+      ex = { steps:[`−${b} を みぎへ うつすと ＋${b}`, `${a}x ＝ ${rhs(a * x - b)} ＋ ${b} ＝ ${f(a * x)}`, `x ＝ ${f(a * x)} ÷ ${a} ＝ ${f(x)}`] }; }
     answer = x;
   } else if (kind === 7) { // わりあい（％）
     const pct = [10, 20, 25, 50, 75][randInt(0, 4)], base = randInt(1, 12) * 20;
     display = `${base} の ${pct}％ ＝ ？`; answer = base * pct / 100;
+    ex = { steps:[`${pct}％ は ${pct / 100}`, `${base} × ${pct / 100} ＝ ${answer}`], note:'100％ が ぜんぶ（＝1）' };
   } else {                 // 2けた × 2けた
     const a = randInt(11, 25), b = randInt(11, 19);
     display = `${a} × ${b} ＝ ？`; answer = a * b;
+    ex = { steps:[`${b} を 10 と ${b-10} に わける`, `${a} × 10 ＝ ${a*10}`, `${a} × ${b-10} ＝ ${a*(b-10)}`, `${a*10} ＋ ${a*(b-10)} ＝ ${answer}`] };
   }
-  return finishCalc(display, answer, 8, { allowNegative:true });
+  return finishCalc(display, answer, 8, { allowNegative:true, ex });
 }
 
 // せんたくしを つくって もんだいを しあげる
@@ -2503,7 +2734,7 @@ function finishCalc(display, answer, maxDelta, opt) {
   }
   const fmt = n => (n < 0 ? `−${-n}` : String(n));
   return { type:'calc', display, answer:fmt(answer), choices: shuffle([answer, ...wrongs]).map(fmt),
-           picture: !!opt.picture };
+           picture: !!opt.picture, ex: opt.ex };
 }
 
 // =============================================
@@ -2820,14 +3051,250 @@ function checkAnswer(choice, btn) {
     if (!q.noRecord) recordWrong(getRecordCat(q), getQuestionKey(q));
     playWrongSound();
     showFeedback(false);
-    // 間違えたら次の問題へ進む（正しい答えを見る時間をとるため正解時より少し長め）
+    // まちがえたら「ざんねん…」の あとに かいせつを みせる（つぎへ すすむのは かいせつの ボタンで）
     setTimeout(() => {
       hideFeedback();
-      currentQIndex++;
-      if (currentQIndex >= totalQuestions) showGoal();
-      else renderQuestion();
-    }, 2400);
+      showExplain(q, choice);
+    }, 1300);
   }
+}
+
+// =============================================
+//  まちがえた あとの かいせつ
+// =============================================
+let explainTimer = null;
+const EXPLAIN_AUTO_SEC = 7;
+
+// ちいさい こ むけ（3〜5さい・としの えらびが ない ジャンル）は じかんで つぎへ すすむ
+function explainAutoNext() {
+  if (currentCategory === 'review') return false;
+  if (document.getElementById('difficulty-area').style.display !== 'none') return currentDifficulty === 'easy';
+  return ['hiragana', 'katakana', 'number', 'color', 'animal', 'vege'].includes(currentCategory);
+}
+
+// えを ならべて ばんごうを ふる（start＝さいしょの ばんごう－1）
+function countRow(icon, n, start, goneFrom) {
+  let h = '';
+  for (let i = 0; i < n; i++) {
+    const gone = goneFrom !== undefined && i >= goneFrom;
+    h += `<span class="${gone ? 'ex-gone' : ''}">${icon}<small>${gone ? '✖' : start + i + 1}</small></span>`;
+  }
+  return h;
+}
+
+function fillCalcExplain(b, q) {
+  const ex = q.ex || {};
+  let h = '';
+  if (ex.kind === 'add') {
+    h += `<div class="ex-count">${countRow(ex.icon || '🔵', ex.a, 0)}${countRow(ex.icon || '🟢', ex.b, ex.a)}</div>`;
+    h += `<div>${ex.a} と ${ex.b} で、ぜんぶで ${ex.a + ex.b}</div>`;
+  } else if (ex.kind === 'sub') {
+    h += `<div class="ex-count">${countRow('🍎', ex.a, 0, ex.a - ex.b)}</div>`;
+    h += `<div>${ex.a}こ から ${ex.b}こ とると、のこりは ${ex.a - ex.b}こ</div>`;
+  } else {
+    h += `<div class="ex-question">${q.display.replace(/\n/g, '<br>')}</div>`;
+  }
+  if (ex.steps) h += `<div class="ex-steps">${ex.steps.map(s => `<div>${s}</div>`).join('')}</div>`;
+  if (ex.note) h += `<div class="ex-note">💡 ${ex.note}</div>`;
+  b.innerHTML = h;
+}
+
+// とどうふけん：こたえを あか、えらんだ ところを はいいろで ぬった ちず
+function prefExplainMap(b, ansCodes, chosenCodes, wholeMap) {
+  const fills = {};
+  chosenCodes.forEach(c => { fills[c] = '#94a3b8'; });
+  ansCodes.forEach(c => { fills[c] = MAP_TARGET; });
+  let view = null;
+  if (!wholeMap) {
+    view = prefView(unionBB([...ansCodes, ...chosenCodes]));
+    if (view[2] > JAPAN_MAP.w * 0.7) view = null;
+  }
+  const wrap = document.createElement('div');
+  wrap.className = 'ex-map';
+  wrap.appendChild(renderJapanMap({ view, fills, mini: !!view, avoid: [...ansCodes, ...chosenCodes].map(c => MAP_BY_CODE[c].bb) }));
+  b.appendChild(wrap);
+  const lg = document.createElement('div');
+  lg.className = 'ex-legend';
+  lg.innerHTML = '<span class="ex-sw" style="background:#ef4444"></span>こたえ　<span class="ex-sw" style="background:#94a3b8"></span>えらんだ ところ';
+  b.appendChild(lg);
+}
+
+// もんだいごとの かいせつ：answer（こたえの ひょうじ）・chosen・fill(body)・speak()
+function buildExplain(q, choice) {
+  const say = (t, lang, rate) => () => speakText(t, lang || 'ja-JP', rate || 0.75);
+  const e = { answer: q.answer, chosen: choice, fill: () => {}, speak: say(q.answer) };
+
+  if (q.type === 'hiragana' || q.type === 'katakana') {
+    const words = q.type === 'hiragana' ? HIRAGANA_WORDS : KATAKANA_WORDS;
+    if (q.mode === 'first') {
+      e.fill = b => { b.innerHTML = `<div class="ex-emoji">${q.emoji}</div>
+        <div class="ex-word"><span class="ex-hl">${q.word[0]}</span>${q.word.slice(1)}</div>
+        <div>「${q.word}」の さいしょの もじは「${q.answer}」</div>`; };
+      e.speak = say(`${q.word}。さいしょの もじは ${q.answer}`);
+    } else {
+      const w = words.find(x => x.word[0] === q.answer);
+      e.fill = b => { b.innerHTML = `<div class="ex-big">${q.question}</div>`
+        + (w ? `<div class="ex-word">${w.emoji} <span class="ex-hl">${w.word[0]}</span>${w.word.slice(1)} の「${q.answer}」</div>` : ''); };
+      e.speak = say(w ? `${q.answer}。${w.word}の ${q.answer}` : q.answer);
+    }
+  } else if (q.type === 'number') {
+    const n = Number(q.answer);
+    if (q.mode === 'count') {
+      e.fill = b => { b.innerHTML = `<div class="ex-count">${countRow(q.emoji, n, 0)}</div><div>1つずつ かぞえると、${n}こ</div>`; };
+      e.speak = say(Array.from({ length:n }, (_, i) => i + 1).join('、') + '。ぜんぶで ' + n);
+    } else {
+      const from = Math.max(0, n - 2), nums = [];
+      for (let i = from; i <= n + 2; i++) nums.push(i);
+      e.fill = b => { b.innerHTML = `<div class="ex-line">${nums.map(i => `<span class="${i === n ? 'ex-hl' : (i === q.base ? 'ex-base' : '')}">${i}</span>`).join('')}</div>
+        <div>${q.base} の ${q.mode === 'next' ? 'つぎ' : 'まえ'}は ${n}</div>`; };
+      e.speak = say(`${q.base}の ${q.mode === 'next' ? 'つぎ' : 'まえ'}は ${n}`);
+    }
+  } else if (q.type === 'color') {
+    const fig = (type, css, label) => {
+      const fg = document.createElement('figure');
+      const d = document.createElement('div');
+      d.className = 'shape-display';
+      renderShape(d, type, css);
+      fg.appendChild(d);
+      const cap = document.createElement('figcaption');
+      cap.textContent = label;
+      fg.appendChild(cap);
+      return fg;
+    };
+    e.fill = b => {
+      const w = document.createElement('div');
+      w.className = 'ex-compare';
+      w.appendChild(fig(q.shapeType, q.colorCss, `⭕ ${q.answer}`));
+      if (q.mode === 'color') {
+        const c = COLOR_DATA.find(x => x.name === choice);
+        if (c) w.appendChild(fig(q.shapeType, c.css, `✖ ${choice}`));
+      } else {
+        const s = SHAPE_DATA.find(x => x.name === choice);
+        if (s) w.appendChild(fig(s.type, '#94a3b8', `✖ ${choice}`));
+      }
+      b.appendChild(w);
+    };
+    e.chosen = null;
+  } else if (q.type === 'english' && q.mode === 'phrase') {
+    e.fill = b => { b.innerHTML = `<div class="ex-phrase">${q.display}</div><div>＝「${q.answer}」</div>`; };
+    e.speak = say(q.display, 'en-US', 0.8);
+  } else if (q.type === 'animal' || q.type === 'vege' || q.type === 'flower' || q.type === 'english') {
+    e.fill = b => {
+      const box = document.createElement('div');
+      box.className = 'ex-photo';
+      if (q.img) {
+        const im = new Image();
+        im.src = q.img; im.alt = '';
+        im.onerror = () => { box.className = 'ex-emoji'; box.textContent = q.emoji || ''; };
+        box.appendChild(im);
+      } else { box.className = 'ex-emoji'; box.textContent = q.emoji || ''; }
+      b.appendChild(box);
+      if (q.type === 'english' && ENGLISH_JA[q.answer]) {
+        const d = document.createElement('div');
+        d.textContent = `「${q.answer}」は「${ENGLISH_JA[q.answer]}」の こと`;
+        b.appendChild(d);
+      }
+    };
+    if (q.type === 'english') {
+      e.speak = say(q.answer, 'en-US', 0.8);
+      if (ENGLISH_JA[choice]) e.chosen = `${choice}（${ENGLISH_JA[choice]}）`;
+    } else e.speak = say(q.answer, 'ja-JP', 0.7);
+  } else if (q.type === 'uchina') {
+    const item = UCHINA_DATA.find(u => u.w === q.key);
+    const other = UCHINA_DATA.find(u => (q.dir === 'd2j' ? u.m : u.w) === choice);
+    e.fill = b => { b.innerHTML = `<div class="ex-dialect">${item.w}</div><div>＝「${item.m}」という いみ</div>`; };
+    e.speak = say(`${item.w}。${item.m}`, 'ja-JP', 0.7);
+    if (other) e.chosen = q.dir === 'd2j' ? `「${choice}」（ウチナーグチでは「${other.w}」）` : `「${choice}」（「${other.m}」という いみ）`;
+  } else if (q.type === 'calc') {
+    e.fill = b => fillCalcExplain(b, q);
+    e.speak = say('こたえは ' + q.answer.replace('−', 'マイナス'));
+  } else if (q.type === 'pref') {
+    const regName = id => REGION_DATA.find(r => r.id === id).name + ' ちほう';
+    const regCodes = id => PREF_DATA.filter(p => p.r === id).map(p => p.c);
+    if (q.mode === 'region' || q.mode === 'regionWhich') {
+      const chosenId = q.mode === 'region' ? REGION_DATA.find(r => r.name === choice).id : q.cands[Number(choice) - 1];
+      e.answer = regName(q.region);
+      e.chosen = regName(chosenId);
+      e.fill = b => prefExplainMap(b, regCodes(q.region), regCodes(chosenId), true);
+      e.speak = say(regName(q.region));
+    } else {
+      const chosenCode = q.mode === 'which' ? q.cands[Number(choice) - 1] : PREF_DATA.find(p => p.name === choice).c;
+      e.answer = prefRuby(PREF_BY_CODE[q.code]);
+      e.chosen = prefRuby(PREF_BY_CODE[chosenCode]);
+      e.fill = b => {
+        prefExplainMap(b, [q.code], [chosenCode], false);
+        if (q.mode === 'hint') {
+          const ol = document.createElement('ol');
+          ol.className = 'hint-list ex-hints';
+          ol.innerHTML = q.hints.map((h, i) => `<li><span class="hint-no">${i + 1}</span><span class="hint-text">${h}</span></li>`).join('');
+          b.appendChild(ol);
+        }
+      };
+      e.speak = say(PREF_BY_CODE[q.code].kana);
+    }
+  }
+  return e;
+}
+
+function showExplain(q, choice) {
+  const ov = document.getElementById('explain-overlay');
+  const e = buildExplain(q, choice);
+  ov.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'explain-card';
+
+  const head = document.createElement('div');
+  head.className = 'explain-head';
+  head.textContent = '📖 かいせつ';
+  const ans = document.createElement('div');
+  ans.className = 'explain-answer';
+  ans.innerHTML = `こたえは <b>${e.answer}</b>`;
+  const body = document.createElement('div');
+  body.className = 'explain-body';
+  e.fill(body);
+  card.append(head, ans, body);
+  if (e.chosen) {
+    const ch = document.createElement('div');
+    ch.className = 'explain-chosen';
+    ch.innerHTML = `えらんだのは ${e.chosen}`;
+    card.appendChild(ch);
+  }
+
+  const btns = document.createElement('div');
+  btns.className = 'explain-btns';
+  const sp = document.createElement('button');
+  sp.className = 'explain-btn explain-speak';
+  sp.textContent = '🔊 こたえを きく';
+  sp.addEventListener('click', () => e.speak());
+  const nx = document.createElement('button');
+  nx.className = 'explain-btn explain-next';
+  nx.innerHTML = 'つぎへ ▶';
+  nx.addEventListener('click', closeExplain);
+  if (explainAutoNext()) {
+    const bar = document.createElement('span');
+    bar.className = 'auto-bar';
+    bar.style.animationDuration = EXPLAIN_AUTO_SEC + 's';
+    nx.appendChild(bar);
+    explainTimer = setTimeout(closeExplain, EXPLAIN_AUTO_SEC * 1000);
+  }
+  btns.append(sp, nx);
+  card.appendChild(btns);
+  ov.appendChild(card);
+  ov.classList.add('show');
+  e.speak();
+  nx.focus({ preventScroll: true });
+}
+
+function closeExplain() {
+  const ov = document.getElementById('explain-overlay');
+  if (!ov.classList.contains('show')) return;
+  clearTimeout(explainTimer);
+  explainTimer = null;
+  ov.classList.remove('show');
+  ov.innerHTML = '';
+  currentQIndex++;
+  if (currentQIndex >= totalQuestions) showGoal();
+  else renderQuestion();
 }
 
 function showFeedback(isCorrect) {
