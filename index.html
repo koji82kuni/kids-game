@@ -95,6 +95,7 @@
   .cat-btn.cat-english  { border-top: 6px solid #a78bfa; }
   .cat-btn.cat-uchina   { border-top: 6px solid #f59e0b; }
   .cat-btn.cat-flower   { border-top: 6px solid #e879f9; }
+  .cat-btn.cat-todofuken { border-top: 6px solid #14b8a6; }
   .cat-btn.cat-review   { border-top: 6px solid #f472b6; min-height: 70px; flex-direction: row; justify-content: center; }
 
   /* ごほうびスタンプバッジ */
@@ -338,6 +339,13 @@
   }
 
   .choice-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.12); }
+  /* とどうふけん：ちずの いろと おなじ いろの ばんごうボタン（せいかい・まちがいの いろが うえに かさなるよう .correct より まえに おく） */
+  .choice-btn.num-choice { background: var(--cl); border-color: var(--cd); }
+  .choice-btn .num-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.9em; height: 1.9em; border-radius: 50%;
+    color: #fff; font-size: clamp(22px, 6vw, 28px); line-height: 1;
+  }
 
   .choice-btn.correct {
     background: #d1fae5;
@@ -470,6 +478,43 @@
     display: block;
     margin: 0 auto;
   }
+  /* ─── とどうふけん（ちず） ─── */
+  .question-area.qa-map { padding: 14px 10px; gap: 8px; }
+  .jmap-box {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 4 / 3;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #cfe8ff;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+  .jmap-box.square { aspect-ratio: 1 / 1; max-width: 400px; }
+  .jmap-box svg { width: 100%; height: 100%; display: block; }
+  .jmap path { stroke: #64748b; stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .jmap .jmap-inset { fill: none; stroke: #475569; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+  .jmap-box svg.jmap-mini {
+    position: absolute;
+    width: 30%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    background: rgba(207,232,255,0.95);
+    border: 2px solid #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  }
+  .jmap-box svg.mini-br { right: 6px; bottom: 6px; }
+  .jmap-box svg.mini-bl { left: 6px; bottom: 6px; }
+  .jmap-box svg.mini-tr { right: 6px; top: 6px; }
+  .jmap-box svg.mini-tl { left: 6px; top: 6px; }
+  .jmap-mini path { stroke-width: 0.4; }
+  .jmap-mini .jmap-view { fill: none; stroke: #dc2626; stroke-width: 2; vector-effect: non-scaling-stroke; }
+  .pref-title { font-size: clamp(22px, 6.5vw, 32px); font-weight: bold; color: #134e4a; line-height: 1.5; }
+  .pref-title rt, .choice-btn rt { font-size: 0.5em; font-weight: bold; color: #475569; }
+  .choice-btn.pref-choice { font-size: clamp(18px, 5.2vw, 24px); word-break: keep-all; padding: 10px 6px; }
+
   .credit-link {
     display: block;
     text-align: center;
@@ -619,6 +664,7 @@
   body.theme-english  { background: linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 50%, #a78bfa 100%); }
   body.theme-uchina   { background: linear-gradient(135deg, #fff7ed 0%, #fde68a 50%, #fbbf24 100%); }
   body.theme-flower   { background: linear-gradient(135deg, #fdf4ff 0%, #f5d0fe 50%, #e879f9 100%); }
+  body.theme-todofuken { background: linear-gradient(135deg, #f0fdfa 0%, #99f6e4 50%, #2dd4bf 100%); }
   body.theme-home     { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
 
   @keyframes screenFlash {
@@ -837,11 +883,14 @@
       <button class="cat-btn cat-flower" data-cat="flower" onclick="startGame('flower')">
         <span class="cat-emoji">🌷</span>はなのなまえ
       </button>
+      <button class="cat-btn cat-todofuken" data-cat="todofuken" onclick="startGame('todofuken')">
+        <span class="cat-emoji">🗾</span>とどうふけん
+      </button>
       <button class="cat-btn cat-review" data-cat="review" onclick="startGame('review')" style="grid-column: 1 / -1;">
         <span class="cat-emoji">💪</span>にがてふくしゅう
       </button>
     </div>
-    <a class="credit-link" href="flowers/credits.html" target="_blank" rel="noopener">はなの しゃしん・ウチナーグチの でどころ</a>
+    <a class="credit-link" href="flowers/credits.html" target="_blank" rel="noopener">しゃしん・ちず・ウチナーグチの でどころ</a>
   </div>
 
   <!-- ゲーム画面 -->
@@ -917,6 +966,7 @@
 
 <div id="toast"></div>
 
+<script src="map/japan.js"></script>
 <script>
 // =============================================
 //  いらすとや 画像 URL
@@ -1562,6 +1612,222 @@ const FLOWER_DATA = [
 ];
 
 // =============================================
+//  とどうふけん（ちずは map/japan.js の JAPAN_MAP）
+// =============================================
+// c＝都道府県コード（JAPAN_MAP と おなじ）、r＝ちほう
+const PREF_DATA = [
+  {c:1, name:'北海道', kana:'ほっかいどう', r:'hokkaido'},
+  {c:2, name:'青森県', kana:'あおもりけん', r:'tohoku'},   {c:3, name:'岩手県', kana:'いわてけん', r:'tohoku'},
+  {c:4, name:'宮城県', kana:'みやぎけん', r:'tohoku'},     {c:5, name:'秋田県', kana:'あきたけん', r:'tohoku'},
+  {c:6, name:'山形県', kana:'やまがたけん', r:'tohoku'},   {c:7, name:'福島県', kana:'ふくしまけん', r:'tohoku'},
+  {c:8, name:'茨城県', kana:'いばらきけん', r:'kanto'},    {c:9, name:'栃木県', kana:'とちぎけん', r:'kanto'},
+  {c:10, name:'群馬県', kana:'ぐんまけん', r:'kanto'},     {c:11, name:'埼玉県', kana:'さいたまけん', r:'kanto'},
+  {c:12, name:'千葉県', kana:'ちばけん', r:'kanto'},       {c:13, name:'東京都', kana:'とうきょうと', r:'kanto'},
+  {c:14, name:'神奈川県', kana:'かながわけん', r:'kanto'},
+  {c:15, name:'新潟県', kana:'にいがたけん', r:'chubu'},   {c:16, name:'富山県', kana:'とやまけん', r:'chubu'},
+  {c:17, name:'石川県', kana:'いしかわけん', r:'chubu'},   {c:18, name:'福井県', kana:'ふくいけん', r:'chubu'},
+  {c:19, name:'山梨県', kana:'やまなしけん', r:'chubu'},   {c:20, name:'長野県', kana:'ながのけん', r:'chubu'},
+  {c:21, name:'岐阜県', kana:'ぎふけん', r:'chubu'},       {c:22, name:'静岡県', kana:'しずおかけん', r:'chubu'},
+  {c:23, name:'愛知県', kana:'あいちけん', r:'chubu'},
+  {c:24, name:'三重県', kana:'みえけん', r:'kinki'},       {c:25, name:'滋賀県', kana:'しがけん', r:'kinki'},
+  {c:26, name:'京都府', kana:'きょうとふ', r:'kinki'},     {c:27, name:'大阪府', kana:'おおさかふ', r:'kinki'},
+  {c:28, name:'兵庫県', kana:'ひょうごけん', r:'kinki'},   {c:29, name:'奈良県', kana:'ならけん', r:'kinki'},
+  {c:30, name:'和歌山県', kana:'わかやまけん', r:'kinki'},
+  {c:31, name:'鳥取県', kana:'とっとりけん', r:'chugoku'}, {c:32, name:'島根県', kana:'しまねけん', r:'chugoku'},
+  {c:33, name:'岡山県', kana:'おかやまけん', r:'chugoku'}, {c:34, name:'広島県', kana:'ひろしまけん', r:'chugoku'},
+  {c:35, name:'山口県', kana:'やまぐちけん', r:'chugoku'},
+  {c:36, name:'徳島県', kana:'とくしまけん', r:'shikoku'}, {c:37, name:'香川県', kana:'かがわけん', r:'shikoku'},
+  {c:38, name:'愛媛県', kana:'えひめけん', r:'shikoku'},   {c:39, name:'高知県', kana:'こうちけん', r:'shikoku'},
+  {c:40, name:'福岡県', kana:'ふくおかけん', r:'kyushu'},  {c:41, name:'佐賀県', kana:'さがけん', r:'kyushu'},
+  {c:42, name:'長崎県', kana:'ながさきけん', r:'kyushu'},  {c:43, name:'熊本県', kana:'くまもとけん', r:'kyushu'},
+  {c:44, name:'大分県', kana:'おおいたけん', r:'kyushu'},  {c:45, name:'宮崎県', kana:'みやざきけん', r:'kyushu'},
+  {c:46, name:'鹿児島県', kana:'かごしまけん', r:'kyushu'}, {c:47, name:'沖縄県', kana:'おきなわけん', r:'kyushu'},
+];
+// しょうがっこうの きょうかしょと おなじ 8つの ちほう（沖縄は 九州地方）
+const REGION_DATA = [
+  {id:'hokkaido', name:'ほっかいどう'}, {id:'tohoku', name:'とうほく'}, {id:'kanto', name:'かんとう'},
+  {id:'chubu', name:'ちゅうぶ'}, {id:'kinki', name:'きんき'}, {id:'chugoku', name:'ちゅうごく'},
+  {id:'shikoku', name:'しこく'}, {id:'kyushu', name:'きゅうしゅう'},
+];
+const PREF_BY_CODE = {};
+PREF_DATA.forEach(p => { PREF_BY_CODE[p.c] = p; });
+const MAP_BY_CODE = {};
+JAPAN_MAP.prefs.forEach(m => { MAP_BY_CODE[m.c] = m; });
+// 4つの いろ（ちずの ぬり／ばんごうの まる）
+const MAP_COLORS = [
+  {fill:'#fca5a5', mark:'#dc2626'}, {fill:'#93c5fd', mark:'#2563eb'},
+  {fill:'#86efac', mark:'#16a34a'}, {fill:'#fcd34d', mark:'#b45309'},
+];
+const MAP_LAND = '#fffdf7', MAP_TARGET = '#ef4444', MAP_REGION = '#fb923c';
+
+function prefRuby(p) { return `<ruby>${p.name}<rt>${p.kana}</rt></ruby>`; }
+
+// bb（左上・右下）の まわりを すこし ひろげ、4:3 に そろえる
+function prefView(bb) {
+  const w = bb[2] - bb[0], h = bb[3] - bb[1];
+  const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2;
+  let vw = Math.max(w * 1.6, w + 160, 260), vh = Math.max(h * 1.6, h + 120, 195);
+  if (vw / vh < 4 / 3) vw = vh * 4 / 3; else vh = vw * 3 / 4;
+  return [cx - vw / 2, cy - vh / 2, vw, vh];
+}
+function unionBB(codes) {
+  const bbs = codes.map(c => MAP_BY_CODE[c].bb);
+  return [Math.min(...bbs.map(b => b[0])), Math.min(...bbs.map(b => b[1])),
+          Math.max(...bbs.map(b => b[2])), Math.max(...bbs.map(b => b[3]))];
+}
+function regionLabelPoint(id) {
+  // 沖縄は ひだりうえの わくの なかなので、九州の ばんごうは 九州本土に おく
+  const ms = PREF_DATA.filter(p => p.r === id && p.c !== 47).map(p => MAP_BY_CODE[p.c].lp);
+  return [ms.reduce((a, b) => a + b[0], 0) / ms.length, ms.reduce((a, b) => a + b[1], 0) / ms.length];
+}
+
+// ちずの SVG（view＝[x,y,はば,たかさ]、fills＝{コード:いろ}、marks＝ばんごうの まる）
+function mapSvg(view, fills, marks, cls) {
+  const [x, y, w, h] = view;
+  const [ix, iy, iw, ih] = JAPAN_MAP.inset;
+  let s = `<svg class="jmap ${cls || ''}" viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">`;
+  s += `<rect class="jmap-inset" x="${ix}" y="${iy}" width="${iw}" height="${ih}" rx="6"/>`;
+  JAPAN_MAP.prefs.forEach(m => { s += `<path d="${m.d}" fill="${fills[m.c] || MAP_LAND}"/>`; });
+  // ばんごうの まるの おおきさ（にほん ぜんたいの ときは ちいさめ）
+  const r = Math.min(w, h) * (w > 1500 ? 0.032 : 0.055);
+  (marks || []).forEach(mk => {
+    s += `<circle cx="${mk.x}" cy="${mk.y}" r="${r}" fill="${mk.color}" stroke="#fff" stroke-width="${r * 0.18}"/>`
+       + `<text x="${mk.x}" y="${mk.y}" font-size="${r * 1.25}" font-weight="bold" fill="#fff" text-anchor="middle" dominant-baseline="central">${mk.text}</text>`;
+  });
+  return s + '</svg>';
+}
+// ちいさい ぜんたいの ちずは、もんだいの けんに かさならない かどに おく
+function miniCorner(view, bbs) {
+  const [x, y, w, h] = view;
+  const mw = w * 0.32, mh = w * 0.32;        // ちずの わくは 4:3、ちいさい ちずは はばの 3わり
+  const corners = { br:[x + w - mw, y + h - mh], bl:[x, y + h - mh], tr:[x + w - mw, y], tl:[x, y] };
+  let best = 'br', bestArea = Infinity;
+  Object.keys(corners).forEach(k => {
+    const [cx, cy] = corners[k];
+    let a = 0;
+    bbs.forEach(b => {
+      const ox = Math.max(0, Math.min(cx + mw, b[2]) - Math.max(cx, b[0]));
+      const oy = Math.max(0, Math.min(cy + mh, b[3]) - Math.max(cy, b[1]));
+      a += ox * oy;
+    });
+    if (a < bestArea - 1e-6) { best = k; bestArea = a; }
+  });
+  return 'mini-' + best;
+}
+// opt = { view:[x,y,w,h]（null＝にほん ぜんたい）, fills, marks, mini:みぎしたに ぜんたいの ちず }
+function renderJapanMap(opt) {
+  const box = document.createElement('div');
+  const all = [0, 0, JAPAN_MAP.w, JAPAN_MAP.h];
+  box.className = 'jmap-box' + (opt.view ? '' : ' square');
+  let html = mapSvg(opt.view || all, opt.fills || {}, opt.marks);
+  if (opt.view && opt.mini) {
+    const [x, y, w, h] = opt.view;
+    html += mapSvg(all, opt.fills || {}, null, 'jmap-mini ' + miniCorner(opt.view, opt.avoid || []))
+      .replace('</svg>', `<rect class="jmap-view" x="${x}" y="${y}" width="${w}" height="${h}"/></svg>`);
+  }
+  box.innerHTML = html;
+  return box;
+}
+
+// 「あかい ところは どこ？」：ちずを みて なまえを えらぶ
+//   6〜8さい：ほかの こたえは ぜんこくから ／ 9〜10さい：ちかくの けんを 2つ まぜる
+function makePrefWhere(item, diff, origCat) {
+  const near = MAP_BY_CODE[item.c].nb.slice(0, 5);
+  let wrongs;
+  if (diff === 'hard') {
+    const far = shuffle(PREF_DATA.filter(p => p.c !== item.c && !near.includes(p.c)))[0];
+    wrongs = [...shuffle(near).slice(0, 2).map(c => PREF_BY_CODE[c]), far];
+  } else {
+    wrongs = shuffle(PREF_DATA.filter(p => p.c !== item.c)).slice(0, 3);
+  }
+  const q = { type:'pref', mode:'where', code:item.c, key:item.name, answer:item.name,
+              choices: shuffle([item.name, ...wrongs.map(p => p.name)]),
+              view: prefView(MAP_BY_CODE[item.c].bb) };
+  if (origCat) q.origCat = origCat;
+  return q;
+}
+
+// 「〇〇けんは どれ？」：いろと ばんごうの ついた 4つから えらぶ
+//   6〜8さい：ちかくの 8けんから 3つ ／ 9〜10さい：いちばん ちかい 3けん
+function makePrefWhich(item, diff) {
+  // 沖縄は ひだりうえの わくの なかで ほかの けんと はなれているので、
+  //   沖縄の もんだいは にほん ぜんたいを みせ、ほかは べつべつの ちほうから えらぶ
+  let others;
+  if (item.c === 47) {
+    const regs = shuffle(REGION_DATA.filter(r => r.id !== 'kyushu')).slice(0, 3);
+    others = regs.map(r => shuffle(PREF_DATA.filter(p => p.r === r.id))[0].c);
+  } else {
+    const nb = MAP_BY_CODE[item.c].nb.filter(c => c !== 47);
+    others = diff === 'hard' ? nb.slice(0, 3) : shuffle(nb.slice(0, 7)).slice(0, 3);
+  }
+  const cands = shuffle([item.c, ...others]);
+  const view = item.c === 47 ? null : prefView(unionBB(cands));
+  return { type:'pref', mode:'which', code:item.c, key:item.name,
+           answer:String(cands.indexOf(item.c) + 1), choices:['1', '2', '3', '4'], cands, view };
+}
+
+// 3〜5さい：「いろの ついた ところは なにちほう？」と「〇〇ちほうは どれ？」
+function makeRegionQuestions() {
+  const qs = [];
+  const first = shuffle(REGION_DATA);
+  const last = first[first.length - 1].id;
+  const order = [...first, ...shuffle(REGION_DATA.filter(r => r.id !== last)).slice(0, 2)];
+  order.forEach((reg, i) => {
+    if (i % 5 < 3) {
+      const wrongs = shuffle(REGION_DATA.filter(r => r.id !== reg.id)).slice(0, 3).map(r => r.name);
+      qs.push({ type:'pref', mode:'region', region:reg.id, answer:reg.name,
+                choices: shuffle([reg.name, ...wrongs]), noRecord:true });
+    } else {
+      const cands = shuffle([reg, ...shuffle(REGION_DATA.filter(r => r.id !== reg.id)).slice(0, 3)]).map(r => r.id);
+      qs.push({ type:'pref', mode:'regionWhich', region:reg.id, display:reg.name,
+                answer:String(cands.indexOf(reg.id) + 1), choices:['1', '2', '3', '4'], cands, noRecord:true });
+    }
+  });
+  return qs;
+}
+
+// もんだいの ちずを つくる
+function renderPrefQuestion(q, labelEl, mainEl, qa) {
+  qa.classList.add('qa-map');
+  mainEl.className = 'pref-main';
+  const fills = {}, marks = [], avoid = [];
+  let view = null, mini = false;
+  if (q.mode === 'where') {
+    labelEl.textContent = 'あかい ところは どこ？';
+    fills[q.code] = MAP_TARGET;
+    view = q.view; mini = true; avoid.push(MAP_BY_CODE[q.code].bb);
+  } else if (q.mode === 'which') {
+    labelEl.textContent = 'ばんごうで えらんでね';
+    const t = document.createElement('div');
+    t.className = 'pref-title';
+    t.innerHTML = `${prefRuby(PREF_BY_CODE[q.code])}は どれ？`;
+    mainEl.appendChild(t);
+    q.cands.forEach((c, i) => {
+      fills[c] = MAP_COLORS[i].fill;
+      const lp = MAP_BY_CODE[c].lp;
+      marks.push({ x:lp[0], y:lp[1], text:String(i + 1), color:MAP_COLORS[i].mark });
+      avoid.push(MAP_BY_CODE[c].bb);
+    });
+    view = q.view; mini = !!q.view;
+  } else if (q.mode === 'region') {
+    labelEl.textContent = 'いろの ついた ところは なにちほう？';
+    PREF_DATA.forEach(p => { if (p.r === q.region) fills[p.c] = MAP_REGION; });
+  } else {
+    labelEl.textContent = 'ばんごうで えらんでね';
+    const t = document.createElement('div');
+    t.className = 'pref-title';
+    t.textContent = `${q.display} ちほうは どれ？`;
+    mainEl.appendChild(t);
+    q.cands.forEach((id, i) => {
+      PREF_DATA.forEach(p => { if (p.r === id) fills[p.c] = MAP_COLORS[i].fill; });
+      const lp = regionLabelPoint(id);
+      marks.push({ x:lp[0], y:lp[1], text:String(i + 1), color:MAP_COLORS[i].mark });
+    });
+  }
+  mainEl.appendChild(renderJapanMap({ view, fills, marks, mini, avoid }));
+}
+
+// =============================================
 //  ゲーム変数
 // =============================================
 let currentCategory = '';
@@ -1577,7 +1843,7 @@ let streak = 0;  // れんぞくせいかい数
 const CAT_LABELS = {
   hiragana:'ひらがな', katakana:'カタカナ', number:'すうじ', color:'いろ・かたち',
   animal:'どうぶつ', vege:'やさい・くだもの', calc:'けいさん', english:'えいご',
-  uchina:'ウチナーグチ', flower:'はなのなまえ',
+  uchina:'ウチナーグチ', flower:'はなのなまえ', todofuken:'とどうふけん',
   review:'ふくしゅう',
 };
 
@@ -1667,6 +1933,7 @@ function getDataItemKey(item) {
 function getQuestionKey(q) {
   if (q.type === 'uchina') return q.key;          // ウチナーグチの ことば
   if (q.type === 'flower') return q.answer;       // はなの なまえ
+  if (q.type === 'pref') return q.key;            // とどうふけんの なまえ
   if (q.type === 'hiragana' || q.type === 'katakana') return q.question;
   if (q.type === 'english' && q.mode === 'phrase') return q.display; // 英語フレーズをキーに
   if (q.type === 'animal' || q.type === 'vege' || q.type === 'english') return q.emoji;
@@ -1784,6 +2051,7 @@ function generateQuestions(cat) {
       { cat:'english_phrase', data:ENGLISH_PHRASE, find:(d,k)=>d.find(x=>x.phrase===k) },
       { cat:'uchina',   data:UCHINA_DATA,   find:(d,k)=>d.find(x=>x.w===k) },
       { cat:'flower',   data:FLOWER_DATA,   find:(d,k)=>d.find(x=>x.name===k) },
+      { cat:'todofuken', data:PREF_DATA,    find:(d,k)=>d.find(x=>x.name===k) },
     ];
     reviewable.forEach(rv => {
       const hist = wrongHistory[rv.cat] || {};
@@ -1819,6 +2087,8 @@ function generateQuestions(cat) {
         qs.push(makeUchinaQuestion(t.item, Math.random() < 0.6 ? 'd2j' : 'j2d', 'uchina'));
       } else if (t.cat === 'flower') {
         qs.push(makeFlowerQuestion(t.item, 'flower'));
+      } else if (t.cat === 'todofuken') {
+        qs.push(makePrefWhere(t.item, 'mid', 'todofuken'));
       }
     });
     return shuffle(qs);
@@ -1917,6 +2187,16 @@ function generateQuestions(cat) {
   else if (cat === 'flower') {
     const catW = wrongHistory[cat] || {};
     biasedPickRandom(FLOWER_DATA, 10, catW).forEach(item => qs.push(makeFlowerQuestion(item)));
+  }
+
+  else if (cat === 'todofuken') {
+    // 3〜5さいは ちほう、6さい〜は 6もん「どこ？」＋4もん「どれ？」
+    if (currentDifficulty === 'easy') return makeRegionQuestions();
+    const catW = wrongHistory[cat] || {};
+    biasedPickRandom(PREF_DATA, 10, catW).forEach((item, i) => {
+      qs.push(i < 6 ? makePrefWhere(item, currentDifficulty) : makePrefWhich(item, currentDifficulty));
+    });
+    return shuffle(qs);
   }
 
   else if (cat === 'english') {
@@ -2104,11 +2384,11 @@ function startGame(cat) {
   setTheme(cat);
   showScreen('game');
 
-  if (cat === 'calc' || cat === 'english') {
+  if (cat === 'calc' || cat === 'english' || cat === 'todofuken') {
     document.getElementById('difficulty-area').style.display = 'block';
-    currentDifficulty = 'easy';
-    document.getElementById('diff-3').classList.add('active');
-    document.getElementById('diff-6').classList.remove('active');
+    currentDifficulty = cat === 'todofuken' ? 'mid' : 'easy';
+    document.getElementById('diff-3').classList.toggle('active', currentDifficulty === 'easy');
+    document.getElementById('diff-6').classList.toggle('active', currentDifficulty === 'mid');
     document.getElementById('diff-9').classList.remove('active');
     document.getElementById('diff-11').classList.remove('active');
     document.getElementById('diff-phrase').classList.remove('active');
@@ -2162,6 +2442,7 @@ function renderQuestion() {
   qa.innerHTML = '';
   qa.onclick = null;
   qa.classList.remove('tappable');
+  qa.classList.remove('qa-map');
 
   const labelEl = document.createElement('div');
   labelEl.className = 'question-label';
@@ -2239,6 +2520,8 @@ function renderQuestion() {
   } else if (q.type === 'english') {
     labelEl.textContent = 'えいごで なんという？';
     showPhotoOrEmoji(mainEl, q);
+  } else if (q.type === 'pref') {
+    renderPrefQuestion(q, labelEl, mainEl, qa);
   }
 
   qa.appendChild(labelEl);
@@ -2246,7 +2529,8 @@ function renderQuestion() {
 
   // ひらがな・カタカナ・えいご・どうぶつ・やさいはタップで音声
   if (q.type === 'hiragana' || q.type === 'katakana' || q.type === 'english'
-      || q.type === 'animal' || q.type === 'vege' || q.type === 'uchina' || q.type === 'flower') {
+      || q.type === 'animal' || q.type === 'vege' || q.type === 'uchina' || q.type === 'flower'
+      || (q.type === 'pref' && (q.mode === 'which' || q.mode === 'regionWhich'))) {
     qa.classList.add('tappable');
     const hintEl = document.createElement('div');
     hintEl.className = 'tap-hint';
@@ -2258,6 +2542,8 @@ function renderQuestion() {
       // ウチナーグチは 出ている ことばを そのまま よむ（こたえは よまない）
       else if (q.type === 'uchina') speakText(q.display, 'ja-JP', 0.7);
       else if (q.type === 'flower') speakText(q.answer, 'ja-JP', 0.7);
+      else if (q.type === 'pref' && q.mode === 'which') speakText(PREF_BY_CODE[q.code].kana + 'は どれ', 'ja-JP', 0.7);
+      else if (q.type === 'pref') speakText(q.display + 'ちほうは どれ', 'ja-JP', 0.7);
       // どうぶつ・やさいは 日本語をゆっくりめ（rate 0.7）で読み上げる
       else if (q.type === 'animal' || q.type === 'vege') speakText(q.answer, 'ja-JP', 0.7);
       else if (q.mode === 'phrase') {
@@ -2275,7 +2561,20 @@ function renderQuestion() {
     const btn = document.createElement('button');
     btn.className = 'choice-btn' + (isPhraseQ ? ' phrase-choice' : '')
                   + (q.type === 'uchina' ? ' uchina-choice' : '');
-    btn.textContent = choice;
+    btn.dataset.value = choice;
+    if (q.type === 'pref' && (q.mode === 'which' || q.mode === 'regionWhich')) {
+      // ちずの いろと おなじ いろの ばんごう
+      const col = MAP_COLORS[Number(choice) - 1];
+      btn.classList.add('num-choice');
+      btn.style.setProperty('--cl', col.fill);
+      btn.style.setProperty('--cd', col.mark);
+      btn.innerHTML = `<span class="num-badge" style="background:${col.mark}">${choice}</span>`;
+    } else if (q.type === 'pref' && q.mode === 'where') {
+      btn.classList.add('pref-choice');
+      btn.innerHTML = prefRuby(PREF_DATA.find(p => p.name === choice));
+    } else {
+      btn.textContent = choice;
+    }
     btn.addEventListener('click', () => checkAnswer(choice, btn));
     grid.appendChild(btn);
   });
@@ -2369,7 +2668,7 @@ function checkAnswer(choice, btn) {
   } else {
     btn.classList.add('wrong');
     document.querySelectorAll('.choice-btn').forEach(b => {
-      if (b.textContent === q.answer) b.classList.add('correct');
+      if (b.dataset.value === q.answer) b.classList.add('correct');
     });
     streak = 0;
     if (!q.noRecord) recordWrong(getRecordCat(q), getQuestionKey(q));
