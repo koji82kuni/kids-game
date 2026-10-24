@@ -104,8 +104,8 @@
 
   /* ごほうびスタンプバッジ */
   .cat-stars {
-    font-size: clamp(11px, 3vw, 14px);
-    color: #f59e0b;
+    font-size: clamp(12px, 3.2vw, 14px);
+    color: #b45309;
     font-weight: bold;
     min-height: 16px;
   }
@@ -114,7 +114,7 @@
   .combo-text {
     font-size: clamp(15px, 4.2vw, 20px);
     font-weight: bold;
-    color: #f97316;
+    color: #c2410c;
     margin-top: 4px;
     animation: comboPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
   }
@@ -528,8 +528,8 @@
     display: block;
     text-align: center;
     margin-top: 14px;
-    font-size: 12px;
-    color: rgba(0,0,0,0.45);
+    font-size: 13px;
+    color: #374151;
   }
 
   /* ─── いろ・かたち（SVGで描く かたち） ─── */
@@ -537,10 +537,16 @@
 
   #goal-screen { display: none; width: 100%; text-align: center; }
 
+  /* しろい もじに こい ふちどり（どの いろの はいけいでも よめるように） */
   .goal-title {
     font-size: clamp(32px, 10vw, 52px);
     color: #fff;
-    text-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+    text-shadow:
+      -2px -2px 0 #334155,
+       2px -2px 0 #334155,
+      -2px  2px 0 #334155,
+       2px  2px 0 #334155,
+       4px  4px 0 rgba(15,23,42,0.25);
     margin-bottom: 10px;
     animation: bounce 1.5s infinite;
   }
@@ -556,7 +562,7 @@
     color: #555;
   }
 
-  .goal-score span { font-size: clamp(36px, 10vw, 52px); color: #f59e0b; }
+  .goal-score span { font-size: clamp(36px, 10vw, 52px); color: #ea580c; }
 
   /* ゴール画面 塗り絵エリア */
   #goal-coloring {
@@ -627,7 +633,6 @@
 
   #goal-screen.perfect .goal-title {
     animation: bounce 0.6s infinite, rainbowText 1.2s linear infinite;
-    text-shadow: 0 0 20px rgba(255,255,255,0.8);
   }
 
   #goal-screen.perfect #goal-coloring {
@@ -798,7 +803,7 @@
     color: #2563eb;
     margin-top: 5px;
   }
-  .growth-art.grow-up + .growth-label { color: #d97706; }
+  .growth-art.grow-up + .growth-label { color: #b45309; }
 
   /* ─── フレーズ問題表示 ─── */
   .question-phrase {
@@ -828,10 +833,15 @@
     animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
   }
   #goal-irasutoya-label {
-    font-size: clamp(12px, 3.2vw, 15px);
+    display: block;
+    width: fit-content;
+    margin-left: auto; margin-right: auto;
+    font-size: clamp(13px, 3.6vw, 16px);
     font-weight: bold;
-    color: #fff;
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+    color: #334155;
+    background: rgba(255,255,255,0.92);
+    border-radius: 999px;
+    padding: 3px 12px;
     margin-top: 4px;
   }
 
@@ -846,15 +856,15 @@
   .hint-list li.hint-new { background: #fff; border-color: #14b8a6; animation: popIn 0.3s ease; }
   .hint-no {
     flex: none; width: 1.6em; height: 1.6em; margin-top: 0.05em; border-radius: 50%;
-    background: #14b8a6; color: #fff; font-size: 0.9em;
+    background: #0f766e; color: #fff; font-size: 0.9em;
     display: inline-flex; align-items: center; justify-content: center;
   }
   .hint-next-btn {
     font-family: inherit; font-weight: bold; font-size: clamp(16px, 4.6vw, 20px);
-    color: #fff; background: #f59e0b; border: none; border-radius: 999px;
-    padding: 10px 22px; box-shadow: 0 4px 0 #b45309; cursor: pointer;
+    color: #fff; background: #c2410c; border: none; border-radius: 999px;
+    padding: 10px 22px; box-shadow: 0 4px 0 #7c2d12; cursor: pointer;
   }
-  .hint-next-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b45309; }
+  .hint-next-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #7c2d12; }
   .hint-left { font-size: 0.8em; }
   .hint-score { font-size: clamp(16px, 4.6vw, 20px); font-weight: bold; color: #b45309; margin-top: 8px; }
 
@@ -946,7 +956,7 @@
     border: none; border-radius: 999px; padding: 12px 22px; cursor: pointer;
   }
   .explain-speak { background: #2563eb; color: #fff; box-shadow: 0 4px 0 #1e40af; }
-  .explain-next { background: #10b981; color: #fff; box-shadow: 0 4px 0 #047857; min-width: 140px; }
+  .explain-next { background: #047857; color: #fff; box-shadow: 0 4px 0 #064e3b; min-width: 140px; }
   .explain-btn:active { transform: translateY(3px); box-shadow: none; }
   .explain-next .auto-bar {
     position: absolute; left: 0; bottom: 0; height: 5px; width: 100%;
