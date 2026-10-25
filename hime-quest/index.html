@@ -1265,7 +1265,7 @@ function fxLoop(now){ if(!fxOn) return;
 
 // ── シークレット：みんなが かいた え が まほうで へんしんして うごく ──
 // drawings/eNN.jpg＝Gemini で えほん ふうに した え ／ oNN.jpg＝もとの え（なまえが かいてある え は のせない）
-const DRAWINGS=[0,1,2,3,4,5,6,7,8,9].map(i=>{ const n=String(i).padStart(2,'0');
+const DRAWINGS=[0,1,2,3,4,5,6,7,8].map(i=>{ const n=String(i).padStart(2,'0');
   return {art:'drawings/e'+n+'.jpg', orig:i<8?'drawings/o'+n+'.jpg':null}; });
 let secretImg=null, secretOrig=null;
 function preloadSecret(){ const d=DRAWINGS[Math.floor(Math.random()*DRAWINGS.length)];
