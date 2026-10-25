@@ -104,7 +104,8 @@
   .progress-bar { height: 100%; width: 0%; border-radius: 999px;
     background: linear-gradient(90deg,#34d399,#22d3ee); transition: width .3s; }
   #board { width: min(90vw, 440px); aspect-ratio: 1; margin: 0 auto; display: grid; gap: 2px;
-    background: #e5e7eb; padding: 4px; border-radius: 12px; box-shadow: inset 0 0 0 2px #cbd5e1; }
+    background: #e5e7eb; padding: 4px; border-radius: 12px; box-shadow: inset 0 0 0 2px #cbd5e1;
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .cell { border-radius: 4px; background: #f1f5f9; transition: background .12s, transform .1s; }
   .cell.empty { background: transparent; }
   .cell.fillable { cursor: pointer; box-shadow: inset 0 0 0 1px #e2e8f0; }
@@ -349,7 +350,8 @@ function beep(freq, dur, type='sine', vol=0.2){
     o.start(); o.stop(c.currentTime+dur);
   } catch(e){}
 }
-function sPaint(){ beep(600,.07,'sine',.14); }
+let lastPaintSound=0;   // なぞって つづけて ぬるとき おとが かさならないように
+function sPaint(){ const t=performance.now(); if(t-lastPaintSound<60) return; lastPaintSound=t; beep(600,.07,'sine',.14); }
 function sSnap(){ beep(520,.08,'square',.18); setTimeout(()=>beep(780,.10,'square',.15),50); }
 function sClear(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.25,'triangle',.2),i*140)); }
 
@@ -594,7 +596,6 @@ function buildColorBoard(){
     else {
       cell.classList.add('fillable');
       if(colorMode==='otehon'){ cell.classList.add('numbered'); cell.textContent=v; }
-      cell.onclick=()=>paintCell(cell,x,y);
     }
     board.appendChild(cell);
   }
@@ -626,10 +627,12 @@ function buildPaletteUI(){
     });
   }
 }
-function paintCell(cell,x,y){
+// swipe=true：なぞって とおった マス（ぬれない マス・おなじ いろの マスは だまって とばす）
+function paintCell(cell,x,y,swipe){
   if(colorMode==='otehon'){
     const v=current.grid[y][x];
     if(otehonIdx === v-1){
+      if(swipe && paintState[y][x]) return;
       const c=current.palette[otehonIdx];
       cell.style.background=c; cell.textContent='';
       cell.classList.remove('pop'); void cell.offsetWidth; cell.classList.add('pop');
@@ -637,12 +640,14 @@ function paintCell(cell,x,y){
       sPaint(); updateColorProgress();
       checkOtehonDone();
     } else {
+      if(swipe) return;
       // ちがう番号の色 → セルを振動させて教える
       cell.classList.remove('shake'); void cell.offsetWidth; cell.classList.add('shake');
       beep(200,.12,'square',.12);
     }
   } else {
     const erase=(freeColor==='#ffffff');
+    if(swipe && paintColors[y][x]===(erase?null:freeColor)) return;
     cell.style.background = erase ? '#f1f5f9' : freeColor;
     cell.classList.remove('pop'); void cell.offsetWidth; cell.classList.add('pop');
     paintState[y][x] = !erase;
@@ -650,6 +655,42 @@ function paintCell(cell,x,y){
     sPaint(); updateColorProgress();
   }
 }
+// ── タップでも、ゆびで なぞっても ぬれる ──
+let stroke=null;   // なぞっている あいだの きろく
+function cellAt(px,py){
+  const el=document.elementFromPoint(px,py);
+  return el && el.classList.contains('fillable') && el.parentElement.id==='board' ? el : null;
+}
+function strokeTo(px,py){
+  // はやく なぞっても マスが とびとびに ならないよう、まえの いちから こまかく たどる
+  const step=Math.max(4, document.getElementById('board').clientWidth/current.grid.length/3);
+  const dx=px-stroke.lastX, dy=py-stroke.lastY;
+  const n=Math.max(1, Math.ceil(Math.hypot(dx,dy)/step));
+  for(let i=1;i<=n;i++){
+    const cell=cellAt(stroke.lastX+dx*i/n, stroke.lastY+dy*i/n);
+    if(cell && !stroke.done.has(cell)){ stroke.done.add(cell); paintCell(cell,+cell.dataset.x,+cell.dataset.y,true); }
+  }
+  stroke.lastX=px; stroke.lastY=py;
+}
+(()=>{
+  const board=document.getElementById('board');
+  board.addEventListener('pointerdown',e=>{
+    if(e.button>0 || stroke) return;
+    e.preventDefault();
+    try{ board.setPointerCapture(e.pointerId); }catch(err){}
+    stroke={id:e.pointerId, lastX:e.clientX, lastY:e.clientY, done:new Set()};
+    const cell=cellAt(e.clientX,e.clientY);
+    if(cell){ stroke.done.add(cell); paintCell(cell,+cell.dataset.x,+cell.dataset.y,false); }
+  });
+  board.addEventListener('pointermove',e=>{
+    if(!stroke || e.pointerId!==stroke.id) return;
+    const evs=e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+    (evs.length ? evs : [e]).forEach(ev=>strokeTo(ev.clientX,ev.clientY));
+  });
+  const end=e=>{ if(stroke && e.pointerId===stroke.id) stroke=null; };
+  board.addEventListener('pointerup',end);
+  board.addEventListener('pointercancel',end);
+})();
 function checkOtehonDone(){
   let total=0,done=0;
   current.grid.forEach((row,y)=>row.forEach((v,x)=>{ if(v!==0){ total++; if(paintState[y][x]) done++; } }));
