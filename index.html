@@ -1183,7 +1183,7 @@
 
 <!-- おじさんおんな リワード オーバーレイ（全問正解25%で表示） -->
 <div id="ojisan-overlay" role="dialog" aria-modal="true">
-  <img id="onepiece-img" src="" alt="ワンピース スペシャル！" />
+  <img id="onepiece-img" src="" alt="みんなの え スペシャル！" />
   <div class="ojisan-label" id="onepiece-label">⭐ スペシャルとうじょう！ ⭐</div>
   <button id="ojisan-close-btn" onclick="closeOjisanOverlay()">✨ とじる</button>
 </div>
@@ -1220,32 +1220,6 @@ const IRASUTOYA_GOAL = [
   { minScore:10, url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgnOQfLfhILjCYNS7aPxa-M65p2n1XhRty5dj6HiBIw5OudpVmgP93sgu_mYvTjeZpQzzBrx166lnB09hUmcZMuXMCG9F40jxAVhBzTWtfleUhfkR_JX1wv68QyzKn5ltkIksupr7_rIpo/s400/test100.png', label:'100てん！やったね！🏆' },
   { minScore:7,  url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh6Vkn9SVcOoTd4QO8lZahKJH6bweNX8QPcgJKlolKlzmARQN-KFpqMHIUuapLUG3dH8mXVpcFY569PHNSAClHJOP1WV-TeNzlj44YxmtLA6wKcNU3TD4iWh_CPLFP5OgHQm2RennIAPzSg/s400/gutspose_man.png', label:'よくできたね！💪' },
   { minScore:0,  url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGJhe_pZIttmovcJodE-d8D8QrZUns_9thKpf9sFLsOzmF-q1uNPMEwG0xyGAgpMcPCJ1rtaCyN8ZpEhZbJb3UM2eJSDJn-OpGIzfjb7Jkn7fPeGGU2JKv-KqSBF8qYHCPyljPtd-LwETT/s400/study_wakaranai_girl.png', label:'もういちどやってみよう！' },
-];
-
-// =============================================
-//  ONEPIECE いらすとや キャラURL（全20種）
-// =============================================
-const ONEPIECE_CHARS = [
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiPJVChEetoejp4E_ARlr9RzNZjTiFkDK8800AWMOFwpmjlAox7mhH2JLR0Qxr0p0cBVWa2j7wUPpK-9XewWFlf0Jht0xMy7EL0JeWd_BCsZpfVE5FIZrqrFJLSwAkIXq2sRnDk64COSjH3/s200/onepiece01_luffy.png', name:'ルフィ' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgkZ57Udi7AA5MRw4uzcx9M4R0J8PK03fIjZaaRlCLWBW5gBtnZpuCWLbao925kYGJy0HNcxEf9NcfbHFyuraKrY-4WhkFV01Ufut5cDeRpuiZ5cewk8CCQUD2v178dm67n_DqoHUrr_s-K/s200/onepiece02_zoro_bandana.png', name:'ゾロ' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgtRfZsghuLTIyRzywbowxR_q3dtXJn33kub2lS7_pDSVeNlHKveWnsHjGOikcQlg6pgZT63i43SgAcJosU2mES_ZKK-f6G9qWvDViXOtBiDRMEDjQJOGghw-ZSUFYXZ1P01l5ZN0gkANI-/s200/onepiece03_nami.png', name:'ナミ' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjtPsAfN0IE2qpCnMIXr9CPKgJkLqiVE0VLh74Ohler_hT4-mosvVlNOraDvmLAJVz65EXKbODKXTheOL1o-IbEBWbZGvuWsxCbMpJeM7u6XbehkLDP8r21lAGu2Q3ZS_5lg0-nO09mxZJ1/s200/onepiece04_usopp_sogeking.png', name:'ウソップ' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjb915nunoRAuBcf2adDTT6Fr8_1ZDE01Ub0VKqNROZTAF-6hAt_f-1MZZxBfa3-OOIbxPvP3-3d3hBJdofYgYtysdgEZHVVkOEORkGoHxeYiU75aESvdKnxIuzZCr4RsjHe2SoUMfS3PEo/s200/onepiece05_sanji.png', name:'サンジ' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjwXhPLNdUe6H1e8X7CvW3edgE1BqK7sNHFIbSLw9Y9sOzNrJFJig-sz9B2IRqsgYWXl-TKRpL99sggcD2qfcN82T5-MxZKdQtMDnjDF7luEIzsB9J41XFUMIN4SUzmCjXwMyuYh1dCkqn0/s200/onepiece06_chopper.png', name:'チョッパー' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgb_FkfaAWLeM3alcb5YOVmXPC2jsBEuuTQ8mplw5B-cnvd8LlExSr_3u7ybNGyT2TRzckrJSLOaY88DIuP6PVCCXxnMCY-a8b1SurHeEhWijrpmRnRpCWV6bw9LRiQghkECdemI4l2oebS/s200/onepiece07_robin.png', name:'ロビン' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEibyeQ970m83yM43EI4t_wfvMdgoP_wqk6pkG8OiwxUJxxqVqPxq8o1pcQaphSepqt2oM1P5cmxTAlhpJRmt3_0JuYKNggM5qIdNFQwzp0RP8xqEzglhuYTIrG-9aBB-fm2iXT_Qejf5rUJ/s200/onepiece08_franky.png', name:'フランキー' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEicPjQ7rvpZ7J4AdwOQLeidTouchG8itU6LzqT3nrNqBLdajXOB2MiFyWoVqYOnLx4ZGLqIKyejQ3kb0t0C_lU6buhcyJ6_svhzZl-NuaEcSUBR2XCj4xbZbZxg-nYWEVhIe8BEBOyrqpS-/s200/onepiece09_brook.png', name:'ブルック' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjiuM-JEUz8mI_zQIxSoV8WjSM3w6N-GFMBYEpb8C7EapguTAX_2rtwHjASJVujRmsxzcsMegLSMx7d9xWkc_tdZKJ3zbHXEd_Jngvvy3pRKiYQjeilI12n9CDomgFXFXyi6rfdFb5JWDNv/s200/onepiece10_jinbe.png', name:'ジンベエ' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGU6Mm_kPvex9hOrvf8-DoAeWQZTL9-1SO-1k2wCLfvV8XTQ2Iu0zwIBtwvgGak4can9FDiFRV6cidcGV94fgx9c0dZNeO1TCANkp7Nxdq_f6-Ph1CliaxJLLlTWt-RoWMjPcR0YufaHGb/s200/onepiece11_arlong.png', name:'アーロン' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEguclVUy3ZqT87uuA3v-T8cwnYHnlz1V5yZlLRMjTUOEwOtqQCExPQM83ZQoNNFPlMhL3gQyWtmZEnVoDtIfUB3iiaZE88UDFCGI0vtBX4SsZUcyn4mCSSY1rHZ8HTGqhr-Dka_T84bL9q_/s200/onepiece12_buggy.png', name:'バギー' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhb5cRnvUOeieTiPUR6Cfe2ZOuJVsRx7K91hyPPVPSfedJQ8A1yrtHq8izGtnYRREwl9TOV_ekM6llbX5bOpyfcprmxH4R1kPaIYKl5zVIehFyhZhtsuzqRaoaVsA_WCbJyTacoUQubXQJs/s200/onepiece13_crocodile.png', name:'クロコダイル' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjTBUDIYA3NqI3GndowHTh-oZf4TAm99PEgmUl09jar-wkO4DPM9FX8sPOQeH5VN7uBKmG8qpkaNiS4NDZlBCLiyoGsTS8TUuw36gMtMcA0kF83EY7tIyS3yqAegpe9yv1YEqXV0bINz0WX/s200/onepiece14_enel.png', name:'エネル' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh8HMVDGjxdwSbuwJyZm6miCx3XZkOXJlysf3c-3GHLXfq6mxpu7uSNmnta6gvdKzS34EECdpuYOzt-s9i8JuFBYG0tAmzFdy5AelwVUFKRIR1F059z086rxJY47BRuzdUyZyzR5ug4G0lC/s200/onepiece15_lucci.png', name:'ルッチ' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg8FDaPQyv5Ru-BQMKNgAfhdeC0mB6K2hXCVqryjuJnC9EDgNVaayxrRXJfFPhFp99aPTsLXGo_I6J2PANaCDaI_CPciUH4rYzv7Y0QiQeYZB-MYVIFxCZWA7YpTsYa3WUBMP5gJE3DPbnC/s200/onepiece16_moria.png', name:'モリア' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEidO5vwwLm34AaQMo2TVuu5Shvp3oXKv2ZaTQUB_LxV9fl5vvPcLMUexO5iFbuk-53lljprPLbdOxIMPgfNePqxndeC9HsZs2cxs5VJ_3gIiYE8LfQmPWYTwizFr3bD2gTgrZofEIc2mEVO/s200/onepiece17_doflamingo.png', name:'ドフラミンゴ' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh8v_HjCvRoh3UssgZFoJdUjFoQHpWLt3YQejUT3C3lwJN3k-gHaslqdPUY-rG3_n8J9G5e6yQLcOWeqGDXQMD3xD8HL7ERldtL3joAaw9KI3CSLlrRdbzX35UE-UjvJcclz0uPpBoNhBvi/s200-c/onepiece18_linlin_kaido.png', name:'ビッグマム&カイドウ' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgJamOZbJE8_UY0oTV_kgtpwa3tdoKtgH21U8F3B2k-7YgxRKSvKkzCyRFMfQ73_oAzYc5fe863l1EUuVQkwz-04SDD_cpHjqzUDfrGAJyiaXJezQXDopzlFy5pYHRXwH_fUcT7xG1zMDIm/s200/onepiece19_kurohige_teach2.png', name:'黒ひげ' },
-  { url:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiT5_y_GQUjG04b62izbowYZU8UWbZrc3Rmbai1L2FuT1YcdHSWtRF9ili2UaMANjFaQYFYeFRN1rePW8Hos7tI20vKaVZGgmf4QgtyckfQ5z84qFJt-WsgDOYXKIdrsxPyw_GddpsFXISL/s200-c/onepiece20_santaisyou.png', name:'三大将' },
 ];
 
 // =============================================
@@ -3416,7 +3390,7 @@ function showGoal() {
     setTimeout(() => launchStars(),     400);  // さらに星も降らせる
     playPerfectFanfare();                 // 豪華ファンファーレ
 
-    // 30% の確率でONEPIECEキャラをランダム表示（画像は先に読み込んでおく）
+    // 30% の確率で みんなの え（special/）を表示（画像は先に読み込んでおく）
     if (Math.random() < 0.30) {
       const reward = pickRewardImage();
       setTimeout(() => showOjisanOverlay(reward), 1800);
@@ -3445,6 +3419,8 @@ let SECRET_IMAGES = [
   'special/ojisan_digital.jpg',   // デジタル版
   'special/machi_to_tori.jpg',    // まちと とり
   'special/nitto_girl.jpg',       // ニットぼうの おんなのこ
+  // 姪っ子の絵を Gemini で えほん ふうに したもの（おひめさまを たすけろ と おなじ絵）
+  ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11].map(i => `special/kids_drawing_${String(i).padStart(2, '0')}.jpg`),
 ];
 
 // special/ フォルダの中身を読み取って SECRET_IMAGES を最新にする
@@ -3467,15 +3443,9 @@ function refreshSpecialImages() {
 
 // ご褒美画像を先に選んでプリロード（オーバーレイ表示を瞬時にする）
 function pickRewardImage() {
-  let reward;
-  // 50%でシークレット（2種ランダム）、50%でONEPIECEキャラをランダム選択
-  if (Math.random() < 0.50) {
-    const url = SECRET_IMAGES[Math.floor(Math.random() * SECRET_IMAGES.length)];
-    reward = { src: url, label: '✨ シークレット とうじょう！ ✨' };
-  } else {
-    const chara = ONEPIECE_CHARS[Math.floor(Math.random() * ONEPIECE_CHARS.length)];
-    reward = { src: chara.url, label: `⭐ ${chara.name} とうじょう！ ⭐` };
-  }
+  // 2026-10-27 オーナー指示：姪っ子の絵が増えたので ONEPIECE をやめ、special/ の絵だけにした
+  const url = SECRET_IMAGES[Math.floor(Math.random() * SECRET_IMAGES.length)];
+  const reward = { src: url, label: '✨ シークレット とうじょう！ ✨' };
   const im = new Image();
   im.src = reward.src;
   return reward;
