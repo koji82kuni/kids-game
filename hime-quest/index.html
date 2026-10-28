@@ -1309,7 +1309,7 @@ function show(scr){ document.querySelectorAll('.screen').forEach(s=>s.classList.
 function syncDiff(){ document.querySelectorAll('.diff-btn').forEach(x=>x.classList.toggle('sel',x.dataset.d===diffKey));
   document.querySelectorAll('.diff-desc').forEach(d=>d.textContent=diff.desc); }
 function startGame(key){ if(key) stageKey=key; reset(); state='play'; show(null); resumeAudio(); startBGM(); tryFullscreen();
-  if(STAGES[stageKey].bossType==='demon') preloadSecret(); }
+  preloadSecret(); }
 // ===== クリア画面 =====
 // いらすとや（直リンク）：ステージごとに 2まい から 1まい えらぶ
 const IRASUTOYA='https://blogger.googleusercontent.com/img/b/R29vZ2xl/';
@@ -1374,8 +1374,9 @@ function win(){ state='clear'; stopBGM();
   img.onload=()=>fig.classList.remove('hidden'); img.onerror=()=>fig.classList.add('hidden');
   img.src=IRASUTOYA+il.imgs[Math.floor(Math.random()*il.imgs.length)];
   show('clear-screen'); sFanfare(); startClearFx(stageKey);
-  // 大魔王の すみかは 50% で みんなの え が うごきだす
-  if(stageDef.bossType==='demon' && secretImg && secretImg.complete && secretImg.naturalWidth && Math.random()<0.5) later(openSecret,2600);
+  // みんなの え：大魔王の すみかは 50%、ほかの ステージは 25% で でる（2026-10-28 A案）
+  const secretRate=stageDef.bossType==='demon'?0.5:0.25;
+  if(secretImg && secretImg.complete && secretImg.naturalWidth && Math.random()<secretRate) later(openSecret,2600);
 }
 
 // ── クリア画面の かみふぶき・はなび（canvas）──
@@ -1428,12 +1429,15 @@ function fxLoop(now){ if(!fxOn) return;
 
 // ── シークレット：みんなが かいた え が まほうで へんしんして うごく ──
 // drawings/eNN.jpg＝Gemini で えほん ふうに した え ／ oNN.jpg＝もとの え（なまえが かいてある 8・9 は のせない。9は とりさげ）
+// eNNw.jpg＝てを ふる ポーズ／eNNj.jpg＝ジャンプの ポーズ（どちらも Gemini で おなじ絵の ポーズだけ かえたもの）
 const DRAWINGS=[0,1,2,3,4,5,6,7,8,10,11].map(i=>{ const n=String(i).padStart(2,'0');
-  return {art:'drawings/e'+n+'.jpg', orig:(i!==8)?'drawings/o'+n+'.jpg':null}; });
-let secretImg=null, secretOrig=null;
+  return {art:'drawings/e'+n+'.jpg', orig:(i!==8)?'drawings/o'+n+'.jpg':null, wave:'drawings/e'+n+'w.jpg', jump:'drawings/e'+n+'j.jpg'}; });
+let secretImg=null, secretOrig=null, secretWave=null, secretJump=null;
+const loadImg=src=>{ const im=new Image(); im.src=src; return im; };
+const ready=im=>!!(im && im.complete && im.naturalWidth);
 function preloadSecret(){ const d=DRAWINGS[Math.floor(Math.random()*DRAWINGS.length)];
-  secretImg=new Image(); secretImg.src=d.art;
-  secretOrig=null; if(d.orig){ secretOrig=new Image(); secretOrig.src=d.orig; } }
+  secretImg=loadImg(d.art); secretWave=loadImg(d.wave); secretJump=loadImg(d.jump);
+  secretOrig=d.orig?loadImg(d.orig):null; }
 const scv=document.getElementById('secret-cv'), sx=scv.getContext('2d');
 let secOn=false, secT0=0, secMask=null, secTmp=null, secSparks=[], secHasOrig=false, secChimed=false;
 function openSecret(){ if(state!=='clear') return;
@@ -1444,7 +1448,7 @@ function openSecret(){ if(state!=='clear') return;
   fitSecret();
   secMask=document.createElement('canvas'); secMask.width=scv.width; secMask.height=scv.height;
   secTmp=document.createElement('canvas'); secTmp.width=scv.width; secTmp.height=scv.height;
-  secSparks=[]; secT0=performance.now();
+  secSparks=[]; secT0=performance.now(); secPose='base'; secPrev='base'; secPoseT=0;
   document.getElementById('secret-ov').classList.remove('hidden');
   [523,659,784,988,1175,1568].forEach((f,i)=>beep(f,.22,'triangle',.11,i*0.09));
   if(!secOn){ secOn=true; requestAnimationFrame(secLoop); } }
@@ -1474,18 +1478,36 @@ function drawSparks(){ const h=scv.height; sx.textAlign='center'; sx.textBaselin
   for(const s of secSparks){ s.y+=s.vy; s.life--; sx.globalAlpha=Math.max(0,s.life/70); sx.fillText(s.e,s.x,s.y); }
   sx.globalAlpha=1; secSparks=secSparks.filter(s=>s.life>0); }
 // いきている みたいに うごく：ぷるぷる＋ぽよん＋ゆっくり ズーム＋ひかりの すじ
-function livingArt(lt){ const w=scv.width, h=scv.height, im=secretImg;
-  const cyc=lt%3.2, boing=cyc<0.6?Math.sin(cyc/0.6*Math.PI):0;
-  const zoom=1.04+0.05*Math.sin(lt*0.5), sy=1-0.06*boing, sxk=1+0.04*boing;
-  const amp=reduceMotion?0:w*0.008, strips=40, sh=h/strips;
-  sx.save(); sx.translate(w/2,h); sx.scale(zoom*sxk,zoom*sy); sx.rotate(reduceMotion?0:Math.sin(lt*1.1)*0.015); sx.translate(-w/2,-h);
-  for(let i=0;i<strips;i++){ const off=Math.sin(i/strips*Math.PI*2*1.3+lt*3)*amp;
-    sx.drawImage(im,0,i*im.naturalHeight/strips,im.naturalWidth,im.naturalHeight/strips+1,off,i*sh,w,sh+1); }
+// うごき：おなじ絵の「てを ふる」「ジャンプ」の ポーズを パラパラまんがの ように きりかえる
+// （1しゅう 7.2びょう：たつ → てを ふる×3 → たつ → ためて ぴょん！ → たつ）
+const POSE_LOOP=7.2;
+function poseAt(t){ t%=POSE_LOOP;
+  if(t<1.0) return 'base';
+  if(t<3.4) return Math.floor((t-1.0)/0.4)%2===0?'wave':'base';
+  if(t<4.3) return t>4.0?'crouch':'base';
+  if(t<5.3) return 'jump';
+  return 'base'; }
+let secPose='base', secPoseT=0, secPrev='base';
+function poseImg(k){ if(k==='wave' && ready(secretWave)) return secretWave; if(k==='jump' && ready(secretJump)) return secretJump; return secretImg; }
+function livingArt(lt){ const w=scv.width, h=scv.height;
+  const k=poseAt(lt);
+  if(k!==secPose){ secPrev=secPose; secPose=k; secPoseT=lt;
+    if(k==='jump'){ beep(523,.08,'square',.08); beep(784,.12,'square',.08,.06);                    // ぴょん
+      for(let i=0;i<8;i++) sparkle(w*(0.3+Math.random()*0.4),h*(0.75+Math.random()*0.2),['✨','⭐'][i%2]); }
+    if(k==='base' && secPrev==='jump') for(let i=0;i<6;i++) sparkle(w*(0.35+Math.random()*0.3),h*0.92,'💫');   // ちゃくち
+    if(k==='wave' && Math.random()<0.5) sparkle(w*(0.4+Math.random()*0.3),h*0.3,'💖'); }
+  const zoom=1.0+0.03*(0.5-0.5*Math.cos(lt*0.35));               // ゆっくり すこし よる（なみうたない）
+  const sq=secPose==='crouch'?0.035:0;                            // ジャンプの まえに ちょっと しゃがむ
+  sx.save(); sx.translate(w/2,h); sx.scale(zoom*(1+sq*0.5),zoom*(1-sq)); sx.translate(-w/2,-h);
+  const fade=Math.min(1,(lt-secPoseT)/0.08);                       // きりかえは 0.08びょうで ふわっと
+  const cur=poseImg(secPose==='crouch'?'base':secPose), prv=poseImg(secPrev==='crouch'?'base':secPrev);
+  if(fade<1 && prv!==cur){ sx.drawImage(prv,0,0,w,h); sx.globalAlpha=fade; }
+  sx.drawImage(cur,0,0,w,h); sx.globalAlpha=1;
   sx.restore();
-  const sw=(lt%4)/4, gx=-w*0.4+sw*w*1.8, g=sx.createLinearGradient(gx,0,gx+w*0.35,h);
-  g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(0.5,'rgba(255,255,255,.35)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  const sw=(lt%4)/4, gx=-w*0.4+sw*w*1.8, g=sx.createLinearGradient(gx,0,gx+w*0.35,h);   // ひかりが すーっと とおる
+  g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(0.5,'rgba(255,255,255,.28)'); g.addColorStop(1,'rgba(255,255,255,0)');
   sx.fillStyle=g; sx.fillRect(0,0,w,h);
-  if(!reduceMotion && Math.random()<0.25) sparkle(Math.random()*w,h*(0.2+Math.random()*0.8)); }
+  if(!reduceMotion && Math.random()<0.12) sparkle(Math.random()*w,h*(0.2+Math.random()*0.8)); }
 function secLoop(now){ if(!secOn) return;
   const t=(now-secT0)/1000, w=scv.width, h=scv.height;
   sx.setTransform(1,0,0,1,0,0); sx.clearRect(0,0,w,h);
