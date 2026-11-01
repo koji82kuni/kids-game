@@ -3464,7 +3464,7 @@ let SECRET_IMAGES = [
   'special/machi_to_tori.jpg',    // まちと とり
   'special/nitto_girl.jpg',       // ニットぼうの おんなのこ
   // 姪っ子の絵を Gemini で えほん ふうに したもの（おひめさまを たすけろ と おなじ絵）
-  ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11].map(i => `special/kids_drawing_${String(i).padStart(2, '0')}.jpg`),
+  ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16].map(i => `special/kids_drawing_${String(i).padStart(2, '0')}.jpg`),
 ];
 
 // special/ フォルダの中身を読み取って SECRET_IMAGES を最新にする
@@ -3499,7 +3499,8 @@ function pickRewardImage() {
 // 姪っ子の絵には ポーズちがいが ある（hime-quest/drawings/ の eNNw.jpg＝てを ふる、eNNh.jpg＝はなまるを みせる）
 function poseImageFor(url, kind) {
   const m = /kids_drawing_(\d\d)\.jpg$/.exec(url);
-  return m ? `hime-quest/drawings/e${m[1]}${kind}.jpg` : null;
+  if (!m || m[1] === '12') return null;   // 12（あかい ぐるぐる）は ひとが いない絵なので ポーズなし
+  return `hime-quest/drawings/e${m[1]}${kind}.jpg`;
 }
 
 // ポーズの がぞうを よみこめた ときだけ うごかす（よめなければ もとの絵の まま）
