@@ -88,11 +88,12 @@ button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
 .stagewrap{min-height:0;min-width:0;display:flex;align-items:center;justify-content:center}
 #stage{position:relative;border-radius:24px;overflow:hidden;background:
   radial-gradient(circle at 50% 35%,#fff 0,#fff 45%,#ffeaf4 100%);box-shadow:0 0 0 4px #fff,0 8px 24px rgba(190,24,93,.15);touch-action:none}
-#art,#paint{position:absolute;inset:0;width:100%;height:100%}
+#art,#paint,#lines{position:absolute;inset:0;width:100%;height:100%}
+#lines{pointer-events:none}#lines svg{width:100%;height:100%;display:block}
 #art svg{width:100%;height:100%;display:block}
 #stage.arrive{animation:arrive .8s cubic-bezier(.3,1.5,.6,1)}
 @keyframes arrive{from{transform:translateY(14%) scale(.6) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
-#stage.happy #art{animation:hop .5s ease-in-out 3}
+#stage.happy #art,#stage.happy #paint,#stage.happy #lines{animation:hop .5s ease-in-out 3}
 @keyframes hop{50%{transform:translateY(-6%)}}
 
 .panel{background:#fff;border-radius:20px;padding:10px;display:flex;flex-direction:column;gap:10px;min-width:0;box-shadow:0 3px 0 var(--line);overflow-y:auto}
@@ -205,7 +206,7 @@ button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
   </div>
   <div class="body">
     <div class="stagewrap" id="stagewrap">
-      <div id="stage"><div id="art"></div><canvas id="paint" width="800" height="800"></canvas></div>
+      <div id="stage"><div id="art"></div><canvas id="paint" width="800" height="800"></canvas><div id="lines"></div></div>
     </div>
     <div class="panel">
       <div class="tools" role="group" aria-label="どうぐ">
@@ -636,13 +637,15 @@ const SVG_HEAD=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" wi
 <style>.p{fill:#fff;stroke:#5b4636;stroke-width:4;stroke-linejoin:round}.soft{stroke:#c69a8a;stroke-dasharray:6 5}.d{pointer-events:none}</style>`;
 // サムネイルは にじいろの id を べつにする（同じ id が かくれた がめんに あると、にじいろが きえるため）
 const svgOf=(c,thumb)=>(thumb?SVG_HEAD.replace('id="rb"','id="rbt"'):SVG_HEAD)+c.svg+'</svg>';
+// ペンの うえに かさねる 線だけの え（「かく」で ぬっても 下書きの 線が きえない）
+const linesOf=c=>SVG_HEAD.replace('id="rb"','id="rbl"').replace('</style>','.p{fill:none!important}</style>')+c.svg+'</svg>';
 
 // ───────── じょうたい ─────────
 const LS='makeupSalon';
 let saved={age:'small',served:0,stars:0,muted:false,bgmOff:false};
 try{ saved={...saved,...JSON.parse(localStorage.getItem(LS)||'{}')}; }catch(e){}
 const save=()=>{ try{ localStorage.setItem(LS,JSON.stringify(saved)); }catch(e){} };
-const S={mode:null,cust:null,blank:false,wishes:[],fills:{},stk:{},tool:'fill',color:'pink',size:1,sticker:'heart',undo:[],lastId:null};
+const S={mode:null,cust:null,blank:false,wishes:[],fills:{},pen:{},stk:{},tool:'fill',color:'pink',size:1,sticker:'heart',undo:[],lastId:null};
 
 const $=id=>document.getElementById(id);
 const art=$('art'), paint=$('paint'), px=paint.getContext('2d',{willReadFrequently:true}), stage=$('stage');
@@ -759,13 +762,13 @@ function muteLabel(){ $('mute').textContent=saved.muted?'🔇 おと なし':'�
 
 // ───────── えを ならべる ─────────
 function loadArt(cust){
-  S.cust=cust; S.blank=!cust; S.fills={}; S.stk={}; S.undo=[];
-  art.innerHTML=cust?svgOf(cust):''; px.globalCompositeOperation='source-over';
+  S.cust=cust; S.blank=!cust; S.fills={}; S.pen={}; S.stk={}; S.undo=[];
+  art.innerHTML=cust?svgOf(cust):''; $('lines').innerHTML=cust?linesOf(cust):''; px.globalCompositeOperation='source-over'; buildLabels(cust);
   if(S.blank){ px.fillStyle='#fff'; px.fillRect(0,0,800,800); } else px.clearRect(0,0,800,800);
   setTool(S.tool==='fill'||S.tool==='pen'?S.tool:'fill'); refreshStickerIcons();
 }
 function setFill(part,key,record){
-  const els=art.querySelectorAll(`[data-part="${part}"]`); if(!els.length) return;
+  const els=stage.querySelectorAll(`[data-part="${part}"]`); if(!els.length) return;
   if(record) S.undo.push({t:'fill',part,prev:S.fills[part]||null});
   // ほっぺ・まぶた・くちびるは、ぬったら てんせん（ぬる場所の めじるし）を けす
   const c=key?COLOR[key].c:'#fff'; els.forEach(el=>{ el.style.fill=c;
@@ -775,9 +778,60 @@ function setFill(part,key,record){
 }
 art.addEventListener('pointerdown',e=>{
   if(S.tool!=='fill'||S.blank) return;
-  const el=e.target.closest('[data-part]'); if(!el) return;
-  e.preventDefault(); setFill(el.dataset.part,S.color,true); sPop(); burst(e.clientX,e.clientY,4);
+  const part=pickPart(e); if(!part) return;
+  e.preventDefault(); setFill(part,S.color,true); sPop(); burst(e.clientX,e.clientY,4);
 });
+
+// ───────── どこが どの ばしょか の ちず（ちいさい ところを ぬりやすく・ペンの はんてい）─────────
+// ばしょごとに ちがう いろで え を かいて よみとる。うしろに かくれた ぶぶんは ふくまない
+let LAB=null, labTok=0;
+async function buildLabels(cust){
+  const tok=++labTok; LAB=null; if(!cust) return;
+  try{
+    const root=new DOMParser().parseFromString(svgOf(cust,true),'image/svg+xml').documentElement;
+    root.setAttribute('shape-rendering','crispEdges'); root.setAttribute('width','800'); root.setAttribute('height','800');
+    root.querySelectorAll('.d').forEach(e=>e.remove());
+    const names=[];
+    root.querySelectorAll('.p').forEach(e=>{ const n=e.getAttribute('data-part'); let k=names.indexOf(n); if(k<0){ names.push(n); k=names.length-1; }
+      e.setAttribute('style',`fill:rgb(${(k+1)*8},0,0);fill-opacity:1;stroke:none`); });
+    const img=new Image();
+    await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(root)); });
+    if(tok!==labTok) return;
+    const c=document.createElement('canvas'); c.width=c.height=800; const x=c.getContext('2d',{willReadFrequently:true});
+    x.fillStyle='#fff'; x.fillRect(0,0,800,800); x.drawImage(img,0,0,800,800);
+    const d=x.getImageData(0,0,800,800).data, map=new Uint8Array(640000), area=new Array(names.length+1).fill(0);
+    for(let i=0;i<640000;i++){ const r=d[i*4]; if(d[i*4+1]>5||d[i*4+2]>5) continue; const k=Math.round(r/8); if(k>=1&&k<=names.length&&Math.abs(r-k*8)<3){ map[i]=k; area[k]++; } }
+    LAB={map,area,names}; penCover();
+  }catch(e){}
+}
+// ゆびの まわり（やく22px）に ちいさい ばしょが あれば、そちらを ぬる
+function pickPart(e){
+  const el=e.target.closest&&e.target.closest('[data-part]'), direct=el?el.dataset.part:null;
+  if(!LAB) return direct;
+  const r=paint.getBoundingClientRect(), k=800/r.width, cx=Math.round((e.clientX-r.left)*k), cy=Math.round((e.clientY-r.top)*k), R=Math.round(22*k);
+  const at=(x,y)=>(x<0||y<0||x>=800||y>=800)?0:LAB.map[y*800+x];
+  const d0=direct?LAB.names.indexOf(direct)+1:at(cx,cy);
+  let best=0;
+  for(let dy=-R;dy<=R;dy+=2) for(let dx=-R;dx<=R;dx+=2){ if(dx*dx+dy*dy>R*R) continue; const l=at(cx+dx,cy+dy);
+    if(l&&l!==d0&&(!best||LAB.area[l]<LAB.area[best])) best=l; }
+  if(best&&(!d0||LAB.area[best]<LAB.area[d0]*.35)) return LAB.names[best-1];
+  return d0?LAB.names[d0-1]:null;
+}
+// ペンで おねがいの いろを その ばしょの はんぶんくらい ぬったら クリア
+const rgbOf=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+function penCover(){
+  S.pen={}; if(!LAB||S.blank||S.mode!=='shop'){ updateWishChips(); return; }
+  const want=S.wishes.filter(w=>w.t==='color'); if(!want.length){ updateWishChips(); return; }
+  const d=px.getImageData(0,0,800,800).data;
+  want.forEach(w=>{ const l=LAB.names.indexOf(w.part)+1; if(!l||!LAB.area[l]) return;
+    const ref=w.color==='rainbow'?null:rgbOf(COLOR[w.color].c); let hit=0; const hues=new Set();
+    for(let i=0;i<640000;i++){ if(LAB.map[i]!==l) continue; const q=i*4; if(d[q+3]<160) continue; const R=d[q],G=d[q+1],B=d[q+2];
+      if(ref){ if(Math.abs(R-ref[0])+Math.abs(G-ref[1])+Math.abs(B-ref[2])<80) hit++; }
+      else { const mx=Math.max(R,G,B), mn=Math.min(R,G,B); if(mx-mn>70){ hit++;
+        const h=mx===R?((G-B)/(mx-mn)+6)%6:mx===G?(B-R)/(mx-mn)+2:(R-G)/(mx-mn)+4; hues.add(Math.floor(h)); } } }
+    if(hit>=LAB.area[l]*.45&&(ref||hues.size>=3)) S.pen[w.part+':'+w.color]=true; });
+  updateWishChips();
+}
 
 // ───────── かく・けす・シール・ぬる（まっしろ）─────────
 const SIZES=[10,22,40];
@@ -798,7 +852,7 @@ paint.addEventListener('pointermove',e=>{
   if(!stroke) return; const co=e.getCoalescedEvents?e.getCoalescedEvents():[]; const list=co.length?co:[e];
   list.forEach(ev=>{ const p=pt(ev); line(stroke.x,stroke.y,p.x,p.y); stroke={x:p.x,y:p.y}; });
 });
-const endStroke=()=>{ stroke=null; px.globalCompositeOperation='source-over'; };
+const endStroke=()=>{ const was=!!stroke; stroke=null; px.globalCompositeOperation='source-over'; if(was) penCover(); };
 paint.addEventListener('pointerup',endStroke); paint.addEventListener('pointercancel',endStroke);
 function brush(){ const w=SIZES[S.size]*(S.tool==='eraser'?1.6:1); px.lineWidth=w; px.lineCap='round'; px.lineJoin='round';
   if(S.tool==='eraser'){ if(S.blank){ px.globalCompositeOperation='source-over'; px.strokeStyle=px.fillStyle='#fff'; } else { px.globalCompositeOperation='destination-out'; px.strokeStyle=px.fillStyle='#000'; } }
@@ -825,7 +879,7 @@ function flood(x,y,css){
 }
 $('undo').addEventListener('click',()=>{ const u=S.undo.pop(); if(!u) return;
   if(u.t==='fill'){ setFill(u.part,u.prev,false); }
-  else { px.putImageData(u.img,0,0); if(u.stk){ S.stk[u.stk]=Math.max(0,(S.stk[u.stk]||1)-1); updateWishChips(); } }
+  else { px.putImageData(u.img,0,0); if(u.stk) S.stk[u.stk]=Math.max(0,(S.stk[u.stk]||1)-1); penCover(); }
   sPop(); });
 let clearArm=null;
 $('clear').addEventListener('click',()=>{ const b=$('clear');
@@ -845,7 +899,7 @@ function makeWishes(c){
   return ws;
 }
 const wishText=w=>w.t==='color'?`${S.cust.parts[w.part]}を ${COLOR[w.color].n}に`:`${STK[w.stk].n}の シールを はって`;
-const wishDone=w=>w.t==='color'?S.fills[w.part]===w.color:(S.stk[w.stk]||0)>0;
+const wishDone=w=>w.t==='color'?(S.fills[w.part]===w.color||!!S.pen[w.part+':'+w.color]):(S.stk[w.stk]||0)>0;
 function renderWish(){
   const box=$('wish'); box.innerHTML='';
   if(S.mode!=='shop'){ const t=document.createElement('span'); t.className='who'; t.textContent=S.cust?`${S.cust.name}の ぬりえ`:'じゆうに かこう！'; box.appendChild(t); return; }
@@ -858,7 +912,7 @@ function renderWish(){
   updateWishChips();
 }
 $('wish').addEventListener('click',e=>{ const c=e.target.closest('.chip'); if(!c) return; const w=S.wishes[+c.dataset.i];
-  speak(wishText(w)+'ね'); if(w.t==='color'){ art.querySelectorAll(`[data-part="${w.part}"]`).forEach(el=>{ el.classList.remove('hint'); void el.getBBox(); el.classList.add('hint'); }); setTool('fill'); }
+  speak(wishText(w)+'ね'); if(w.t==='color'){ art.querySelectorAll(`[data-part="${w.part}"]`).forEach(el=>{ el.classList.remove('hint'); void el.getBBox(); el.classList.add('hint'); }); if(S.tool!=='pen') setTool('fill'); }
   else { setTool('sticker'); const b=stkEl.querySelector(`[data-stk="${w.stk}"]`); S.sticker=w.stk; press(stkEl,'[data-stk]',b); } });
 function updateWishChips(){ if(S.mode!=='shop') return; $('wish').querySelectorAll('.chip').forEach(c=>c.classList.toggle('ok',wishDone(S.wishes[+c.dataset.i]))); }
 function sayWish(){ speak(`${S.cust.name}です。`+S.wishes.map(wishText).join('、そして ')+'ね。おねがいします！'); }
@@ -885,13 +939,16 @@ async function renderBlob(){
     await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(str); });
     x.drawImage(img,0,0,800,800); }
   x.drawImage(paint,0,0);
+  const ln=$('lines').querySelector('svg');
+  if(ln){ const img=new Image(); await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(ln)); });
+    x.drawImage(img,0,0,800,800); }
   return await new Promise(r=>c.toBlob(r,'image/png'));
 }
 let resultURL=null;
 $('done').addEventListener('click',async()=>{
   const btn=$('done'); if(btn.disabled) return; btn.disabled=true;
   try{
-    const blob=await renderBlob();
+    penCover(); const blob=await renderBlob();
     let id=null; try{ id=await DB.add({t:Date.now(),mode:S.mode,who:S.cust?S.cust.name:'じゆうに かいた え',img:blob}); }catch(e){}
     S.lastId=id;
     if(resultURL) URL.revokeObjectURL(resultURL); resultURL=URL.createObjectURL(blob); $('rimg').src=resultURL;
@@ -974,7 +1031,7 @@ $('go-draw').addEventListener('click',()=>{ buildPick(); show('drawpick'); });
 $('go-album').addEventListener('click',openAlbum);
 document.querySelectorAll('[data-home]').forEach(b=>b.addEventListener('click',()=>{ if(window.speechSynthesis) speechSynthesis.cancel(); titleScore(); show('title'); }));
 muteLabel(); bgmLabel(); titleScore(); setTool('fill'); refreshStickerIcons();
-window.__salon={S,BGM,CUSTOMERS,setFill,renderBlob,DB,makeWishes,wishDone,nextCustomer,startDraw};
+window.__salon={S,BGM,pickPart,penCover,getLAB:()=>LAB,CUSTOMERS,setFill,renderBlob,DB,makeWishes,wishDone,nextCustomer,startDraw};
 })();
 </script>
 </body>
