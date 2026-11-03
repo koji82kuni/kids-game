@@ -1432,7 +1432,7 @@ function fxLoop(now){ if(!fxOn) return;
 // eNNw.jpg＝てを ふる ポーズ／eNNj.jpg＝ジャンプの ポーズ（どちらも Gemini で おなじ絵の ポーズだけ かえたもの）
 // 12（あかい ぐるぐる）は ひとが いない絵なので ポーズなし
 const NO_POSE=[12];
-const DRAWINGS=[0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16].map(i=>{ const n=String(i).padStart(2,'0'), pose=!NO_POSE.includes(i);
+const DRAWINGS=[0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19,20,21].map(i=>{ const n=String(i).padStart(2,'0'), pose=!NO_POSE.includes(i);
   return {art:'drawings/e'+n+'.jpg', orig:(i!==8)?'drawings/o'+n+'.jpg':null, wave:pose?'drawings/e'+n+'w.jpg':null, jump:pose?'drawings/e'+n+'j.jpg':null}; });
 let secretImg=null, secretOrig=null, secretWave=null, secretJump=null;
 const loadImg=src=>{ if(!src) return null; const im=new Image(); im.src=src; return im; };
