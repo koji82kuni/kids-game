@@ -93,6 +93,8 @@ button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
   radial-gradient(circle at 50% 35%,#fff 0,#fff 45%,#ffeaf4 100%);box-shadow:0 0 0 4px #fff,0 8px 24px rgba(190,24,93,.15);touch-action:none}
 #art,#paint,#lines{position:absolute;inset:0;width:100%;height:100%}
 #lines{pointer-events:none}#lines svg{width:100%;height:100%;display:block}
+/* 線だけの え は ぬりを すきとおらせる（#lines の なかだけ。ほかの え の いろを けさない） */
+#lines .p{fill:none!important}
 #art svg{width:100%;height:100%;display:block}
 #stage.arrive{animation:arrive .8s cubic-bezier(.3,1.5,.6,1)}
 @keyframes arrive{from{transform:translateY(14%) scale(.6) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
@@ -667,7 +669,7 @@ const SVG_HEAD=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" wi
 // サムネイルは にじいろの id を べつにする（同じ id が かくれた がめんに あると、にじいろが きえるため）
 const svgOf=(c,thumb)=>(thumb?SVG_HEAD.replace('id="rb"','id="rbt"'):SVG_HEAD)+c.svg+'</svg>';
 // ペンの うえに かさねる 線だけの え（「かく」で ぬっても 下書きの 線が きえない）
-const linesOf=c=>SVG_HEAD.replace('id="rb"','id="rbl"').replace('</style>','.p{fill:none!important}</style>')+c.svg+'</svg>';
+const linesOf=c=>SVG_HEAD.replace('id="rb"','id="rbl"')+c.svg+'</svg>';
 
 // ───────── じょうたい ─────────
 const LS='makeupSalon';
