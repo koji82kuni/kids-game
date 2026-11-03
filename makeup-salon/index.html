@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>きらきら メイクやさん</title>
+<script>
+// ── LINE等アプリ内ブラウザ → 通常ブラウザへ誘導 ──
+(function(){
+  var ua=(navigator.userAgent||'').toLowerCase();
+  if(ua.indexOf('line')!==-1 && location.search.indexOf('openExternalBrowser=1')===-1){
+    location.href=location.href+(location.search?'&':'?')+'openExternalBrowser=1';
+  }
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
@@ -176,6 +185,7 @@ button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
     <button data-age="small" aria-pressed="true">4〜5さい（おねがい 1つ）</button>
     <button data-age="big" aria-pressed="false">6〜8さい（おねがい 2〜3つ）</button>
   </div>
+  <button class="small" data-bgm aria-pressed="true">🎵 おんがく</button>
   <p class="score" id="score"></p>
   <p class="foot">できた えは この きかいの アルバムに のこります</p>
 </section>
@@ -216,6 +226,7 @@ button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
         <button class="small" id="undo">↩ もどす</button>
         <button class="small warn" id="clear">ぜんぶ けす</button>
         <button class="small" id="mute" aria-pressed="false">🔊 おと</button>
+        <button class="small" data-bgm aria-pressed="true">🎵 おんがく</button>
       </div>
     </div>
   </div>
@@ -357,6 +368,48 @@ const CUSTOMERS=[
   <path class="p" data-part="hige" d="M156 272 Q178 254 200 268 Q222 254 244 272 Q224 290 200 278 Q176 290 156 272Z"/>
   ${SM(200,292,14)}
   <path class="p" data-part="tie" d="M200 332 L166 314 L166 350Z"/><path class="p" data-part="tie" d="M200 332 L234 314 L234 350Z"/><circle class="p" data-part="tie" cx="200" cy="332" r="9"/>`},
+ {id:'grandma',name:'おばあちゃん',parts:{hair:'かみのけ',face:'かお',cheek:'ほっぺ',lips:'くちびる',megane:'めがね',flower:'かみかざり',shawl:'ショール'},
+  wish:['hair','cheek','lips','megane','flower','shawl'],
+  svg:`<path class="p" data-part="shawl" d="M100 400 Q110 318 200 312 Q290 318 300 400Z"/>
+  <circle class="p" data-part="hair" cx="200" cy="96" r="40"/>
+  <path class="p" data-part="hair" d="M96 232 Q86 118 200 110 Q314 118 304 232 Q300 272 280 282 L120 282 Q100 272 96 232Z"/>
+  <ellipse class="p" data-part="face" cx="200" cy="224" rx="90" ry="94"/>
+  <path class="p" data-part="hair" d="M110 198 Q116 130 200 126 Q284 130 290 198 Q250 162 200 168 Q150 162 110 198Z"/>
+  <path class="d" d="M146 224 Q160 210 174 224 M226 224 Q240 210 254 224" fill="none" stroke="#3b2a24" stroke-width="5" stroke-linecap="round"/>
+  <circle class="p" data-part="megane" cx="160" cy="222" r="26" style="fill-opacity:.55"/><circle class="p" data-part="megane" cx="240" cy="222" r="26" style="fill-opacity:.55"/>
+  <path class="d" d="M186 220 Q200 212 214 220" fill="none" stroke="#5b4636" stroke-width="4"/>
+  <path class="d" d="M199 242 Q205 252 196 254" fill="none" stroke="#5b4636" stroke-width="4" stroke-linecap="round"/>
+  ${CH(132,268,258)}
+  <path class="p soft" data-part="lips" d="M178 274 Q200 296 222 274 Q200 284 178 274Z"/>
+  ${ring(5,250,100,13,(x,y)=>`<circle class="p" data-part="flower" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="11"/>`)}
+  <circle class="d" cx="250" cy="100" r="7" fill="#facc15" stroke="#5b4636" stroke-width="3"/>`},
+ {id:'baby',name:'あかちゃん',parts:{bonnet:'ぼうし',face:'かお',hair:'まえがみ',cheek:'ほっぺ',pacifier:'おしゃぶり',bib:'よだれかけ',clothes:'ふく'},
+  wish:['bonnet','cheek','pacifier','bib','clothes'],
+  svg:`<path class="p" data-part="clothes" d="M110 400 Q118 326 200 320 Q282 326 290 400Z"/>
+  <path class="p" data-part="bib" d="M150 316 Q200 302 250 316 Q254 372 200 380 Q146 372 150 316Z"/>
+  <path class="p" data-part="bonnet" d="M84 250 Q70 92 200 86 Q330 92 316 250 Q302 300 280 300 L120 300 Q98 300 84 250Z"/>
+  <ellipse class="p" data-part="face" cx="200" cy="228" rx="96" ry="88"/>
+  <path class="p" data-part="bonnet" d="M98 212 Q100 114 200 108 Q300 114 302 212 Q280 152 200 148 Q120 152 98 212Z"/>
+  <circle class="p" data-part="bonnet" cx="200" cy="86" r="15"/>
+  <path class="p" data-part="hair" d="M196 160 Q176 138 194 124 Q214 118 214 138 Q204 134 200 142 Q208 152 196 160Z"/>
+  ${EY(165,226,12)}${EY(235,226,12)}${CH(130,270,254)}
+  <circle class="p" data-part="pacifier" cx="200" cy="290" r="18"/>
+  <ellipse class="p" data-part="pacifier" cx="200" cy="274" rx="30" ry="13"/>`},
+ {id:'princess',name:'おひめさま',parts:{hair:'かみのけ',face:'かお',cheek:'ほっぺ',lips:'くちびる',shadow:'まぶた',crown:'かんむり',jewel:'ほうせき',dress:'ドレス'},
+  wish:['hair','crown','jewel','lips','shadow','dress','cheek'],
+  svg:`<path class="p" data-part="hair" d="M84 240 Q72 100 200 92 Q328 100 316 240 Q330 332 300 382 Q266 362 254 332 L146 332 Q134 362 100 382 Q70 332 84 240Z"/>
+  <path class="p" data-part="dress" d="M112 400 Q122 330 200 324 Q278 330 288 400Z"/>
+  <rect class="p" data-part="face" x="180" y="292" width="40" height="40"/>
+  <ellipse class="p" data-part="face" cx="200" cy="222" rx="86" ry="94"/>
+  <path class="p" data-part="hair" d="M114 208 Q118 122 200 114 Q282 122 286 208 Q266 162 236 170 Q220 144 200 166 Q180 144 164 170 Q134 162 114 208Z"/>
+  <path class="p" data-part="crown" d="M140 114 L132 54 L166 84 L200 42 L234 84 L268 54 L260 114Z"/>
+  <circle class="p" data-part="jewel" cx="200" cy="94" r="10"/><circle class="p" data-part="jewel" cx="164" cy="102" r="7"/><circle class="p" data-part="jewel" cx="236" cy="102" r="7"/>
+  <path class="p soft" data-part="shadow" d="M140 214 Q164 186 188 214 Q164 202 140 214Z"/><path class="p soft" data-part="shadow" d="M260 214 Q236 186 212 214 Q236 202 260 214Z"/>
+  ${EY(164,228)}${EY(236,228)}
+  <path class="d" d="M149 218 L143 210 M157 214 L153 205 M251 218 L257 210 M243 214 L247 205" stroke="#3b2a24" stroke-width="3" stroke-linecap="round"/>
+  ${CH(136,264,256)}
+  <path class="d" d="M199 244 Q205 254 196 256" fill="none" stroke="#5b4636" stroke-width="4" stroke-linecap="round"/>
+  <path class="p soft" data-part="lips" d="M174 276 Q188 264 200 270 Q212 264 226 276 Q200 304 174 276Z"/>`},
  {id:'cat',name:'ねこさん',parts:{fur:'かお',ear:'みみ',inner:'みみの なか',nose:'はな',cheek:'ほっぺ',collar:'くびわ',bell:'すず',ribbon:'リボン'},
   wish:['fur','ear','inner','nose','cheek','collar','bell','ribbon'],
   svg:`<path class="p" data-part="ear" d="M108 166 L118 58 L192 122Z"/><path class="p" data-part="ear" d="M292 166 L282 58 L208 122Z"/>
@@ -403,6 +456,70 @@ const CUSTOMERS=[
   <path class="p" data-part="nose" d="M182 234 Q200 222 218 234 Q200 252 182 234Z"/>
   <path class="d" d="M200 248 L200 260 M200 260 Q188 274 174 266 M200 260 Q212 274 226 266" fill="none" stroke="#5b4636" stroke-width="4" stroke-linecap="round"/>
   ${CH(132,268,242)}`},
+ {id:'bear',name:'くまさん',parts:{fur:'かお',ear:'みみ',inner:'みみの なか',muzzle:'くちの まわり',nose:'はな',cheek:'ほっぺ',tie:'ちょうネクタイ'},
+  wish:['fur','ear','inner','muzzle','nose','cheek','tie'],
+  svg:`<circle class="p" data-part="ear" cx="122" cy="122" r="40"/><circle class="p" data-part="ear" cx="278" cy="122" r="40"/>
+  <circle class="p" data-part="inner" cx="122" cy="122" r="22"/><circle class="p" data-part="inner" cx="278" cy="122" r="22"/>
+  <ellipse class="p" data-part="fur" cx="200" cy="214" rx="108" ry="100"/>
+  <path class="p" data-part="tie" d="M200 340 L164 320 L164 360Z"/><path class="p" data-part="tie" d="M200 340 L236 320 L236 360Z"/><circle class="p" data-part="tie" cx="200" cy="340" r="10"/>
+  <ellipse class="p" data-part="muzzle" cx="200" cy="250" rx="50" ry="38"/>
+  ${EY(158,198,12)}${EY(242,198,12)}
+  <path class="d" d="M200 246 L200 258 M200 258 Q188 270 178 262 M200 258 Q212 270 222 262" fill="none" stroke="#5b4636" stroke-width="4" stroke-linecap="round"/>
+  <ellipse class="p" data-part="nose" cx="200" cy="236" rx="18" ry="12"/>
+  ${CH(128,272,240,16,10)}`},
+ {id:'panda',name:'パンダさん',parts:{fur:'かお',ear:'みみ',patch:'めの まわり',nose:'はな',cheek:'ほっぺ',bamboo:'たけ',leaf:'はっぱ'},
+  wish:['fur','ear','patch','nose','cheek','bamboo','leaf'],
+  svg:`<rect class="p" data-part="bamboo" x="300" y="150" width="26" height="250" rx="9"/>
+  <path class="d" d="M300 230 L326 230 M300 310 L326 310" stroke="#5b4636" stroke-width="4"/>
+  <path class="p" data-part="leaf" d="M322 172 Q360 138 384 152 Q362 188 322 182Z"/><path class="p" data-part="leaf" d="M324 252 Q362 236 382 254 Q356 278 324 262Z"/>
+  <circle class="p" data-part="ear" cx="124" cy="124" r="34"/><circle class="p" data-part="ear" cx="276" cy="124" r="34"/>
+  <ellipse class="p" data-part="fur" cx="200" cy="216" rx="104" ry="96"/>
+  <ellipse class="p" data-part="patch" cx="160" cy="208" rx="26" ry="34" transform="rotate(-25 160 208)"/><ellipse class="p" data-part="patch" cx="240" cy="208" rx="26" ry="34" transform="rotate(25 240 208)"/>
+  <circle class="d" cx="162" cy="208" r="14" fill="#fff"/><circle class="d" cx="238" cy="208" r="14" fill="#fff"/>
+  ${EY(162,208,10)}${EY(238,208,10)}
+  <path class="d" d="M200 256 L200 266 M200 266 Q190 278 180 270 M200 266 Q210 278 220 270" fill="none" stroke="#5b4636" stroke-width="4" stroke-linecap="round"/>
+  <ellipse class="p" data-part="nose" cx="200" cy="248" rx="16" ry="11"/>
+  ${CH(132,268,256,15,10)}`},
+ {id:'pig',name:'ぶたさん',parts:{fur:'かお',ear:'みみ',snout:'はな',cheek:'ほっぺ',ribbon:'リボン'},
+  wish:['fur','ear','snout','cheek','ribbon'],
+  svg:`<path class="p" data-part="ear" d="M118 152 L108 74 L180 118Z"/><path class="p" data-part="ear" d="M282 152 L292 74 L220 118Z"/>
+  <ellipse class="p" data-part="fur" cx="200" cy="222" rx="110" ry="98"/>
+  ${EY(154,202,11)}${EY(246,202,11)}
+  <ellipse class="p" data-part="snout" cx="200" cy="248" rx="44" ry="30"/>
+  <ellipse class="d" cx="186" cy="248" rx="6" ry="9" fill="#5b4636"/><ellipse class="d" cx="214" cy="248" rx="6" ry="9" fill="#5b4636"/>
+  ${SM(200,290,14)}${CH(128,272,250)}
+  <path class="p" data-part="ribbon" d="M262 116 L296 96 L296 136Z"/><path class="p" data-part="ribbon" d="M262 116 L230 98 L232 136Z"/><circle class="p" data-part="ribbon" cx="263" cy="116" r="10"/>`},
+ {id:'chick',name:'ひよこさん',parts:{body:'からだ',tuft:'あたまの け',beak:'くちばし',wing:'はね',shell:'たまごの から',cheek:'ほっぺ'},
+  wish:['body','tuft','beak','wing','shell','cheek'],
+  svg:`<path class="p" data-part="tuft" d="M194 100 Q176 62 198 50 Q204 72 212 56 Q230 72 208 102Z"/>
+  <ellipse class="p" data-part="body" cx="200" cy="212" rx="112" ry="114"/>
+  <path class="p" data-part="wing" d="M98 204 Q54 212 60 252 Q90 256 106 236Z"/><path class="p" data-part="wing" d="M302 204 Q346 212 340 252 Q310 256 294 236Z"/>
+  <path class="p" data-part="shell" d="M76 252 L110 228 L140 258 L170 226 L200 258 L230 226 L260 258 L290 228 L324 252 Q330 380 200 386 Q70 380 76 252Z"/>
+  ${EY(162,182,12)}${EY(238,182,12)}
+  <path class="p" data-part="beak" d="M180 206 L220 206 L200 232Z"/>
+  ${CH(134,266,214,16,10)}`},
+ {id:'frog',name:'かえるさん',parts:{skin:'からだ',eyeball:'しろめ',crown:'かんむり',leaf:'はっぱ',cheek:'ほっぺ'},
+  wish:['skin','crown','leaf','cheek'],
+  svg:`<path class="p" data-part="leaf" d="M36 336 Q200 280 364 336 Q374 394 200 396 Q26 394 36 336Z"/>
+  <circle class="p" data-part="skin" cx="138" cy="124" r="46"/><circle class="p" data-part="skin" cx="262" cy="124" r="46"/>
+  <ellipse class="p" data-part="skin" cx="200" cy="240" rx="128" ry="100"/>
+  <circle class="p" data-part="eyeball" cx="138" cy="124" r="30"/><circle class="p" data-part="eyeball" cx="262" cy="124" r="30"/>
+  ${EY(138,128,14)}${EY(262,128,14)}
+  <path class="p" data-part="crown" d="M176 134 L172 94 L188 110 L200 86 L212 110 L228 94 L224 134Z"/>
+  <path class="d" d="M136 238 Q200 300 264 238" fill="none" stroke="#5b4636" stroke-width="6" stroke-linecap="round"/>
+  <circle class="d" cx="186" cy="200" r="4" fill="#5b4636"/><circle class="d" cx="214" cy="200" r="4" fill="#5b4636"/>
+  ${CH(116,284,262,18,11)}`},
+ {id:'penguin',name:'ペンギンさん',parts:{back:'からだ',belly:'おなか',beak:'くちばし',feet:'あし',wing:'はね',scarf:'マフラー',cheek:'ほっぺ'},
+  wish:['back','belly','beak','feet','wing','scarf','cheek'],
+  svg:`<ellipse class="p" data-part="feet" cx="164" cy="372" rx="30" ry="14"/><ellipse class="p" data-part="feet" cx="236" cy="372" rx="30" ry="14"/>
+  <path class="p" data-part="back" d="M200 60 Q300 60 306 200 Q312 330 270 366 L130 366 Q88 330 94 200 Q100 60 200 60Z"/>
+  <path class="p" data-part="wing" d="M100 190 Q54 240 68 302 Q96 284 110 240Z"/><path class="p" data-part="wing" d="M300 190 Q346 240 332 302 Q304 284 290 240Z"/>
+  <path class="p" data-part="belly" d="M200 108 Q150 108 140 168 Q120 210 128 280 Q140 352 200 354 Q260 352 272 280 Q280 210 260 168 Q250 108 200 108Z"/>
+  ${EY(172,168,11)}${EY(228,168,11)}
+  <path class="p" data-part="beak" d="M184 190 L216 190 L200 212Z"/>
+  ${CH(150,250,200,13,9)}
+  <path class="p" data-part="scarf" d="M236 254 L256 254 L264 312 L240 312Z"/>
+  <path class="p" data-part="scarf" d="M128 234 Q200 262 272 234 L270 258 Q200 288 130 258Z"/>`},
  {id:'sunflower',name:'ひまわりさん',parts:{petal:'はなびら',center:'まんなか',stem:'くき',leaf:'はっぱ',pot:'うえきばち',cheek:'ほっぺ'},
   wish:['petal','center','stem','leaf','pot','cheek'],
   svg:`${POT}<rect class="p" data-part="stem" x="189" y="196" width="22" height="110" rx="8"/>
@@ -419,6 +536,30 @@ const CUSTOMERS=[
   ${ring(5,200,74,15,(x,y)=>`<circle class="p" data-part="flower" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="13"/>`)}
   <circle class="d" cx="200" cy="74" r="8" fill="#facc15" stroke="#5b4636" stroke-width="3"/>
   ${EY(182,170,10)}${EY(218,170,10)}${SM(200,190,12)}${CH(170,230,192,11,8)}`},
+ {id:'tulip',name:'チューリップさん',parts:{petal:'そとの はなびら',petal2:'まんなかの はなびら',stem:'くき',leaf:'はっぱ',pot:'うえきばち',cheek:'ほっぺ'},
+  wish:['petal','petal2','stem','leaf','pot','cheek'],
+  svg:`${POT}<path class="p" data-part="leaf" d="M196 302 Q128 270 112 196 Q170 220 196 276Z"/><path class="p" data-part="leaf" d="M204 302 Q272 270 288 196 Q230 220 204 276Z"/>
+  <rect class="p" data-part="stem" x="189" y="236" width="22" height="72" rx="8"/>
+  <path class="p" data-part="petal" d="M116 112 L158 158 L200 96 L242 158 L284 112 L286 196 Q274 254 200 258 Q126 254 114 196Z"/>
+  <path class="p" data-part="petal2" d="M148 150 Q200 118 252 150 Q262 238 200 256 Q138 238 148 150Z"/>
+  ${EY(178,196,9)}${EY(222,196,9)}${SM(200,216,12)}${CH(164,236,218,10,7)}`},
+ {id:'mushroom',name:'きのこさん',parts:{cap:'かさ',dots:'もよう',stem:'じく',grass:'くさ',cheek:'ほっぺ'},
+  wish:['cap','dots','stem','grass','cheek'],
+  svg:`<path class="p" data-part="stem" d="M140 226 Q128 330 150 370 L250 370 Q272 330 260 226Z"/>
+  <path class="p" data-part="grass" d="M24 398 Q26 362 66 354 Q108 330 150 354 Q200 334 250 354 Q292 330 334 354 Q374 362 376 398Z"/>
+  <path class="p" data-part="cap" d="M60 236 Q60 80 200 72 Q340 80 340 236 Q200 264 60 236Z"/>
+  <circle class="p" data-part="dots" cx="140" cy="150" r="22"/><circle class="p" data-part="dots" cx="214" cy="114" r="18"/><circle class="p" data-part="dots" cx="272" cy="176" r="24"/>
+  <circle class="p" data-part="dots" cx="106" cy="212" r="13"/><circle class="p" data-part="dots" cx="196" cy="198" r="16"/>
+  ${EY(176,290,10)}${EY(224,290,10)}${SM(200,312,12)}${CH(160,240,314,11,8)}`},
+ {id:'tree',name:'りんごの きさん',parts:{leaves:'はっぱ',trunk:'みき',apple:'りんご',grass:'くさ',cheek:'ほっぺ'},
+  wish:['leaves','trunk','apple','grass','cheek'],
+  svg:`<path class="p" data-part="trunk" d="M166 384 Q180 300 178 226 L222 226 Q220 300 234 384Z"/>
+  <path class="p" data-part="grass" d="M24 398 Q26 364 66 356 Q108 334 150 356 Q200 338 250 356 Q292 334 334 356 Q374 364 376 398Z"/>
+  ${ring(9,200,154,84,(x,y)=>`<circle class="p" data-part="leaves" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="50"/>`)}
+  <circle class="p" data-part="leaves" cx="200" cy="154" r="92"/>
+  <circle class="p" data-part="apple" cx="116" cy="206" r="17"/><circle class="p" data-part="apple" cx="286" cy="196" r="17"/><circle class="p" data-part="apple" cx="146" cy="86" r="15"/>
+  <circle class="p" data-part="apple" cx="262" cy="90" r="15"/><circle class="p" data-part="apple" cx="204" cy="226" r="14"/>
+  ${EY(172,150,11)}${EY(228,150,11)}${SM(200,174,14)}${CH(148,252,178,13,9)}`},
  {id:'cake',name:'ケーキさん',parts:{plate:'おさら',sponge:'スポンジ',cream:'クリーム',berry:'いちご',candle:'ろうそく',cheek:'ほっぺ'},
   wish:['plate','sponge','cream','berry','candle','cheek'],
   svg:`<ellipse class="p" data-part="plate" cx="200" cy="348" rx="162" ry="30"/>
@@ -443,7 +584,50 @@ const CUSTOMERS=[
   <path class="p" data-part="scoop1" d="M118 230 Q108 158 200 148 Q292 158 282 230 Q262 250 240 232 Q220 252 200 232 Q180 252 160 232 Q140 250 118 230Z"/>
   <path class="d" d="M212 44 Q218 20 236 14" fill="none" stroke="#5b4636" stroke-width="4" stroke-linecap="round"/>
   <circle class="p" data-part="cherry" cx="210" cy="52" r="17"/>
-  ${EY(176,188,10)}${EY(224,188,10)}${SM(200,204,12)}${CH(154,246,206,13,9)}`}
+  ${EY(176,188,10)}${EY(224,188,10)}${SM(200,204,12)}${CH(154,246,206,13,9)}`},
+ {id:'donut',name:'ドーナツさん',parts:{dough:'ドーナツ',glaze:'うえの クリーム',sprinkle:'トッピング',cheek:'ほっぺ'},
+  wish:['dough','glaze','sprinkle','cheek'],
+  svg:`<path class="p" data-part="dough" fill-rule="evenodd" d="M50 210 A150 136 0 1 0 350 210 A150 136 0 1 0 50 210Z M152 210 A48 40 0 1 1 248 210 A48 40 0 1 1 152 210Z"/>
+  <path class="p" data-part="glaze" fill-rule="evenodd" d="M66 200 Q60 90 200 84 Q340 90 334 200 Q330 250 300 236 Q290 280 256 262 Q230 292 200 270 Q170 292 144 262 Q110 280 100 236 Q70 250 66 200Z M148 206 A52 44 0 1 1 252 206 A52 44 0 1 1 148 206Z"/>
+  ${[[112,150,-30],[152,112,20],[224,104,-15],[282,138,35],[306,196,-40],[96,204,60],[262,236,10],[136,236,-20]].map(([x,y,a])=>`<rect class="p" data-part="sprinkle" x="-12" y="-5" width="24" height="10" rx="5" transform="translate(${x} ${y}) rotate(${a})"/>`).join('')}
+  ${EY(156,306,10)}${EY(244,306,10)}${SM(200,318,12)}${CH(122,278,312,12,8)}`},
+ {id:'pudding',name:'プリンさん',parts:{plate:'おさら',custard:'プリン',caramel:'カラメル',cream:'クリーム',cherry:'さくらんぼ',cheek:'ほっぺ'},
+  wish:['plate','custard','caramel','cream','cherry','cheek'],
+  svg:`<ellipse class="p" data-part="plate" cx="200" cy="350" rx="162" ry="30"/>
+  <path class="p" data-part="custard" d="M108 338 L140 150 L260 150 L292 338 Q200 362 108 338Z"/>
+  <path class="p" data-part="caramel" d="M140 150 Q140 126 200 124 Q260 126 260 150 L264 176 Q248 198 236 176 Q222 200 206 178 Q190 202 176 178 Q160 198 136 176Z"/>
+  <path class="p" data-part="cream" d="M166 130 Q168 94 200 90 Q232 94 234 130 Q200 142 166 130Z"/>
+  <path class="d" d="M210 64 Q216 40 234 32" fill="none" stroke="#5b4636" stroke-width="4" stroke-linecap="round"/>
+  <circle class="p" data-part="cherry" cx="206" cy="76" r="16"/>
+  ${EY(170,250,11)}${EY(230,250,11)}${SM(200,276,14)}${CH(144,256,274)}`},
+ {id:'strawberry',name:'いちごさん',parts:{berry:'いちご',leaf:'へた',seed:'つぶつぶ',cheek:'ほっぺ'},
+  wish:['berry','leaf','seed','cheek'],
+  svg:`<path class="p" data-part="berry" d="M200 382 Q90 332 84 200 Q86 120 150 116 Q180 114 200 130 Q220 114 250 116 Q314 120 316 200 Q310 332 200 382Z"/>
+  ${[[122,178],[278,178],[110,240],[290,240],[140,296],[260,296],[200,334],[172,320],[228,320],[200,164]].map(([x,y])=>`<ellipse class="p" data-part="seed" cx="${x}" cy="${y}" rx="6" ry="9"/>`).join('')}
+  <rect class="p" data-part="leaf" x="192" y="78" width="16" height="50" rx="6"/>
+  <path class="p" data-part="leaf" d="M200 128 Q150 88 112 118 Q150 152 200 140 Q250 152 288 118 Q250 88 200 128Z"/>
+  ${EY(168,228,12)}${EY(232,228,12)}${SM(200,256,14)}${CH(136,264,256,15,10)}`},
+ {id:'burger',name:'ハンバーガーさん',parts:{bun:'パン',sesame:'ごま',lettuce:'レタス',tomato:'トマト',cheese:'チーズ',patty:'ハンバーグ',cheek:'ほっぺ'},
+  wish:['bun','sesame','lettuce','tomato','cheese','patty','cheek'],
+  svg:`<path class="p" data-part="bun" d="M80 300 L320 300 Q324 352 290 358 L110 358 Q76 352 80 300Z"/>
+  <rect class="p" data-part="patty" x="74" y="262" width="252" height="46" rx="22"/>
+  <path class="p" data-part="cheese" d="M84 256 L316 256 L300 280 L280 264 L256 292 L236 264 L170 264 L150 292 L130 264 L100 278Z"/>
+  <rect class="p" data-part="tomato" x="88" y="236" width="224" height="26" rx="12"/>
+  <path class="p" data-part="lettuce" d="M70 230 Q90 214 110 232 Q130 214 150 232 Q170 214 190 232 Q210 214 230 232 Q250 214 270 232 Q290 214 310 232 Q330 220 332 238 Q310 252 290 240 Q270 254 250 240 Q230 254 210 240 Q190 254 170 240 Q150 254 130 240 Q110 254 90 240 Q68 252 70 230Z"/>
+  <path class="p" data-part="bun" d="M76 230 Q80 90 200 84 Q320 90 324 230 Q200 246 76 230Z"/>
+  ${[[150,122,-25],[200,104,0],[250,122,25],[114,172,-45],[286,172,45]].map(([x,y,a])=>`<ellipse class="p" data-part="sesame" cx="${x}" cy="${y}" rx="6" ry="10" transform="rotate(${a} ${x} ${y})"/>`).join('')}
+  ${EY(170,174,11)}${EY(230,174,11)}${SM(200,196,13)}${CH(144,256,198,13,9)}`},
+ {id:'ghost',name:'おばけさん',parts:{body:'からだ',hat:'ぼうし',band:'ぼうしの リボン',tongue:'べろ',cheek:'ほっぺ'},
+  wish:['body','hat','band','tongue','cheek'],
+  svg:`<path class="p" data-part="body" d="M100 242 Q60 236 56 262 Q80 278 102 266Z"/><path class="p" data-part="body" d="M300 242 Q340 236 344 262 Q320 278 298 266Z"/>
+  <path class="p" data-part="body" d="M200 104 Q306 104 306 232 L306 330 Q290 358 270 330 Q252 358 236 330 Q218 358 200 330 Q182 358 164 330 Q148 358 130 330 Q110 358 94 330 L94 232 Q94 104 200 104Z"/>
+  <path class="p" data-part="hat" d="M140 134 L208 22 L262 134Z"/>
+  <path class="p" data-part="band" d="M150 116 L254 116 L262 134 L140 134Z"/>
+  <ellipse class="p" data-part="hat" cx="200" cy="136" rx="92" ry="18"/>
+  ${EY(166,214,13)}${EY(234,214,13)}
+  <ellipse class="d" cx="200" cy="258" rx="16" ry="12" fill="#5b4636"/>
+  <path class="p" data-part="tongue" d="M189 262 Q200 292 211 262Z"/>
+  ${CH(134,266,246)}`}
 ];
 const CUST=Object.fromEntries(CUSTOMERS.map(c=>[c.id,c]));
 
@@ -455,7 +639,7 @@ const svgOf=(c,thumb)=>(thumb?SVG_HEAD.replace('id="rb"','id="rbt"'):SVG_HEAD)+c
 
 // ───────── じょうたい ─────────
 const LS='makeupSalon';
-let saved={age:'small',served:0,stars:0,muted:false};
+let saved={age:'small',served:0,stars:0,muted:false,bgmOff:false};
 try{ saved={...saved,...JSON.parse(localStorage.getItem(LS)||'{}')}; }catch(e){}
 const save=()=>{ try{ localStorage.setItem(LS,JSON.stringify(saved)); }catch(e){} };
 const S={mode:null,cust:null,blank:false,wishes:[],fills:{},stk:{},tool:'fill',color:'pink',size:1,sticker:'heart',undo:[],lastId:null};
@@ -471,15 +655,67 @@ if(window.ResizeObserver) new ResizeObserver(()=>{ if($('play').classList.contai
 
 // ───────── おと・こえ ─────────
 let ac=null;
-function tone(f,d,type='sine',v=.12,t0=0){ if(saved.muted) return; try{
-  ac=ac||new (window.AudioContext||window.webkitAudioContext)(); const t=ac.currentTime+t0, o=ac.createOscillator(), g=ac.createGain();
-  o.type=type; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.001,t+d); o.connect(g).connect(ac.destination); o.start(t); o.stop(t+d+.02);
+function actx(){ try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended') ac.resume(); }catch(e){} return ac; }
+function tone(f,d,type='sine',v=.12,t0=0,dest){ if(saved.muted) return; try{
+  actx(); const t=ac.currentTime+t0, o=ac.createOscillator(), g=ac.createGain();
+  o.type=type; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.001,t+d); o.connect(g).connect(dest||ac.destination); o.start(t); o.stop(t+d+.02);
 }catch(e){} }
-const sChime=()=>{ tone(988,.35,'triangle',.12); tone(784,.5,'triangle',.12,.18); };
+// おとの なまえ → しゅうはすう（'C5' 'F#4' など）
+const SEMI={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+const hz=n=>440*Math.pow(2,((+n.slice(-1)+1)*12+SEMI[n[0]]+(n[1]==='#'?1:0)-69)/12);
+// いらっしゃいませの メロディ（3しゅるいから えらぶ）
+const ARRIVE=[
+  [['G5',0],['C6',.13],['E6',.26],['G6',.39],['E6',.6],['F6',.73],['A6',.86,.5]],
+  [['E6',0],['D6',.12],['C6',.24],['D6',.36],['E6',.48],['G6',.66],['C7',.84,.5]],
+  [['C6',0],['E6',.11],['G6',.22],['A6',.4],['G6',.52],['E6',.64],['F6',.76],['G6',.92,.5]]
+];
+function sArrive(){ const m=ARRIVE[Math.random()*ARRIVE.length|0]; bgmDuck(1.6);
+  m.forEach(([n,t,d=.22])=>{ tone(hz(n),d+.15,'triangle',.11,t); tone(hz(n)*2,d,'sine',.03,t); });
+  tone(hz('C5'),.9,'sine',.05,0); tone(hz('G4'),.9,'sine',.04,.43); }
 const sPop=()=>tone(660+Math.random()*200,.09,'sine',.1);
 const sStk=()=>{ tone(1318,.12,'triangle',.08); tone(1760,.16,'triangle',.07,.07); };
-const sFan=()=>[523,659,784,1046,1318].forEach((f,i)=>tone(f,.3,'triangle',.11,i*.11));
-function speak(t){ if(saved.muted||!window.speechSynthesis) return; try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='ja-JP'; u.rate=.85; u.pitch=1.15; speechSynthesis.speak(u); }catch(e){} }
+const sFan=()=>{ bgmDuck(1.4); [523,659,784,1046,1318].forEach((f,i)=>tone(f,.3,'triangle',.11,i*.11)); };
+function speak(t){ if(saved.muted||!window.speechSynthesis) return; try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='ja-JP'; u.rate=.85; u.pitch=1.15;
+  u.onstart=()=>bgmQuiet(true); u.onend=u.onerror=()=>bgmQuiet(false); speechSynthesis.speak(u); }catch(e){} }
+
+// ───────── BGM（オルゴールふうの オリジナル曲を その場で ならす）─────────
+// 1マス＝8ぶおんぷ。'-'＝のばす、null＝やすみ。コードは 1しょうせつ ごと
+const BGM_MEL=[
+  'E5','G5','C6','G5','A5','G5','E5','-',   'C5','D5','E5','-','A5','-','G5','-',
+  'F5','A5','C6','A5','G5','F5','E5','-',   'D5','E5','F5','-','G5','-','-','-',
+  'E5','G5','C6','G5','A5','G5','E5','-',   'C6','B5','A5','-','E5','-','A5','-',
+  'A5','G5','F5','A5','G5','E5','D5','-',   'G5','F5','E5','F5','D5','-','-','-',
+  'A5','-','C6','-','A5','G5','F5','-',     'G5','-','B5','-','G5','F5','D5','-',
+  'E5','G5','B5','G5','E5','-','G5','-',    'A5','-','-','C6','B5','A5','E5','-',
+  'F5','E5','D5','F5','A5','-','F5','-',    'G5','A5','B5','-','D6','-','B5','-',
+  'C6','-','G5','-','E5','G5','C6','-',     'C6','-','-','-',null,'G5',null,null
+];
+const BGM_CH=[['C3','C4','E4','G4'],['A2','A3','C4','E4'],['F2','F3','A3','C4'],['G2','G3','B3','D4'],
+  ['C3','C4','E4','G4'],['A2','A3','C4','E4'],['F2','F3','A3','C4'],['G2','G3','B3','D4'],
+  ['F2','F3','A3','C4'],['G2','G3','B3','D4'],['E2','E3','G3','B3'],['A2','A3','C4','E4'],
+  ['D3','D4','F4','A4'],['G2','G3','B3','D4'],['C3','C4','E4','G4'],['C3','C4','E4','G4']];
+const STEP=60/104/2;
+const BGM={on:false,timer:null,i:0,next:0,bus:null,duckUntil:0,quiet:false};
+function bgmLevel(){ return BGM.quiet?.35:1; }
+function bgmStart(){ if(BGM.on||saved.muted||saved.bgmOff||document.hidden||!actx()) return;
+  BGM.bus=ac.createGain(); BGM.bus.gain.setValueAtTime(.0001,ac.currentTime); BGM.bus.gain.exponentialRampToValueAtTime(bgmLevel(),ac.currentTime+1.2); BGM.bus.connect(ac.destination);
+  BGM.on=true; BGM.next=ac.currentTime+.15; BGM.timer=setInterval(bgmTick,60); bgmTick(); }
+function bgmStop(){ if(!BGM.on) return; BGM.on=false; clearInterval(BGM.timer); const b=BGM.bus; BGM.bus=null;
+  try{ b.gain.cancelScheduledValues(ac.currentTime); b.gain.setTargetAtTime(.0001,ac.currentTime,.15); setTimeout(()=>b.disconnect(),900); }catch(e){} }
+function bgmDuck(sec){ if(!BGM.on) return; const t=ac.currentTime; try{ BGM.bus.gain.cancelScheduledValues(t); BGM.bus.gain.setTargetAtTime(.2,t,.05); BGM.bus.gain.setTargetAtTime(bgmLevel(),t+sec,.3); }catch(e){} }
+function bgmQuiet(q){ BGM.quiet=q; if(!BGM.on) return; try{ BGM.bus.gain.setTargetAtTime(bgmLevel(),ac.currentTime,.2); }catch(e){} }
+function bgmTick(){ if(!BGM.on) return;
+  while(BGM.next<ac.currentTime+.25){ const i=BGM.i, t=BGM.next-ac.currentTime, bar=i>>3, beat=i&7, ch=BGM_CH[bar];
+    const n=BGM_MEL[i]; if(n&&n!=='-'){ let len=1; while(BGM_MEL[(i+len)%BGM_MEL.length]==='-') len++;
+      tone(hz(n),STEP*len+.25,'triangle',.05,t,BGM.bus); tone(hz(n)*2,.35,'sine',.018,t,BGM.bus); }
+    if(beat===0||beat===4) tone(hz(ch[0]),STEP*3,'triangle',.07,t,BGM.bus);
+    if(beat===2||beat===6) ch.slice(1).forEach(c=>tone(hz(c),STEP*1.4,'sine',.016,t,BGM.bus));
+    BGM.next+=STEP; BGM.i=(i+1)%BGM_MEL.length; } }
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) bgmStop(); else bgmStart(); });
+// さいしょに さわった ときから ならす（ブラウザの きまりで、さわる まえは おとが でない）
+addEventListener('pointerdown',()=>bgmStart(),{passive:true}); addEventListener('click',()=>bgmStart());
+function bgmLabel(){ document.querySelectorAll('[data-bgm]').forEach(b=>{ b.textContent=saved.bgmOff?'🎵 おんがく なし':'🎵 おんがく'; b.setAttribute('aria-pressed',!saved.bgmOff); }); }
+document.querySelectorAll('[data-bgm]').forEach(b=>b.addEventListener('click',()=>{ saved.bgmOff=!saved.bgmOff; save(); bgmLabel(); if(saved.bgmOff) bgmStop(); else bgmStart(); }));
 
 // ───────── シールの え ─────────
 function drawSticker(ctx,k,x,y,s,col){
@@ -518,7 +754,7 @@ STICKERS.forEach(s=>{ const b=document.createElement('button'); b.className='stk
 function refreshStickerIcons(){ stkEl.querySelectorAll('.stk').forEach(b=>{ const c=b.querySelector('canvas'), x=c.getContext('2d'); x.clearRect(0,0,96,96);
   drawSticker(x,b.dataset.stk,48,50,86,b.dataset.stk==='blush'?'#f472b6':(S.color==='white'?'#f9a8d4':solid(S.color))); }); }
 stkEl.addEventListener('click',e=>{ const b=e.target.closest('[data-stk]'); if(!b) return; S.sticker=b.dataset.stk; press(stkEl,'[data-stk]',b); sStk(); });
-$('mute').addEventListener('click',()=>{ saved.muted=!saved.muted; save(); muteLabel(); });
+$('mute').addEventListener('click',()=>{ saved.muted=!saved.muted; save(); muteLabel(); if(saved.muted){ bgmStop(); if(window.speechSynthesis) speechSynthesis.cancel(); } else bgmStart(); });
 function muteLabel(){ $('mute').textContent=saved.muted?'🔇 おと なし':'🔊 おと'; $('mute').setAttribute('aria-pressed',saved.muted); }
 
 // ───────── えを ならべる ─────────
@@ -630,8 +866,8 @@ let lastCust=null;
 function nextCustomer(){
   let c; do{ c=CUSTOMERS[Math.random()*CUSTOMERS.length|0]; }while(c.id===lastCust&&CUSTOMERS.length>1); lastCust=c.id;
   S.mode='shop'; loadArt(c); S.wishes=makeWishes(c); show('play'); renderWish(); setTool('fill');
-  stage.classList.remove('arrive'); void stage.offsetWidth; stage.classList.add('arrive'); sChime();
-  setTimeout(()=>speak(`いらっしゃいませ！ ${c.name}が きたよ。`+S.wishes.map(wishText).join('、そして ')+'ね。'),500);
+  stage.classList.remove('arrive'); void stage.offsetWidth; stage.classList.add('arrive'); sArrive();
+  setTimeout(()=>speak(`いらっしゃいませ！ ${c.name}が きたよ。`+S.wishes.map(wishText).join('、そして ')+'ね。'),1300);
 }
 
 // ───────── おえかき ─────────
@@ -737,8 +973,8 @@ $('go-shop').addEventListener('click',()=>{ S.tool='fill'; nextCustomer(); });
 $('go-draw').addEventListener('click',()=>{ buildPick(); show('drawpick'); });
 $('go-album').addEventListener('click',openAlbum);
 document.querySelectorAll('[data-home]').forEach(b=>b.addEventListener('click',()=>{ if(window.speechSynthesis) speechSynthesis.cancel(); titleScore(); show('title'); }));
-muteLabel(); titleScore(); setTool('fill'); refreshStickerIcons();
-window.__salon={S,CUSTOMERS,setFill,renderBlob,DB,makeWishes,wishDone,nextCustomer,startDraw};
+muteLabel(); bgmLabel(); titleScore(); setTool('fill'); refreshStickerIcons();
+window.__salon={S,BGM,CUSTOMERS,setFill,renderBlob,DB,makeWishes,wishDone,nextCustomer,startDraw};
 })();
 </script>
 </body>
