@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>おとの チェック</title>
+<script>
+// LINEで開いたら いつものブラウザで開き直す（ほかのゲームと同じ）
+(function(){ var ua=navigator.userAgent.toLowerCase();
+  if(ua.indexOf('line')!==-1 && location.search.indexOf('openExternalBrowser=1')===-1){
+    location.href=location.href+(location.search?'&':'?')+'openExternalBrowser=1'; } })();
+</script>
+<style>
+:root{--ink:#1e293b;--muted:#475569;--ok:#047857;--ng:#b91c1c;--line:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:#fff7fb;color:var(--ink);font-family:system-ui,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;line-height:1.6}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:24px;margin:8px 0}
+p.lead{margin:0 0 12px;color:var(--muted)}
+.btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:12px 0}
+button{border:none;border-radius:16px;padding:16px 12px;font-size:19px;font-weight:700;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.b1{background:#be185d}.b2{background:#1d4ed8}.b3{background:#047857}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:15px}
+td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top}
+td:first-child{width:42%;color:var(--muted)}
+.ok{color:var(--ok);font-weight:700}.ng{color:var(--ng);font-weight:700}
+#log{background:#fff;border-radius:12px;padding:10px;font-size:14px;min-height:60px;white-space:pre-wrap;margin-top:12px}
+.note{font-size:14px;color:var(--muted);margin-top:14px}
+</style>
+</head>
+<body>
+<main>
+  <h1>🔊 おとの チェック</h1>
+  <p class="lead">おうちの方へ：音が出ないときに、この画面でボタンを3つ順に押してください。押したあとの画面をスクリーンショットで送ってもらえれば、原因を調べられます。</p>
+  <div class="btns">
+    <button class="b1" id="tja">① にほんごの こえ</button>
+    <button class="b2" id="ten">② えいごの こえ</button>
+    <button class="b3" id="tbeep">③ ピッという おと</button>
+  </div>
+  <table id="info"></table>
+  <div id="log">ボタンを押すと、ここに結果が出ます。</div>
+  <p class="note">・音量ボタンで音量を上げ、iPadは横の消音スイッチ（またはコントロールセンターの🔕）も確かめてください。<br>・③だけ鳴らないときは消音の設定、①②だけ鳴らないときは「読み上げの声」が入っていない可能性があります。</p>
+</main>
+<script src="../common/kids-audio.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const log=t=>{ const l=$('log'); if(l.dataset.init!=='1'){ l.textContent=''; l.dataset.init='1'; } l.textContent+=`${new Date().toLocaleTimeString('ja-JP')} ${t}\n`; };
+function row(k,v,ok){ return `<tr><td>${k}</td><td class="${ok===true?'ok':ok===false?'ng':''}">${v}</td></tr>`; }
+function info(){
+  const ua=navigator.userAgent;
+  const dev=/iPad|Macintosh/.test(ua)&&'ontouchend' in document?'iPad':/iPhone/.test(ua)?'iPhone':/Android/.test(ua)?'Android':'パソコンほか';
+  const br=/CriOS|Chrome/.test(ua)&&!/Edg/.test(ua)?'Chrome':/Safari/.test(ua)?'Safari':/Firefox|FxiOS/.test(ua)?'Firefox':/Edg/.test(ua)?'Edge':'その他';
+  const vs=KidsAudio.voices();
+  const ja=vs.filter(v=>/^ja/i.test(v.lang)), en=vs.filter(v=>/^en/i.test(v.lang));
+  $('info').innerHTML=
+    row('きかい・ブラウザ',`${dev}・${br}`)+
+    row('読み上げのしくみ',window.speechSynthesis?'あり':'なし（このブラウザは読み上げできません）',!!window.speechSynthesis)+
+    row('声の数',`${vs.length}こ`, vs.length>0)+
+    row('にほんごの声',ja.length?ja.slice(0,3).map(v=>v.name).join('、'):'見つかりません',ja.length>0)+
+    row('えいごの声',en.length?en.slice(0,3).map(v=>v.name).join('、'):'見つかりません',en.length>0)+
+    row('LINEの中で開いている',/Line/i.test(ua)?'はい（Safari/Chromeで開き直してください）':'いいえ',!/Line/i.test(ua));
+}
+function sayTest(text,lang){
+  if(!window.speechSynthesis){ log('✖ このブラウザは読み上げできません'); return; }
+  log(`▶ ${lang} を読み上げます…`);
+  KidsAudio.lastError=null;
+  const ok=KidsAudio.speak(text,{lang,rate:.9,
+    onstart:()=>log(`○ ${lang}：話し始めました（聞こえましたか？）`),
+    onend:()=>{ if(KidsAudio.lastError) log(`✖ ${lang}：エラー「${KidsAudio.lastError}」`); else log(`○ ${lang}：読み終わりました`); }});
+  if(!ok) log(`✖ ${lang}：読み上げを始められませんでした`);
+  setTimeout(()=>{ info(); }, 300);
+}
+$('tja').addEventListener('click',()=>sayTest('こんにちは。きこえますか？','ja-JP'));
+$('ten').addEventListener('click',()=>sayTest('Hello! Can you hear me?','en-US'));
+let ac=null;
+$('tbeep').addEventListener('click',()=>{
+  try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)(); ac.resume();
+    const o=ac.createOscillator(), g=ac.createGain(); o.frequency.value=880; g.gain.value=.2;
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+.4);
+    log(`▶ ピッ（おとの きかいの じょうたい：${ac.state}）`);
+  }catch(e){ log('✖ おとを ならせませんでした：'+e.message); }
+});
+info();
+if(window.speechSynthesis) speechSynthesis.addEventListener('voiceschanged',info);
+setTimeout(info,1000);
+</script>
+</body>
+</html>

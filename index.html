@@ -1249,6 +1249,7 @@
 
 <div id="toast"></div>
 
+<script src="common/kids-audio.js"></script>
 <script src="map/japan.js"></script>
 <script src="map/pref_hints.js"></script>
 <script>
@@ -2300,16 +2301,9 @@ function biasedPickRandom(arr, n, catWeights) {
 //  音声読み上げ（SpeechSynthesis）
 // =============================================
 function speakText(text, lang, rate) {
-  if (!window.speechSynthesis) return;
   if (isMuted) return;  // ミュート中は音声読み上げもスキップ
-  // cancel()→即speak()：setTimeoutを使わないことでAndroidのユーザージェスチャー
-  // コンテキストを維持する（setTimeoutを挟むとAndroidはspeak()を拒否する）
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = lang || 'ja-JP';
-  utt.rate = (typeof rate === 'number') ? rate : 0.85;
-  utt.volume = 1;
-  window.speechSynthesis.speak(utt);
+  // タブレットで無音にならないよう、声の選択・言い直しは共通の KidsAudio に任せる（common/kids-audio.js）
+  KidsAudio.speak(text, { lang: lang || 'ja-JP', rate: (typeof rate === 'number') ? rate : 0.85 });
 }
 
 // =============================================
@@ -3756,17 +3750,7 @@ function initAudio() {
   if (bgmStarted) return;
   bgmStarted = true;
   startBGM();
-  if (window.speechSynthesis) {
-    // Android Chrome: 音声エンジンをウォームアップ（getVoicesで初期化を促す）
-    window.speechSynthesis.getVoices();
-    // iOS Safari: 最初のユーザー操作で無音発話してspeechSynthesisをアンロック
-    // ※ unlock完了後すぐcancel()するためspeaking状態は最小限に抑える
-    const unlock = new SpeechSynthesisUtterance('');
-    unlock.volume = 0;
-    unlock.onend = () => window.speechSynthesis.cancel();
-    unlock.onerror = () => {};
-    window.speechSynthesis.speak(unlock);
-  }
+  // 読み上げの「許可」は common/kids-audio.js が最初のタップで取る
 }
 
 // 正解音

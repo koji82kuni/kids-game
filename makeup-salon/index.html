@@ -139,6 +139,16 @@ button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
 .btn{border:none;border-radius:16px;padding:12px 18px;font-size:18px;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.18)}
 .btn.rose{background:#be185d}.btn.mint{background:#047857}.btn.violet{background:#6d28d9}.btn.gray{background:#475569}
 #fx{position:fixed;inset:0;pointer-events:none;z-index:30}
+/* えを おおきく みる（タップで ひらく・もう一度 タップで もどる） */
+.card img.result{cursor:zoom-in}
+.zhint{margin:-6px 0 0;font-size:14px;color:var(--muted)}
+#zoomov{position:fixed;inset:0;z-index:25;background:rgba(15,23,42,.94);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:zoom-out;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+#zoomov.on{display:flex}
+#zimg{flex:1;min-height:0;width:100%;object-fit:contain;animation:zin .25s ease-out}
+@keyframes zin{from{transform:scale(.88)}to{transform:scale(1)}}
+#zoomov .toggle button{font-size:17px;padding:8px 18px}
+#zoomov .tip{margin:0;color:#fff;font-size:15px;opacity:.85}
 
 /* おえかき：えらぶ */
 .pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;width:100%}
@@ -276,6 +286,7 @@ button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
     <h2 id="rtitle">できた！</h2>
     <div class="stars" id="rstars"></div>
     <img class="result" id="rimg" alt="できた え">
+    <p class="zhint">👆 えを タップすると おおきく みられるよ</p>
     <p id="rtext" style="margin:0;font-size:18px"></p>
     <span class="saved" id="rsaved">📒 アルバムに いれたよ</span>
     <div class="btns">
@@ -295,6 +306,7 @@ button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
       <button data-v="gem" aria-pressed="false">へんしん！</button>
     </div>
     <img class="result" id="vimg" alt="アルバムの え">
+    <p class="zhint">👆 えを タップすると おおきく みられるよ</p>
     <div class="btns">
       <button class="btn mint" id="vsave">⬇ ほぞん</button>
       <button class="btn gray" id="vdel">けす</button>
@@ -316,8 +328,18 @@ button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
   </div>
 </div>
 
+<!-- えを おおきく みる -->
+<div id="zoomov" role="dialog" aria-modal="true" aria-label="えを おおきく みる">
+  <img id="zimg" alt="">
+  <div class="toggle" id="ztoggle" hidden>
+    <button data-v="orig" aria-pressed="true">もとの え</button>
+    <button data-v="gem" aria-pressed="false">へんしん！</button>
+  </div>
+  <p class="tip">👆 タップすると もどるよ</p>
+</div>
 <canvas id="fx"></canvas>
 
+<script src="../common/kids-audio.js"></script>
 <script>
 (function(){
 'use strict';
@@ -712,8 +734,8 @@ function sArrive(){ const m=ARRIVE[Math.random()*ARRIVE.length|0]; bgmDuck(1.6);
 const sPop=()=>tone(660+Math.random()*200,.09,'sine',.1);
 const sStk=()=>{ tone(1318,.12,'triangle',.08); tone(1760,.16,'triangle',.07,.07); };
 const sFan=()=>{ bgmDuck(1.4); [523,659,784,1046,1318].forEach((f,i)=>tone(f,.3,'triangle',.11,i*.11)); };
-function speak(t){ if(saved.muted||!window.speechSynthesis) return; try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='ja-JP'; u.rate=.85; u.pitch=1.15;
-  u.onstart=()=>bgmQuiet(true); u.onend=u.onerror=()=>bgmQuiet(false); speechSynthesis.speak(u); }catch(e){} }
+// こえ：タブレットで無音にならないよう common/kids-audio.js の KidsAudio に任せる
+function speak(t){ if(saved.muted) return; KidsAudio.speak(t,{lang:'ja-JP',rate:.85,pitch:1.15,onstart:()=>bgmQuiet(true),onend:()=>bgmQuiet(false)}); }
 
 // ───────── BGM（オルゴールふうの オリジナル曲を その場で ならす）─────────
 // 1マス＝8ぶおんぷ。'-'＝のばす、null＝やすみ。コードは 1しょうせつ ごと
@@ -791,7 +813,7 @@ STICKERS.forEach(s=>{ const b=document.createElement('button'); b.className='stk
 function refreshStickerIcons(){ stkEl.querySelectorAll('.stk').forEach(b=>{ const c=b.querySelector('canvas'), x=c.getContext('2d'); x.clearRect(0,0,96,96);
   drawSticker(x,b.dataset.stk,48,50,86,b.dataset.stk==='blush'?'#f472b6':(S.color==='white'?'#f9a8d4':solid(S.color))); }); }
 stkEl.addEventListener('click',e=>{ const b=e.target.closest('[data-stk]'); if(!b) return; S.sticker=b.dataset.stk; press(stkEl,'[data-stk]',b); sStk(); });
-$('mute').addEventListener('click',()=>{ saved.muted=!saved.muted; save(); muteLabel(); if(saved.muted){ bgmStop(); if(window.speechSynthesis) speechSynthesis.cancel(); } else bgmStart(); });
+$('mute').addEventListener('click',()=>{ saved.muted=!saved.muted; save(); muteLabel(); if(saved.muted){ bgmStop(); KidsAudio.cancel(); } else bgmStart(); });
 function muteLabel(){ $('mute').innerHTML=saved.muted?'🔇<span class="lb"> おと なし</span>':'🔊<span class="lb"> おと</span>'; $('mute').setAttribute('aria-label','おと'); $('mute').setAttribute('aria-pressed',saved.muted); }
 
 // ───────── えを ならべる ─────────
@@ -1031,6 +1053,21 @@ function paintView(){ if(viewURL) URL.revokeObjectURL(viewURL); const blob=viewi
   press($('vtoggle'),'[data-v]',$('vtoggle').querySelector(`[data-v="${viewing}"]`)); }
 $('vtoggle').addEventListener('click',e=>{ const b=e.target.closest('[data-v]'); if(!b) return; viewing=b.dataset.v; paintView(); if(viewing==='gem'){ sFan(); confetti(); } });
 $('vclose').addEventListener('click',()=>{ $('viewov').classList.remove('on'); openAlbum(); });
+// ───────── えを おおきく みる ─────────
+// できた！の え・アルバムの え を タップ → がめん いっぱいに。もう一度 タップで もとの おおきさへ
+let zoomFrom=null;
+function zoomPaint(){ const z=$('zimg'), src=zoomFrom==='view'?$('vimg'):$('rimg'); z.src=src.src; z.alt=src.alt;
+  const t=$('ztoggle'); t.hidden=!(zoomFrom==='view'&&cur&&cur.gem);
+  if(!t.hidden) press(t,'[data-v]',t.querySelector(`[data-v="${viewing}"]`)); }
+function zoomOpen(from){ zoomFrom=from; zoomPaint(); $('zoomov').classList.add('on'); sPop(); }
+function zoomClose(){ $('zoomov').classList.remove('on'); zoomFrom=null; }
+$('rimg').addEventListener('click',()=>zoomOpen('result'));
+$('vimg').addEventListener('click',()=>zoomOpen('view'));
+$('zoomov').addEventListener('click',zoomClose);
+// おおきく みたまま「もとの え／へんしん！」を くらべられる（ボタンは とじない）
+$('ztoggle').addEventListener('click',e=>{ e.stopPropagation(); const b=e.target.closest('[data-v]'); if(!b) return;
+  viewing=b.dataset.v; paintView(); zoomPaint(); if(viewing==='gem'){ sFan(); confetti(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('zoomov').classList.contains('on')) zoomClose(); });
 function fileName(r,suffix){ const d=new Date(r.t), p=n=>String(n).padStart(2,'0'); return `makeup_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${suffix}.png`; }
 function download(blob,name){ const u=URL.createObjectURL(blob), a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
 $('vsave').addEventListener('click',()=>{ const gem=viewing==='gem'&&cur.gem; download(gem?cur.gem:cur.img,fileName(cur,gem?'_henshin':'')); });
@@ -1065,7 +1102,7 @@ document.querySelectorAll('.age [data-age]').forEach(b=>{ b.setAttribute('aria-p
 $('go-shop').addEventListener('click',()=>{ S.tool='fill'; nextCustomer(); });
 $('go-draw').addEventListener('click',()=>{ buildPick(); show('drawpick'); });
 $('go-album').addEventListener('click',openAlbum);
-document.querySelectorAll('[data-home]').forEach(b=>b.addEventListener('click',()=>{ if(window.speechSynthesis) speechSynthesis.cancel(); titleScore(); show('title'); }));
+document.querySelectorAll('[data-home]').forEach(b=>b.addEventListener('click',()=>{ KidsAudio.cancel(); titleScore(); show('title'); }));
 muteLabel(); bgmLabel(); titleScore(); setTool('fill'); refreshStickerIcons();
 window.__salon={S,BGM,pickPart,penCover,getLAB:()=>LAB,CUSTOMERS,setFill,renderBlob,DB,makeWishes,wishDone,nextCustomer,startDraw};
 })();
