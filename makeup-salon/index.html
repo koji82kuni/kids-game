@@ -172,6 +172,9 @@ button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
 .parent ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:8px}
 .parent textarea{width:100%;min-height:88px;font:inherit;font-size:13px;border:2px solid #e2e8f0;border-radius:10px;padding:8px;user-select:text;-webkit-user-select:text}
 .parent a{color:#6d28d9}
+.parent .row{display:flex;flex-wrap:wrap;gap:8px}
+.parent .row button.alt{background:#fff;color:#6d28d9;box-shadow:inset 0 0 0 2px #6d28d9}
+.parent .gstyle{margin:0;font-weight:800;color:#6d28d9}
 .parent .row button,.parent .row label{border:none;border-radius:12px;padding:8px 12px;font-size:14px;background:#6d28d9;color:#fff;font-weight:800;cursor:pointer}
 .parent .row label input{display:none}
 .msg{font-size:13px;color:var(--mint);min-height:1em}
@@ -317,7 +320,8 @@ button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
       <ol>
         <li><div class="row"><button id="g1">① えを ダウンロード</button></div></li>
         <li>おねがいの文をコピーします（うまくいかないときは、下の文を長押しでコピー）
-          <div class="row"><button id="g2">② 文を コピー</button></div>
+          <div class="row"><button id="g2">② 文を コピー</button> <button id="groll" class="alt">🎲 べつの テイストに</button></div>
+          <p class="gstyle" id="gstyle" aria-live="polite"></p>
           <textarea id="gprompt" readonly></textarea></li>
         <li><a href="https://gemini.google.com/app" target="_blank" rel="noopener">③ Geminiを ひらく</a>（えを添付し、文を貼りつけて送ります）</li>
         <li>できた絵をダウンロードして、ここに入れます
@@ -1048,7 +1052,7 @@ async function openAlbum(){
 let cur=null, viewURL=null, viewing='orig';
 async function openView(id){ cur=await DB.get(id); if(!cur) return; viewing=cur.gem?'gem':'orig';
   const d=new Date(cur.t); $('vtitle').textContent=`${cur.who}（${d.getMonth()+1}/${d.getDate()}）`;
-  $('vtoggle').hidden=!cur.gem; $('gmsg').textContent=''; $('gprompt').value=geminiPrompt(cur); paintView(); $('viewov').classList.add('on'); }
+  $('vtoggle').hidden=!cur.gem; $('gmsg').textContent=''; gemRoll(); gemShow(); paintView(); $('viewov').classList.add('on'); }
 function paintView(){ if(viewURL) URL.revokeObjectURL(viewURL); const blob=viewing==='gem'&&cur.gem?cur.gem:cur.img; viewURL=URL.createObjectURL(blob); $('vimg').src=viewURL;
   press($('vtoggle'),'[data-v]',$('vtoggle').querySelector(`[data-v="${viewing}"]`)); }
 $('vtoggle').addEventListener('click',e=>{ const b=e.target.closest('[data-v]'); if(!b) return; viewing=b.dataset.v; paintView(); if(viewing==='gem'){ sFan(); confetti(); } });
@@ -1075,7 +1079,28 @@ let delArm=null;
 $('vdel').addEventListener('click',async()=>{ const b=$('vdel');
   if(!delArm){ b.textContent='もういちど おすと けすよ'; delArm=setTimeout(()=>{ delArm=null; b.textContent='けす'; },3000); return; }
   clearTimeout(delArm); delArm=null; b.textContent='けす'; await DB.del(cur.id); $('viewov').classList.remove('on'); openAlbum(); });
-function geminiPrompt(r){ return `この子どもが${r.mode==='shop'?'メイク（ぬりえ）した':'かいた'}絵をもとに、4〜8さいの子どもが喜ぶ、かわいいアニメ風のイラストにしてください。条件：元の絵の形・色・メイクの雰囲気をできるだけ残す／明るくかわいい絵本風／正方形／文字・名前・サインは入れない／実在のアニメやゲームのキャラクターに似せない／こわい表現はなし`; }
+// へんしんの テイスト（ひらくたびに ランダム。🎲で べつのに かえられる）
+const GEM_STYLES=[
+  {n:'えほん', t:'やさしい色の水彩えほん風のイラスト'},
+  {n:'アニメ', t:'明るくかわいいアニメ風のイラスト'},
+  {n:'ねんど', t:'ねんどで作ったような、ころんとした立体のクレイアート風'},
+  {n:'ぬいぐるみ', t:'ふわふわのフェルトとぬいぐるみで作ったような手芸風'},
+  {n:'きりえ', t:'色画用紙を切って重ねた、はり絵・きり絵風'},
+  {n:'クレヨン', t:'クレヨンと色えんぴつで描いた、あたたかい手描き風'},
+  {n:'ゆめかわ', t:'パステルカラーと星やハートがきらきらする、ゆめかわいい風'},
+  {n:'ドットえ', t:'レトロゲームのようなカラフルなドット絵（ピクセルアート）風'},
+  {n:'おかし', t:'クッキーやアイシング、キャンディで作ったようなおかしの世界風'},
+  {n:'ステンドグラス', t:'光がすける、カラフルなステンドグラス風'},
+  {n:'3Dえいが', t:'子ども向け3Dアニメ映画のような、つやつやで立体的なイラスト'},
+  {n:'えにっき', t:'夏休みのえにっきのような、のびのびした水彩とペンのイラスト'}
+];
+const GEM_SCENES=['おはなばたけで','にじの かかった そらの したで','おしろの まえで','うみべで','ほしぞらの したで','おかしの まちで','もりの なかで','ゆきの ふる まちで','おまつりの よるに','くもの うえで'];
+let gemStyle=null, gemScene=null;
+function gemRoll(){ let st; do{ st=GEM_STYLES[Math.random()*GEM_STYLES.length|0]; }while(gemStyle&&st===gemStyle); gemStyle=st; gemScene=GEM_SCENES[Math.random()*GEM_SCENES.length|0]; }
+function geminiPrompt(r){ if(!gemStyle) gemRoll();
+  return `この子どもが${r.mode==='shop'?'メイク（ぬりえ）した':'かいた'}絵をもとに、4〜8さいの子どもが喜ぶ「${gemStyle.t}」にしてください。背景は「${gemScene.replace(/\s+/g,'')}」のイメージで。条件：元の絵の形・色・メイクの雰囲気をできるだけ残す／主役は中央に大きく／明るく楽しい雰囲気／正方形／文字・名前・サインは入れない／実在のアニメやゲームのキャラクターに似せない／こわい表現はなし`; }
+function gemShow(){ $('gprompt').value=geminiPrompt(cur); $('gstyle').textContent=`こんかいの テイスト：${gemStyle.n}`; }
+$('groll').addEventListener('click',()=>{ gemRoll(); gemShow(); sPop(); $('gmsg').textContent='テイストを かえました'; });
 $('g1').addEventListener('click',()=>{ download(cur.img,fileName(cur,'')); $('gmsg').textContent='えを ダウンロードしました'; });
 $('g2').addEventListener('click',()=>{ const t=$('gprompt'); const ok=()=>{ $('gmsg').textContent='おねがいの文を コピーしました'; };
   const fallback=()=>{ t.focus(); t.select(); $('gmsg').textContent='文を えらびました。長押しで コピーしてください'; };
