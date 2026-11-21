@@ -71,6 +71,11 @@
   .qz-opt .qz-e{font-size:clamp(28px,8vh,48px);line-height:1.1;}
   .qz-opt.ok{background:#d4ffd9;border-color:#3cc05a;box-shadow:0 5px 0 #3cc05a;}
   .qz-opt.ng{background:#ffe0e0;border-color:#ff7a7a;box-shadow:0 5px 0 #ff7a7a;opacity:.8;}
+  .qz-exp{background:#fff6d6;border:2px dashed #ffc21a;border-radius:14px;padding:5px 12px;margin-top:6px;
+    font-size:clamp(13px,3.6vh,19px);font-weight:900;color:#7a4a00;line-height:1.4;}
+  .qz-exp:empty{display:none;}
+  .qz-skip{font-size:clamp(11px,2.8vh,14px);color:#9a7ab8;margin-top:4px;font-weight:bold;}
+  .qz-skip.hidden,.qz-say.hidden{display:none;}
   .qz-msg{font-size:clamp(13px,3.4vh,18px);font-weight:900;color:#c0306a;min-height:1.4em;}
   .start-btn{background:linear-gradient(135deg,#ff7eb3,#ff4d6d);border:none;border-radius:999px;
     padding:15px 44px;font-size:clamp(17px,5vw,24px);font-weight:900;color:#fff;cursor:pointer;font-family:inherit;
@@ -269,6 +274,8 @@
     <button class="qz-say" id="qz-say">🔊 もういちど きく</button>
     <div class="qz-opts" id="qz-opts"></div>
     <div class="qz-msg" id="qz-msg"></div>
+    <div class="qz-exp" id="qz-exp"></div>
+    <div class="qz-skip hidden" id="qz-skip">▶ タップで つぎへ</div>
   </div></div>
 
   <!-- 縦向き時：横向きにするよう案内 -->
@@ -1731,6 +1738,126 @@ const NAZO=[
   ['とりは とりでも、ごみを あつめる とりは？',[['🧹','ちりとり'],['🐔','にわとり'],['🦜','オウム']]],
   ['おしりに「ん」を つけると、がっこうへ もっていく ものに なる どうぶつは？',[['🦛','かば'],['🐘','ぞう'],['🦒','きりん']]],
 ];
+// クイズの ひとこと かいせつ（2026-11-21）。もんだいぶん → かいせつ
+const QUIZ_EXPLAIN={
+  'ひを けしに いく、あかい くるまは？':'ホースで みずを かけて ひを けすよ',
+  'びょうきや けがの ひとを はこぶ くるまは？':'サイレンを ならして びょういんへ いそぐよ',
+  'せんろの うえを はしる のりものは？':'レールの うえを、たくさんの ひとを のせて はしるよ',
+  'パンを うっている おみせは？':'パンやさんは あさから パンを やいて いるよ',
+  'しんごうが なにいろの とき わたって いい？':'あおは「すすめ」、あかは「とまれ」の あいずだよ',
+  'ポストは なにいろ？':'とおくからでも めだつように あかいろに なって いるよ',
+  'おまわりさんが いる ちいさな たてものは？':'おまわりさんが まちを まもって いる ところだよ',
+  'そらを とんで とおくへ いく のりものは？':'つばさで そらを とんで、とおくの まちへ いけるよ',
+  'ほんを かりられる ところは？':'ほんを かりて、よみおわったら かえすよ',
+  'じてんしゃの タイヤは いくつ？':'まえと うしろに 1つずつ。タイヤは 2つだよ',
+  'しんごうの いろは、あお・きいろと あと ひとつは？':'あおは すすめ、きいろは ちゅうい、あかは とまれ',
+  'きゅうきゅうしゃや しょうぼうしゃを よぶ でんわばんごうは？':'かじや けがの ときは 119ばんに でんわするよ',
+  'けいさつを よぶ でんわばんごうは？':'じけんの ときは 110ばんで けいさつを よぶよ',
+  'ふねが とまる ところは？':'ふねは みなとに とまって、ひとや にもつを のせるよ',
+  'くるまに ガソリンを いれる おみせは？':'くるまは ガソリンを いれると はしれるよ',
+  'あしが 8ほん ある うみの いきものは？':'たこの あしは 8ほん。いかは 10ぽんだよ',
+  'よこに あるく うみの いきものは？':'かには あしの つくりの せいで よこに あるくよ',
+  'うみの みずは どんな あじ？':'うみの みずには しおが とけて いるよ',
+  'あたまから しおを ふきあげる、とても おおきな いきものは？':'あたまの あなから いきを ふきだすと、しおふきに みえるよ',
+  'こうらを せおって、うみを およぐ いきものは？':'うみがめは すなはまに たまごを うむよ',
+  'いかの あしは なんぼん？':'いかは 10ぽん。そのうち 2ほんは ながい「しょくわん」だよ',
+  'すみを はいて にげる いきものは？':'すみで あいての めを くらませて にげるよ',
+  'うみで いちばん おおきな いきものは？':'シロナガスクジラは バス 2だいよりも ながいよ',
+  'おおきな ひれで、みずの うえを とぶ さかなは？':'むなびれを つばさのように ひろげて とぶよ',
+  'クマノミが かくれて すんで いる ところは？':'イソギンチャクの なかで、てきから みを まもるよ',
+  'くじらは なんの なかま？':'くじらは はいで いきを して、あかちゃんに おちちを あげるよ',
+  'ヤドカリが せなかに せおって いる ものは？':'からだが おおきく なると、おおきな かいがらに おひっこし するよ',
+  'うみの みずが ふえたり へったり する ことを なんと いう？':'おつきさまの ちからで、うみの みずが うごくよ',
+  'ペンギンは そらを とべる？':'とべないけれど、みずの なかを とても はやく およぐよ',
+  'ぷくーっと ふくらむ さかなは？':'フグは みずを のみこんで ぷくーっと ふくらむよ',
+  'ゆきで つくる、まるい にんぎょうは？':'ゆきの たまを 2つ かさねて つくるよ',
+  'さむい ひに てに はめる ものは？':'てを あたためて、つめたい ゆきからも まもるよ',
+  'ゆきは なにいろ？':'こおりの ちいさな つぶが あつまって、しろく みえるよ',
+  'みずが こおると なにに なる？':'みずは とても さむいと かたまって こおりに なるよ',
+  'ゆきの うえを すべる どうぐは？':'ほそながい いたで、ゆきの うえを すべるよ',
+  'ふゆの あいだ ながく ねむる どうぶつは？':'たべものが すくない ふゆは、あなの なかで ねて すごすよ',
+  'ゆきが ふる きせつは？':'さむい ふゆに、くもの なかの みずが こおって ゆきに なるよ',
+  'さむい ところに すむ、くろと しろの とりは？':'みなみきょくの さむい うみの ちかくに すむ なかまも いるよ',
+  'むれで くらして「ワオーン」と ほえる どうぶつは？':'なかまと「とおぼえ」で れんらくを とりあうよ',
+  'ゆきを まるめて なげあう あそびは？':'ゆきだまを まるめて、あてっこを する あそびだよ',
+  'ゆきの けっしょうの かどは いくつ？':'ゆきの けっしょうは、ほしのような 6つの かどが あるよ',
+  'こおりは みずに うく？ しずむ？':'こおりは みずより かるいので うくよ',
+  'にほんで いちばん たかい やまは？':'ふじさんの たかさは 3776メートル。にほんで いちばん たかいよ',
+  'ふゆに なると からだが しろく なる どうぶつは？':'ゆきの なかで みつからないように、しろく なるよ',
+  'ホッキョクグマの けの いろは？':'しろく みえるので、ゆきや こおりの なかで めだたないよ',
+  'きいろくて ながい、おさるさんの だいすきな くだものは？':'バナナは あたたかい くにで そだつ くだものだよ',
+  'むねを たたいて「ドンドン」と ならす おおきな どうぶつは？':'ドラミングで「ここに いるぞ」と なかまに しらせるよ',
+  'はなが ながーい どうぶつは？':'ながい はなで みずを すったり、ものを つかんだり するよ',
+  'たてがみの ある「どうぶつの おうさま」は？':'おすの ライオンには りっぱな たてがみが あるよ',
+  'しましまもようの おおきな ねこの なかまは？':'しまもようで、くさむらに かくれやすく なるよ',
+  'ひとの ことばを まねする とりは？':'オウムは きいた おとを まねして しゃべるよ',
+  'みずべで おおきな くちを あける、かたい からだの いきものは？':'ワニは みずの なかで じっと えものを まつよ',
+  'ゴリラが よく たべる ものは？':'からだは おおきいけれど、しょくぶつが だいすきだよ',
+  'きの えだに ぶらさがって あそぶ どうぶつは？':'ながい てで、えだから えだへ わたるよ',
+  'ぞうは はなで なにを する？':'はなで みずを すって、くちに いれて のむよ',
+  'カメレオンが かえられる ものは？':'まわりの ようすや きもちに あわせて いろが かわるよ',
+  'ナマケモノは 1にちに どれくらい ねる？':'ナマケモノは 1にちの ほとんどを ねて すごすよ',
+  'ヘビの あしは なんぼん？':'あしが なくても、からだを くねらせて すすむよ',
+  'ゴリラの あかちゃんは なにを のんで そだつ？':'ゴリラも ひとと おなじように、おちちで そだつよ',
+  'バナナは どこに なる？':'バナナは ふさに なって、きの うえで そだつよ',
+  'よるに「ホーホー」と なく とりは？':'ふくろうは よるに うごいて、えものを さがすよ',
+  'よるの そらで きらきら ひかる ものは？':'ほしは、とおくで ひかる たいようの なかまだよ',
+  'ハロウィンで かざる オレンジの やさいは？':'かぼちゃに かおを ほって、ランタンに するよ',
+  'くらい ところを てらす どうぐは？':'でんちで あかりが つく どうぐだよ',
+  'ねる ときに あたまを のせる ものは？':'まくらに あたまを のせると ぐっすり ねむれるよ',
+  'さかさまに ぶらさがって ねる どうぶつは？':'あしで えだに つかまって、ぶらさがって ねるよ',
+  'まんげつの おつきさまの かたちは？':'まんまるの おつきさまを「まんげつ」と いうよ',
+  'ハロウィンで こどもが いう ことばは？':'「おかしを くれないと いたずら するぞ」と いう いみだよ',
+  'よるに おしりが ひかる むしは？':'ホタルは ひかりで なかまに あいずを おくるよ',
+  'よるでも よく みえる めを もつ とりは？':'おおきな めで、くらい ところでも よく みえるよ',
+  'おつきさまが ひかって みえる わけは？':'おつきさまは じぶんで ひからず、たいようの ひかりを はねかえして いるよ',
+  'こうもりは くらやみで なにを つかって とぶ？':'こえが ものに あたって もどってくる おとで、まわりを しるよ',
+  'よるの 12じの ことを なんと いう？':'よるの 12じは「れいじ」とも いうよ',
+  'ほしを せんで つないで かたちに した ものを なんと いう？':'オリオンざや はくちょうざなど、たくさん あるよ',
+  'おつきさまが まるく なって、また まるく なるまで どれくらい？':'おつきさまの かたちは、やく 1かげつで ひとまわり するよ',
+  'さくらの はなは なにいろ？':'さくらは はるに、うすい ピンクの はなを さかせるよ',
+  'はなの みつを あつめる むしは？':'みつを あつめて、はちみつを つくるよ',
+  'あかい からだに くろい てんてんの むしは？':'てんとうむしは、はたけの アブラムシを たべて くれるよ',
+  'チューリップは どれ？':'チューリップは はるに さく はなだよ',
+  'さくらの したで ごはんを たべる ことを なんと いう？':'さくらを みながら たのしむ、はるの ぎょうじだよ',
+  'あおむしが おおきく なると なにに なる？':'あおむし、さなぎ、ちょうちょの じゅんに かわるよ',
+  'さくらが さく きせつは？':'あたたかく なる はるに さくよ',
+  'たねから でて さいしょに ひらく 2まいの はっぱは？':'さいしょの 2まいの はっぱを「ふたば」と いうよ',
+  'みつばちの あしに つく、はなの こなは？':'かふんを はこんで、はなが みを つける おてつだいを するよ',
+  'たんぼで「ケロケロ」と なく いきものは？':'かえるは みずべの ちかくで くらして いるよ',
+  'さくらの はなびらは 1つの はなに なんまい？':'ソメイヨシノの はなびらは 5まいだよ',
+  'てんとうむしの あしは なんぼん？':'むしの なかまは、あしが 6ぽん あるよ',
+  'ちょうちょが はなから すう ものは？':'ながい くちを ストローのように して、みつを すうよ',
+  'さくらの はなが ちった あと、えだに でてくる ものは？':'はなが ちると はっぱが でて「はざくら」に なるよ',
+  'おたまじゃくしが おおきく なると なにに なる？':'おたまじゃくしに てあしが はえて、かえるに なるよ',
+  'おひめさまが あたまに のせる ものは？':'かんむりは、おうさまや おひめさまの しるしだよ',
+  'ひを けす ときに つかう ものは？':'ひには みずを かけて けすよ',
+  'ゆうしゃが もって いる ぶきは？':'ゆうしゃは けんで みんなを まもるよ',
+  'おしろに すんで いるのは？':'おしろには、おうさまや おひめさまが すんで いるよ',
+  'かぎで あける ものは？':'かぎで ドアを あけたり しめたり するよ',
+  '1しゅうかんは なんにち？':'にちようびから どようびまで、7にち あるよ',
+  'にほんで よく いう にじの いろの かずは？':'あか・だいだい・きいろ・みどり・あお・あい・むらさき の 7しょくだよ',
+  '10から 3を ひくと いくつ？':'10こから 3こ とると、のこりは 7こだよ',
+  'とけいの みじかい はりが おしえて くれるのは？':'みじかい はりは「なんじ」、ながい はりは「なんぷん」を おしえるよ',
+  '1ねんは なんかげつ？':'1がつから 12がつまで あるよ',
+  'いぬが 1ぴき、ねこが 2ひき。あしは ぜんぶで なんぼん？':'いぬも ねこも あしは 4ほん。3びき だから 12ほんだよ',
+  '1ねんは なんにち？（うるうどし では ない とし）':'うるうどしは 1にち ふえて、366にちに なるよ',
+  'みずが こおるのは なんど？':'みずは 0どで こおり、100どで ふっとう するよ',
+  '5×2は いくつ？':'5が 2つで 10だよ',
+  'よるに みえる、ちきゅうの まわりを まわって いる ものは？':'おつきさまは、ちきゅうの まわりを まわって いるよ',
+  'パンは パンでも たべられない パンは なあに？':'「フライパン」にも「パン」が かくれて いるね',
+  'さかさまに よむと「かるい」に なる うみの いきものは？':'「い・る・か」を うしろから よむと「か・る・い」',
+  'さかさまに よんでも おなじ、あかい やさいは？':'「ト・マ・ト」は うしろから よんでも「トマト」',
+  'かみは かみでも、ゴロゴロ なる かみは？':'「かみなり」は そらで ゴロゴロ なるね',
+  'いすは いすでも、つめたくて あまい いすは？':'「アイス」にも「いす」が かくれて いるね',
+  'はしは はしでも、わたれない はしは？':'ごはんを たべる「おはし」は わたれないね',
+  'バスは バスでも、のれない バスは？':'おふろで つかう タオルを「バスタオル」と いうよ',
+  'くまは くまでも、おちばを あつめる くまは？':'おちばを あつめる どうぐを「くまで」と いうよ',
+  'ひるは ひるでも、みずに うかぶ ひるは？':'「あひる」は みずに うかぶ とりだね',
+  'つきは つきでも、そらに ない つきは？':'おもちを つく「もちつき」は、そらには ないね',
+  'とりは とりでも、ごみを あつめる とりは？':'ごみ（ちり）を とるから「ちりとり」だよ',
+  'おしりに「ん」を つけると、がっこうへ もっていく ものに なる どうぶつは？':'「かば」に「ん」を つけると「かばん」に なるね',
+};
 let quizUsed={};
 function pickRiddle(){ const nazo=diffKey!=='easy' && Math.random()<0.25;
   const pool=nazo?NAZO:((QUIZ[stageKey]||QUIZ.town)[diffKey]||QUIZ.town.normal), key=nazo?'nazo':stageKey+'/'+diffKey;
@@ -1738,7 +1865,7 @@ function pickRiddle(){ const nazo=diffKey!=='easy' && Math.random()<0.25;
   let i; do{ i=Math.floor(Math.random()*pool.length); }while(used.has(i)); used.add(i);
   const r=pool[i], opts=r[1].map((o,k)=>({e:o[0],t:o[1],ok:k===0}));
   for(let k=opts.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [opts[k],opts[j]]=[opts[j],opts[k]]; }
-  return {q:r[0],opts,nazo}; }
+  return {q:r[0],opts,nazo,exp:QUIZ_EXPLAIN[r[0]]||''}; }
 function sayQuiz(){ if(!quiz||!window.KidsAudio||!KidsAudio.speak) return;
   const r=quiz.r, nums=['いちばん','にばん','さんばん'];
   KidsAudio.speak((r.nazo?'なぞなぞ。':'クイズ。')+r.q.replace(/（[^）]*）/g,'')+'　'+r.opts.map((o,i)=>nums[i]+'、'+o.t).join('。'),{lang:'ja-JP',rate:0.9}); }
@@ -1751,27 +1878,36 @@ function sayThen(t, minMs, fn){ let done=false, started=false; const t0=Date.now
     onstart:()=>{ started=true; },
     onend:()=>{ if(started) setTimeout(go, Math.max(400, minMs-(Date.now()-t0))); }}));
   setTimeout(()=>{ if(!started) go(); }, ok?Math.max(minMs,3200):minMs);
-  setTimeout(go, 9000); }
+  setTimeout(go, Math.max(9000,minMs+9000)); return go; }
+// よみあげ用に きごうを ととのえる（（）の なかは よまない・× は「かける」）
+function speakable(t){ return t.replace(/（[^）]*）/g,'').replace(/[「」]/g,'').replace(/・/g,'、').replace(/×/g,' かける '); }
 function openQuiz(){ if(quiz) return; state='quiz'; keys.left=keys.right=keys.jump=false; keys.jumpEdge=false;
   quiz={try:1, r:pickRiddle(), lock:false}; renderQuiz(); document.getElementById('quiz').classList.remove('hidden'); sAngel();
-  setTimeout(()=>{ if(quiz) sayQuiz(); },350); }
+  setTimeout(()=>{ if(quiz && !quiz.lock) sayQuiz(); },350); }
 function renderQuiz(){ const r=quiz.r;
   document.getElementById('qz-title').textContent=r.nazo?'てんしの なぞなぞ':'てんしの クイズ';
   document.getElementById('qz-q').textContent=r.q;
   document.getElementById('qz-msg').textContent=quiz.try===1?'こたえを えらんでね':'もう 1もん！ がんばれ！';
+  document.getElementById('qz-exp').textContent=''; document.getElementById('qz-skip').classList.add('hidden'); document.getElementById('qz-say').classList.remove('hidden');
   const box=document.getElementById('qz-opts'); box.innerHTML='';
   r.opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='qz-opt';
     b.innerHTML='<span class="qz-n">'+(i+1)+'</span><span class="qz-e">'+o.e+'</span><span class="qz-t"></span>';
     b.querySelector('.qz-t').textContent=o.t; b.addEventListener('click',()=>answerQuiz(i)); box.appendChild(b); }); }
-function answerQuiz(i){ if(!quiz||quiz.lock) return; quiz.lock=true;
+function answerQuiz(i){ if(!quiz||quiz.lock) return; quiz.lock=true; quiz.lockAt=Date.now();
   const btns=[...document.querySelectorAll('.qz-opt')], o=quiz.r.opts[i], msg=document.getElementById('qz-msg');
-  if(o.ok){ btns[i].classList.add('ok'); msg.textContent='せいかい！ パワーアップ！'; sPower();
-    sayThen('せいかい！ パワーアップ！',1700,()=>closeQuiz('power')); }
-  else if(quiz.try===1){ btns[i].classList.add('ng'); msg.textContent='おしい！ もう 1もん いくよ'; sOver();
-    sayThen('おしい！ もう いちもん いくよ',1700,()=>{ if(!quiz) return; quiz.try=2; quiz.r=pickRiddle(); quiz.lock=false; renderQuiz(); setTimeout(()=>{ if(quiz) sayQuiz(); },300); }); }
-  else { btns[i].classList.add('ng'); btns[quiz.r.opts.findIndex(x=>x.ok)].classList.add('ok');
-    msg.textContent='ざんねん！ ハートを 1こ あげるね';
-    sayThen('ざんねん！ ハートを ひとつ あげるね',2300,()=>closeQuiz('heart')); } }
+  const ci=quiz.r.opts.findIndex(x=>x.ok), ans=quiz.r.opts[ci].t, exp=quiz.r.exp||'';
+  btns[ci].classList.add('ok'); if(!o.ok) btns[i].classList.add('ng');           // まちがえても せいかいを みどりで みせる
+  document.getElementById('qz-exp').textContent=exp?'💡 '+exp:'';
+  document.getElementById('qz-skip').classList.remove('hidden'); document.getElementById('qz-say').classList.add('hidden');
+  const readT=1600+exp.length*110; let say, next;
+  if(o.ok){ msg.textContent='せいかい！ パワーアップ！'; sPower(); say='せいかい！ パワーアップ！ '+exp; next=()=>closeQuiz('power'); }
+  else if(quiz.try===1){ msg.textContent='おしい！ こたえは「'+ans+'」'; sOver(); say='おしい！ こたえは '+ans+'。 '+exp+'。 もう いちもん いくよ';
+    next=()=>{ if(!quiz) return; quiz.try=2; quiz.r=pickRiddle(); quiz.lock=false; quiz.skip=null; renderQuiz(); setTimeout(()=>{ if(quiz && !quiz.lock) sayQuiz(); },300); }; }
+  else { msg.textContent='ざんねん！ こたえは「'+ans+'」。ハートを 1こ あげるね'; say='ざんねん！ こたえは '+ans+'。 '+exp+'。 ハートを ひとつ あげるね'; next=()=>closeQuiz('heart'); }
+  quiz.skip=sayThen(speakable(say), readT, next); }
+// こたえた あとは がめんを タップすると つぎへ（よみあげを とめて すすむ）
+function skipQuiz(){ if(!quiz || !quiz.lock || !quiz.skip || Date.now()-quiz.lockAt<700) return;
+  const go=quiz.skip; quiz.skip=null; if(window.KidsAudio && KidsAudio.cancel) KidsAudio.cancel(); go(); }
 function closeQuiz(result){ document.getElementById('quiz').classList.add('hidden'); quiz=null;   // ここでは こえを とめない（いいおわってから よばれる）
   if(!angel) return; angel.mode='leave';
   const p=player;
@@ -2782,6 +2918,7 @@ document.getElementById('start-btn').addEventListener('click',()=>{ state='title
 document.querySelectorAll('.stage-btn').forEach(b=>b.addEventListener('click',()=>startGame(b.dataset.s)));
 document.querySelectorAll('.hero-btn').forEach(b=>b.addEventListener('click',()=>{ heroKey=b.dataset.h; try{ localStorage.setItem('himeHero',heroKey); }catch(e){} syncHero(); }));
 document.getElementById('qz-say').addEventListener('click',sayQuiz);
+document.getElementById('quiz').addEventListener('click',skipQuiz);
 addEventListener('keydown',e=>{ if(quiz && ['1','2','3'].includes(e.key)) answerQuiz(+e.key-1); });   // パソコンは 1・2・3 キーでも こたえられる
 document.getElementById('ss-back').addEventListener('click',()=>show('title-screen'));
 document.getElementById('clear-again').addEventListener('click',()=>{state='title';show('stage-select-screen');});
