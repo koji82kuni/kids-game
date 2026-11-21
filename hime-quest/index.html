@@ -2432,12 +2432,21 @@ const DRAWINGS=[0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19,20,21,22].map(i=
 let secretImg=null, secretOrig=null, secretWave=null, secretJump=null;
 const loadImg=src=>{ if(!src) return null; const im=new Image(); im.src=src; return im; };
 const ready=im=>!!(im && im.complete && im.naturalWidth);
-function preloadSecret(){ const d=DRAWINGS[Math.floor(Math.random()*DRAWINGS.length)];
+// シークレットは「ぜんぶの え が 1かいずつ でるまで おなじ え を ださない」（2026-11-21 オーナー指摘：おなじ え ばかり でる）
+//   でた え を localStorage に おぼえて、まだ でていない え から えらぶ。ひとまわり したら リセット（さいごの え は つづけて ださない）
+function loadSeen(key){ try{ const b=JSON.parse(localStorage.getItem(key)||'[]'); return Array.isArray(b)?b:[]; }catch(e){ return []; } }
+function saveSeen(key,b){ try{ localStorage.setItem(key,JSON.stringify(b)); }catch(e){} }
+function pickUnseen(key,all){ let seen=loadSeen(key).filter(k=>all.includes(k)); let rest=all.filter(k=>!seen.includes(k));
+  if(!rest.length){ const last=seen[seen.length-1]; saveSeen(key,[]); rest=all.filter(k=>k!==last); if(!rest.length) rest=all.slice(); }
+  return rest[Math.floor(Math.random()*rest.length)]; }
+function markSeen(key,k){ if(!k) return; const seen=loadSeen(key); if(!seen.includes(k)){ seen.push(k); saveSeen(key,seen); } }
+let secretKeyNow=null;
+function preloadSecret(){ secretKeyNow=pickUnseen('himeSecretSeen',DRAWINGS.map(d=>d.art)); const d=DRAWINGS.find(x=>x.art===secretKeyNow)||DRAWINGS[0];
   secretImg=loadImg(d.art); secretWave=loadImg(d.wave); secretJump=loadImg(d.jump);
   secretOrig=d.orig?loadImg(d.orig):null; }
 const scv=document.getElementById('secret-cv'), sx=scv.getContext('2d');
 let secOn=false, secT0=0, secMask=null, secTmp=null, secSparks=[], secHasOrig=false, secChimed=false;
-function openSecret(){ if(state!=='clear') return;
+function openSecret(){ if(state!=='clear') return; markSeen('himeSecretSeen',secretKeyNow);   // でた ときだけ「でた」に する
   secHasOrig=!!(secretOrig && secretOrig.complete && secretOrig.naturalWidth && !reduceMotion); secChimed=false;
   document.querySelector('#secret-ov .secret-sub').textContent=secHasOrig?'みんなが かいた えに まほうを かけるよ…':'みんなが かいた えが うごきだしたよ！';
   const im=secretImg, iw=im.naturalWidth, ih=im.naturalHeight, sc=Math.min(1,900/Math.max(iw,ih));

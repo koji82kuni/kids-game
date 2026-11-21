@@ -3490,10 +3490,20 @@ function refreshSpecialImages() {
     .catch(() => { /* 読めなくても内蔵リストで動くので何もしない */ });
 }
 
+// シークレットは「ぜんぶの え が 1かいずつ でるまで おなじ え を ださない」（2026-11-21 オーナー指摘：おなじ え ばかり でる）
+//   でた え を localStorage に おぼえて、まだ でていない え から えらぶ。ひとまわり したら リセット（さいごの え は つづけて ださない）
+function loadSeen(key){ try{ const b=JSON.parse(localStorage.getItem(key)||'[]'); return Array.isArray(b)?b:[]; }catch(e){ return []; } }
+function saveSeen(key,b){ try{ localStorage.setItem(key,JSON.stringify(b)); }catch(e){} }
+function pickUnseen(key,all){ let seen=loadSeen(key).filter(k=>all.includes(k)); let rest=all.filter(k=>!seen.includes(k));
+  if(!rest.length){ const last=seen[seen.length-1]; saveSeen(key,[]); rest=all.filter(k=>k!==last); if(!rest.length) rest=all.slice(); }
+  return rest[Math.floor(Math.random()*rest.length)]; }
+function markSeen(key,k){ if(!k) return; const seen=loadSeen(key); if(!seen.includes(k)){ seen.push(k); saveSeen(key,seen); } }
+
 // ご褒美画像を先に選んでプリロード（オーバーレイ表示を瞬時にする）
 function pickRewardImage() {
   // 2026-10-27 オーナー指示：姪っ子の絵が増えたので ONEPIECE をやめ、special/ の絵だけにした
-  const url = SECRET_IMAGES[Math.floor(Math.random() * SECRET_IMAGES.length)];
+  const url = pickUnseen('kidsSecretSeen', SECRET_IMAGES);   // まだ でていない え から
+  markSeen('kidsSecretSeen', url);
   const reward = { src: url, label: '✨ シークレット とうじょう！ ✨', wave: poseImageFor(url, 'w'), hana: poseImageFor(url, 'h') };
   const im = new Image();
   im.src = reward.src;
