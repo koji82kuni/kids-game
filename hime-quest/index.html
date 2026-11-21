@@ -264,7 +264,7 @@
 
   <!-- てんしの なぞなぞ -->
   <div id="quiz" class="hidden"><div class="qz-card">
-    <div class="qz-head"><span class="qz-angel">👼</span>てんしの なぞなぞ</div>
+    <div class="qz-head"><span class="qz-angel">👼</span><span id="qz-title">てんしの クイズ</span></div>
     <div class="qz-q" id="qz-q"></div>
     <button class="qz-say" id="qz-say">🔊 もういちど きく</button>
     <div class="qz-opts" id="qz-opts"></div>
@@ -303,7 +303,7 @@
       </div>
     </div>
     <button class="start-btn" id="start-btn">▶ ステージを えらぶ</button>
-    <div class="how">🎮 キーボード：← → うごく／スペース・↑ ジャンプ<br>📱 スマホ：がめんの ボタンで そうさ／🪙コインを つかって ★や バリアで こうげき！<br>👼 てんしに さわると なぞなぞ。せいかいで パワーアップ！</div>
+    <div class="how">🎮 キーボード：← → うごく／スペース・↑ ジャンプ<br>📱 スマホ：がめんの ボタンで そうさ／🪙コインを つかって ★や バリアで こうげき！<br>👼 てんしに さわると クイズ。せいかいで パワーアップ！</div>
   </div></div>
 
   <!-- ステージ選択 -->
@@ -836,6 +836,7 @@ function updateBoss(){ const b=boss; if(b.defeated){ if(b.dropY<40)b.dropY+=1.5;
     if(demon){ b.roar=90; sRoar(); shake(40,9); } }
   if(b.roar>0){ b.roar--;                      // ほえている あいだは うごかない
     if(b.roar%3===0) particles.push({x:b.x+b.w/2+(Math.random()-.5)*b.w*1.4,y:b.y+b.h*(0.2+Math.random()*0.7),vx:0,vy:-1.6,life:28,c:'#c06bff'}); }
+  else if(near && bossSkill(b)){ }                // とくいわざを つかって いる あいだは あるかない
   else if(near){
     const angry=demon && b.hp<=1;              // 大魔王は さいごの 1かいで おこって すこし はやくなる
     b.x+=(player.x<b.x?-1:1)*(angry?0.72:0.5)*diff.espd;
@@ -846,11 +847,9 @@ function updateBoss(){ const b=boss; if(b.defeated){ if(b.dropY<40)b.dropY+=1.5;
     if(b.y>=fy){ if(!b.onGround && demon){ shake(14,7); sThud();   // 大魔王の ちゃくち：ドスン！
         for(let i=0;i<10;i++) particles.push({x:b.x+b.w/2+(i-4.5)*12,y:GT-4,vx:(i-4.5)*0.5,vy:-Math.random()*2.5,life:24,c:'#8a7a90'}); }
       b.y=fy; b.vy=0; b.onGround=true; if(b.t%70===0)b.vy=demon?-8.6:-8; } else b.onGround=false;
-    if(diff.fire){ b.fireCd--; if(b.fireCd<=0){ b.fireCd=100;
-      fireballs.push({x:b.x+b.w/2,y:b.y+b.h*0.4,vx:(player.x<b.x?-3:3),vy:-2,life:200,c:stageDef.projC}); sBossFire(); } }
   }
   if(b.hit>0)b.hit--;
-  if(rectHit(player,b)){
+  if(!(b.fade!=null && b.fade<0.6) && rectHit(player,b)){   // ワープで きえて いる あいだは あたらない
     const stomp=player.vy>0.8 && (player.y+player.h)<b.y+b.h*0.62;
     if(stomp && b.hit===0){ bossDamage(); stompBounce(-10); }
     else if(!stomp && invuln===0) hurt(false);
@@ -859,6 +858,7 @@ function updateBoss(){ const b=boss; if(b.defeated){ if(b.dropY<40)b.dropY+=1.5;
 
 function updateFireballs(){
   for(const f of fireballs){
+    if(f.kind && SHOT[f.kind]){ const hb=SHOT[f.kind](f); if(hb && invuln===0 && rectHit(player,hb)){ if(!f.keep) f.life=0; hurt(false); } continue; }   // ボスの とくいわざ
     if(f.kind==='needle'){ f.x+=f.vx; f.y+=f.vy; f.life--; if(f.y>GT-4) f.life=0; }          // はり：まっすぐ
     else if(f.kind==='petal'){ f.y+=f.vy; f.x+=Math.sin((f.y+f.ph)*0.04)*0.7; f.rot+=0.05; f.life--;   // はなびら：ひらひら おちる
       if(f.y>GT-6){ f.life=0; particles.push({x:f.x,y:GT-4,vx:(Math.random()-.5),vy:-1,life:12,c:'#ffb7d2',petal:true}); } }
@@ -1202,7 +1202,7 @@ function drawEnemyBody(e){ switch(e.type){
 // ===== ボス =====
 // 大魔王：つの・マント・よろい・ひかる め。さいごの 1かいは あかい オーラで おこる
 function drawDemon(b){ const x=b.x-cam, w=b.w, h=b.h, F=b.hit>0&&Math.floor(b.hit/4)%2;
-  const angry=b.hp<=1 && !b.defeated, up=b.roar>0||!b.onGround||(b.t%70)>52, bob=Math.sin(b.t*0.08)*2;
+  const angry=b.hp<=1 && !b.defeated, up=b.roar>0||!b.onGround||(b.t%70)>52||b.skill==='charge', bob=Math.sin(b.t*0.08)*2;
   const C=c=>F?'#fff':c;
   if(!b.defeated){ ctx.fillStyle='rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x+w/2,GT+2,w*0.6,8,0,0,7); ctx.fill(); }
   ctx.save(); ctx.translate(x+w/2,b.y+b.dropY+bob);
@@ -1276,6 +1276,7 @@ function drawBoss(){ const b=boss; const x=b.x-cam; if(x<-180||x>W+180)return;
     ctx.fillStyle='#ff5d73'; ctx.beginPath(); ctx.arc(0,-8,2.6,0,7); ctx.fill();
     ctx.restore();
   }
+  drawSkillFx(b);
   if(!b.defeated && !b.split && player.x>b.x-W*0.6){ const dm=b.type==='demon', bw=Math.max(70,b.w), bx=x+b.w/2-bw/2, by=b.y-(dm?56:32);
     ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(bx-2,by-2,bw+4,dm?12:10);
     ctx.fillStyle=dm?'#c0182a':'#ff4d6d'; ctx.fillRect(bx,by,bw*(b.hp/diff.boss),dm?8:6);
@@ -1300,6 +1301,7 @@ function drawCastle(){ const x=(LEVEL_W-280)-cam; if(x>W+200||x<-280)return;
   ctx.fillStyle='#9a4a4a'; ctx.beginPath(); ctx.moveTo(x-6,180); ctx.lineTo(x+112,110); ctx.lineTo(x+226,180); ctx.closePath(); ctx.fill();
 }
 function drawFire(f){ const x=f.x-cam;
+  if(f.kind && SHOT_DRAW[f.kind]) return SHOT_DRAW[f.kind](f,x);
   if(f.kind==='needle'){ ctx.save(); ctx.translate(x,f.y); ctx.rotate(Math.atan2(f.vy,f.vx));
     ctx.fillStyle='rgba(255,240,150,.55)'; dot(-5,0,5); ctx.fillStyle='#fffbe8'; ctx.strokeStyle='#8a5a10'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.moveTo(12,0); ctx.lineTo(-8,-3.5); ctx.lineTo(-8,3.5); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); return; }
@@ -1313,6 +1315,156 @@ function drawFire(f){ const x=f.x-cam;
 function star5(ro,ri){ ctx.beginPath(); for(let i=0;i<10;i++){ const r=i%2?ri:ro, a=-Math.PI/2+i*Math.PI/5; const px=Math.cos(a)*r, py=Math.sin(a)*r; if(i===0)ctx.moveTo(px,py); else ctx.lineTo(px,py);} ctx.closePath(); }
 function drawStar(s){ const x=s.x-cam; if(x<-20||x>W+20)return; ctx.save(); ctx.translate(x,s.y); ctx.rotate(s.spin);
   ctx.fillStyle='#ffe14d'; star5(11,4.8); ctx.fill(); ctx.fillStyle='#fff7c0'; star5(5,2.2); ctx.fill(); ctx.restore(); }
+
+// ===================================================================
+// ボスの とくいわざ（2026-11-21 オーナー依頼：キャラクターらしい こうげきに）
+//   どの わざも「よこく（！・ためる・じめんの しるし）→ こうげき」。むずかしさで かず・はやさが かわる
+//   カエルキング：したを のばす（ジャンプで よける）／おおジャンプで ドスン → じめんを はしる なみ
+//   ゆきおおかみ：とおぼえ → つららが おちる（じめんの かげ）／ふせて → ダッシュ
+//   ゴリラだいおう：バナナを なげる／ドラミング → おんぷが とんでくる（ひくい おんぷは ジャンプ）
+//   おばけの おやぶん：きえて ワープ（でてくる ばしょが ひかる）／ひとだまを とばす
+//   大魔王：ほのおの たま／じめんから ほのおの はしら（あかい しるし）
+// ===================================================================
+const BOSS_SKILLS={frog:['tongue','stomp'], wolf:['icicle','dash'], gorilla:['banana','drum'], bigghost:['warp','wisp'], demon:['fire','pillar']};
+const SKILL_CHARGE={tongue:46,stomp:40,icicle:52,dash:42,banana:40,drum:48,warp:42,wisp:44,fire:50,pillar:58};
+const SKILL_CD={easy:300,normal:230,hard:170};
+const nOf=(e,n,h)=>diffKey==='easy'?e:(diffKey==='hard'?h:n);
+function sTongue(){ beep(300,.08,'square',.12); beep(760,.12,'triangle',.12,.05); }
+function sDrum(){ beep(95,.12,'triangle',.28); beep(75,.12,'triangle',.24,.11); }
+function sWarp(){ [880,660,440,330].forEach((f,i)=>beep(f,.1,'sine',.08,i*0.06)); }
+function sHowl(){ try{ if(muted)return; const c=AC(),t=c.currentTime,o=c.createOscillator(),g=c.createGain(); o.type='sawtooth';
+  o.frequency.setValueAtTime(300,t); o.frequency.linearRampToValueAtTime(640,t+0.5); o.frequency.linearRampToValueAtTime(420,t+1.1);
+  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.07,t+0.15); g.gain.exponentialRampToValueAtTime(0.0005,t+1.2);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+1.25); }catch(e){} }
+const inArena=x=>Math.max(boss.minX+20,Math.min(GOAL_WALL-30,x));
+
+// ボスが わざを つかっている あいだは true（あるかない）
+function bossSkill(b){
+  if(b.skill==null){ b.skill='idle'; b.scd=140; b.sseq=0; }
+  const fy=GT-b.h;
+  if(b.skill==='idle'){ b.sq=0; b.rot=0; b.fade=null; b.drum=false;
+    if(--b.scd>0 || !b.onGround || !b.met || !BOSS_SKILLS[b.type]) return false;
+    const list=BOSS_SKILLS[b.type]; b.sname=list[b.sseq++%list.length]; b.skill='charge'; b.st=0; b.dir=player.x<b.x?-1:1; sCharge(); skillBegin(b); return true; }
+  b.st++;
+  if(b.skill==='charge'){ b.y=fy; b.vy=0; b.onGround=true; skillCharge(b);
+    if(b.st>=SKILL_CHARGE[b.sname]){ b.skill='act'; b.st=0; skillFire(b); } return true; }
+  if(skillAct(b)){ b.skill='idle'; b.scd=SKILL_CD[diffKey]||230; b.sq=0; b.rot=0; b.fade=null; b.drum=false; }
+  return true; }
+function skillBegin(b){ const px=player.x+player.w/2;
+  if(b.sname==='icicle'){ sHowl(); const offs=[0,-150,150,-300].slice(0,nOf(2,3,4));
+    offs.forEach((o,k)=>fireballs.push({kind:'icicle',x:inArena(px+o),y:24,vy:0,wait:SKILL_CHARGE.icicle+k*10,life:600,solid:true})); }
+  else if(b.sname==='pillar'){ const offs=[0,180,-180].slice(0,nOf(1,2,3));
+    offs.forEach(o=>fireballs.push({kind:'pillar',x:inArena(px+o),y:GT-60,wait:SKILL_CHARGE.pillar,burn:42,life:999,solid:true,keep:true})); }
+  else if(b.sname==='warp'){ const mid=(b.minX+GOAL_WALL)/2, side=px<mid?1:-1;
+    b.wx=Math.max(b.minX,Math.min(GOAL_WALL-10-b.w,px+side*160-b.w/2)); sWarp(); }
+  else if(b.sname==='fire'||b.sname==='pillar'){ sRoar(); } }
+function skillCharge(b){ const k=b.st/SKILL_CHARGE[b.sname];
+  switch(b.sname){
+    case 'tongue': b.sq=0.12*Math.sin(b.st*0.7); break;                       // ほっぺを ぷくぷく
+    case 'stomp':  b.sq=Math.min(0.6,k*0.7); break;                          // ぐっと しゃがむ
+    case 'icicle': b.rot=-b.dir*0.3; break;                                  // うえを むいて とおぼえ
+    case 'dash':   b.sq=0.45; break;                                         // ふせて ねらう
+    case 'drum':   if(b.st%12===1) sDrum(); break;
+    case 'warp':   b.fade=Math.max(0.12,1-k*1.2); break;                     // すーっと きえる
+  } }
+function skillFire(b){ const S=diff.espd;
+  switch(b.sname){
+    case 'tongue': b.tl=0; sTongue(); break;
+    case 'stomp':  b.vy=-12.5; b.svx=Math.max(-3.2,Math.min(3.2,((player.x+player.w/2)-(b.x+b.w/2))/55)); b.onGround=false; sJump(); b.sq=-0.3; break;
+    case 'banana': for(let i=0;i<nOf(2,3,3);i++) fireballs.push({kind:'banana',x:b.x+b.w/2,y:b.y+8,vx:b.dir*(1.7+i*1.0)*S,vy:-6.8+i*0.5,spin:0,life:300}); sThrow(); break;
+    case 'drum':   b.notes=nOf(3,4,5); b.drum=true; break;
+    case 'warp':   b.x=b.wx; b.dir=player.x<b.x?-1:1; sWarp(); break;
+    case 'wisp':   for(let i=0;i<nOf(2,3,4);i++){ const a=-Math.PI/2+(i-1)*0.9; fireballs.push({kind:'wisp',x:b.x+b.w/2+Math.cos(a)*50,y:b.y+b.h*0.4+Math.sin(a)*30,vx:0,vy:0,life:230,t:0}); } sWarp(); break;
+    case 'fire':   [-4.6,-3,-1.4].slice(0,nOf(2,3,3)).forEach(vy=>fireballs.push({x:b.x+b.w/2,y:b.y+b.h*0.35,vx:b.dir*3*S,vy,life:220,c:stageDef.projC})); sBossFire(); break;
+  } }
+function skillAct(b){ const S=diff.espd, fy=GT-b.h, st=b.st;
+  switch(b.sname){
+    case 'tongue': { b.y=fy; const out=16, hold=12, back=16, L=nOf(210,250,270);
+      b.tl= st<=out ? L*st/out : (st<=out+hold ? L : Math.max(0,L*(1-(st-out-hold)/back)));
+      const mx=b.dir>0?b.x+b.w-12:b.x+12; b.tbox={x:b.dir>0?mx:mx-b.tl, y:GT-34, w:b.tl, h:12};
+      if(b.tl>6 && invuln===0 && rectHit(player,b.tbox)) hurt(false);
+      return st>=out+hold+back; }
+    case 'stomp':
+      b.vy+=GRAV; b.y+=b.vy; b.x=Math.max(b.minX,Math.min(GOAL_WALL-10-b.w,b.x+b.svx*S));
+      if(b.y>=fy && b.vy>0){ b.y=fy; b.vy=0; b.onGround=true; b.sq=0; shake(14,7); sThud();     // ドスン → なみ
+        for(const d of [-1,1]) fireballs.push({kind:'wave',x:b.x+b.w/2+d*b.w*0.45,y:GT,vx:d*3*S,life:200});
+        return true; }
+      return st>150;
+    case 'icicle': b.rot=0; return st>=36;
+    case 'dash': b.sq=0; b.rot=b.dir*0.08; b.x+=b.dir*5.2*S;
+      if(st%3===0) particles.push({x:b.x+b.w/2-b.dir*b.w/2,y:GT-4,vx:-b.dir,vy:-1,life:16,c:'rgba(255,255,255,.95)'});
+      if(b.x<=b.minX||b.x+b.w>=GOAL_WALL-10){ b.x=Math.max(b.minX,Math.min(GOAL_WALL-10-b.w,b.x)); return true; }
+      return st>=44;
+    case 'banana': return st>=30;
+    case 'drum':
+      if(st%18===1 && b.notes>0){ const low=b.notes%2===1, ny=low?GT-20:GT-92; b.notes--;          // ひくい おんぷ＝ジャンプ／たかい おんぷ＝あたまの うえ
+        fireballs.push({kind:'note',x:b.x+b.w/2+b.dir*b.w*0.4,y:ny,base:ny,vx:b.dir*2.5*S,life:500,t:0,sym:low?'♪':'♫'}); sDrum(); }
+      return b.notes<=0 && st>30;
+    case 'warp': b.fade=Math.min(1,0.15+st/30); return st>=30;
+    case 'wisp': return st>=20;
+    case 'fire': return st>=24;
+    case 'pillar': return st>=54;
+  }
+  return true; }
+
+// わざの たま（うごき と あたりはんい）
+const SHOT={
+  wave(f){ f.x+=f.vx; f.life--; if(f.x<boss.minX-40||f.x>GOAL_WALL+20) f.life=0; return {x:f.x-10,y:GT-18,w:20,h:18}; },
+  icicle(f){ if(f.wait>0){ f.wait--; return null; } f.vy+=0.45; f.y+=f.vy;
+    if(f.y>GT-22){ f.life=0; for(let i=0;i<7;i++) particles.push({x:f.x,y:GT-6,vx:(Math.random()-.5)*4,vy:-1.5-Math.random()*2,life:18,c:'#dff4ff'}); return null; }
+    return {x:f.x-7,y:f.y-14,w:14,h:28}; },
+  banana(f){ f.vy+=0.2; f.x+=f.vx; f.y+=f.vy; f.spin+=0.25; f.life--;
+    if(f.y>GT-8){ f.life=0; for(let i=0;i<5;i++) particles.push({x:f.x,y:GT-6,vx:(Math.random()-.5)*3,vy:-1-Math.random()*2,life:16,c:'#ffd23a'}); }
+    return {x:f.x-10,y:f.y-9,w:20,h:18}; },
+  note(f){ f.t++; f.x+=f.vx; f.y=f.base+Math.sin(f.t*0.15)*5; f.life--; if(f.x<boss.minX-60||f.x>GOAL_WALL+40) f.life=0; return {x:f.x-9,y:f.y-12,w:18,h:22}; },
+  wisp(f){ f.t++; const dx=player.x+player.w/2-f.x, dy=player.y+player.h/2-f.y, L=Math.hypot(dx,dy)||1, sp=1.3*diff.espd;
+    f.vx+=(dx/L*sp-f.vx)*0.04; f.vy+=(dy/L*sp-f.vy)*0.04; f.x+=f.vx; f.y+=f.vy; f.life--; return f.t<30?null:{x:f.x-8,y:f.y-8,w:16,h:16}; },
+  pillar(f){ if(f.wait>0){ f.wait--; return null; } f.burn--; if(f.burn===41){ shake(8,5); sBossFire(); } if(f.burn<=0) f.life=0; return {x:f.x-18,y:GT-170,w:36,h:170}; },
+};
+const SHOT_DRAW={
+  wave(f,x){ ctx.fillStyle='rgba(140,210,255,.85)'; ctx.beginPath(); ctx.ellipse(x,GT,13,17,0,Math.PI,0); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.9)'; ctx.beginPath(); ctx.ellipse(x,GT-12,7,4,0,0,7); ctx.fill(); },
+  icicle(f,x){ if(f.wait>0){ const k=0.5+0.5*Math.sin(animT*0.4); ctx.fillStyle='rgba(60,110,200,'+(0.25+0.3*k)+')'; ctx.beginPath(); ctx.ellipse(x,GT+2,18,6,0,0,7); ctx.fill(); }
+    const sh=f.wait>0&&f.wait<20?Math.sin(animT*1.5)*2:0;
+    ctx.fillStyle='#e6f6ff'; ctx.strokeStyle='#5a90d0'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x-9+sh,f.y-16); ctx.lineTo(x+9+sh,f.y-16); ctx.lineTo(x+sh,f.y+16); ctx.closePath(); ctx.fill(); ctx.stroke(); },
+  banana(f,x){ ctx.save(); ctx.translate(x,f.y); ctx.rotate(f.spin); ctx.strokeStyle='#ffd23a'; ctx.lineWidth=7; ctx.lineCap='round';
+    ctx.beginPath(); ctx.arc(0,-6,11,0.3,Math.PI-0.3); ctx.stroke(); ctx.fillStyle='#7a4a1a'; dot(-10,-2,2.2); dot(10,-2,2.2); ctx.restore(); },
+  note(f,x){ ctx.font='900 30px serif'; ctx.textAlign='center'; ctx.lineWidth=5; ctx.strokeStyle='#fff'; ctx.strokeText(f.sym,x,f.y+10);
+    ctx.fillStyle=f.sym==='♪'?'#ff4f8f':'#7a4adf'; ctx.fillText(f.sym,x,f.y+10); ctx.textAlign='left'; },
+  wisp(f,x){ const a=f.t<30?f.t/30:0.8+0.2*Math.sin(f.t*0.5);
+    ctx.save(); ctx.globalAlpha=a; const g=ctx.createRadialGradient(x,f.y,2,x,f.y,18); g.addColorStop(0,'rgba(200,240,255,.9)'); g.addColorStop(1,'rgba(90,160,255,0)');
+    ctx.fillStyle=g; dot(x,f.y,18); ctx.fillStyle='#7ac8ff'; ctx.beginPath(); ctx.moveTo(x,f.y-14); ctx.quadraticCurveTo(x+9,f.y-2,x,f.y+8); ctx.quadraticCurveTo(x-9,f.y-2,x,f.y-14); ctx.fill();
+    ctx.fillStyle='#1a2a5a'; dot(x-2.5,f.y,1.6); dot(x+2.5,f.y,1.6); ctx.restore(); },
+  pillar(f,x){ if(f.wait>0){ const k=0.5+0.5*Math.sin(animT*0.5);
+      ctx.fillStyle='rgba(255,60,40,'+(0.3+0.35*k)+')'; ctx.beginPath(); ctx.ellipse(x,GT+3,30,9,0,0,7); ctx.fill();
+      ctx.strokeStyle='rgba(255,40,20,.95)'; ctx.lineWidth=3; ctx.beginPath(); ctx.ellipse(x,GT+3,25,6,0,0,7); ctx.stroke();
+      ctx.font='900 26px sans-serif'; ctx.textAlign='center'; ctx.lineWidth=5; ctx.strokeStyle='#fff'; const ey=GT-58-Math.abs(Math.sin(animT*0.15))*8;
+      ctx.strokeText('!',x,ey); ctx.fillStyle='#ff3b30'; ctx.fillText('!',x,ey); ctx.textAlign='left'; return; }
+    const hgt=170*Math.min(1,(42-f.burn+1)/6), wob=Math.sin(animT*0.6)*3;
+    const g=ctx.createLinearGradient(0,GT,0,GT-hgt); g.addColorStop(0,'#ffe14d'); g.addColorStop(0.5,'#ff7b2e'); g.addColorStop(1,'rgba(255,60,30,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(x-18,GT); ctx.quadraticCurveTo(x-22+wob,GT-hgt*0.5,x+wob,GT-hgt); ctx.quadraticCurveTo(x+22-wob,GT-hgt*0.5,x+18,GT); ctx.closePath(); ctx.fill(); },
+};
+// わざの えんしゅつ（よこくの「！」・した・バナナ・ドラミング・ワープの ひかり など）
+function drawSkillFx(b){ if(b.defeated||!b.skill||b.skill==='idle') return; const x=b.x-cam, cx=x+b.w/2, dm=b.type==='demon';
+  if(b.skill==='charge'){ ctx.font='900 32px sans-serif'; ctx.textAlign='center'; ctx.lineWidth=6; ctx.strokeStyle='#fff'; const ey=b.y-(dm?100:46)+Math.sin(b.st*0.4)*3;
+    ctx.strokeText('!',cx,ey); ctx.fillStyle='#ff3b30'; ctx.fillText('!',cx,ey); ctx.textAlign='left'; }
+  switch(b.sname){
+    case 'tongue': if(b.skill==='act' && b.tbox && b.tl>2){ const t=b.tbox, tx=t.x-cam;
+      ctx.fillStyle='#ff6f9a'; roundRect(tx,t.y,t.w,t.h,6); ctx.fill(); ctx.fillStyle='#ff4f80'; dot(b.dir>0?tx+t.w:tx,t.y+t.h/2,9); } break;
+    case 'banana': if(b.skill==='charge'){ ctx.save(); ctx.translate(cx+b.dir*10,b.y-8+Math.sin(b.st*0.3)*2); ctx.rotate(-0.4); ctx.strokeStyle='#ffd23a'; ctx.lineWidth=8; ctx.lineCap='round';
+      ctx.beginPath(); ctx.arc(0,-6,13,0.3,Math.PI-0.3); ctx.stroke(); ctx.restore(); } break;
+    case 'drum': if(b.skill==='charge'||b.drum){ const s=Math.sin(b.t*0.9)>0?1:-1, cy=b.y+b.h*0.45;
+      ctx.fillStyle='#4a3a3a'; dot(cx-16,cy+(s>0?-6:4),11); dot(cx+16,cy+(s<0?-6:4),11);
+      if(b.t%12<6){ ctx.strokeStyle='rgba(255,230,120,.9)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(cx,cy,b.w*0.55+(b.t%12)*3,0,7); ctx.stroke(); }
+      ctx.font='bold 18px sans-serif'; ctx.textAlign='center'; ctx.lineWidth=4; ctx.strokeStyle='#5a2a00'; ctx.strokeText('ドンドコ！',cx,b.y-84); ctx.fillStyle='#ffe14d'; ctx.fillText('ドンドコ！',cx,b.y-84); ctx.textAlign='left'; } break;
+    case 'icicle': if(b.skill==='charge'){ ctx.font='bold 18px sans-serif'; ctx.textAlign='center'; ctx.lineWidth=4; ctx.strokeStyle='#1e3a5a'; ctx.strokeText('ワオーン！',cx,b.y-84); ctx.fillStyle='#ffffff'; ctx.fillText('ワオーン！',cx,b.y-84); ctx.textAlign='left'; } break;
+    case 'warp': if(b.skill==='charge'){ const wx=b.wx+b.w/2-cam, k=0.5+0.5*Math.sin(b.st*0.4);
+      ctx.strokeStyle='rgba(190,150,255,'+(0.5+0.4*k)+')'; ctx.lineWidth=4; ctx.setLineDash([8,6]); ctx.beginPath(); ctx.ellipse(wx,GT-b.h/2,b.w*0.5,b.h*0.5,0,0,7); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle='rgba(190,150,255,.25)'; ctx.beginPath(); ctx.ellipse(wx,GT+2,b.w*0.5,8,0,0,7); ctx.fill(); } break;
+    case 'wisp': if(b.skill==='charge'){ for(let i=0;i<nOf(2,3,4);i++){ const a=b.st*0.12+i*Math.PI*2/nOf(2,3,4); SHOT_DRAW.wisp({t:60,y:b.y+b.h*0.4+Math.sin(a)*30},cx+Math.cos(a)*60); } } break;
+    case 'fire': case 'pillar': if(b.skill==='charge'){ const k=0.5+0.5*Math.sin(b.st*0.5), g=ctx.createRadialGradient(cx,b.y+b.h*0.3,10,cx,b.y+b.h*0.3,b.w);
+      g.addColorStop(0,'rgba(255,90,40,'+(0.25+0.25*k)+')'); g.addColorStop(1,'rgba(255,90,40,0)'); ctx.fillStyle=g; dot(cx,b.y+b.h*0.3,b.w); } break;
+  } }
 
 // ===================================================================
 // しゅじんこう えらび・まほうの バリア・てんしの なぞなぞ（2026-11-21 追加）
@@ -1337,7 +1489,7 @@ function barrierBox(b){ const cx=player.x+player.w/2, off=10+Math.min(30,b.age*1
   return {x:b.dir>0?cx+off:cx-off-34, y:player.y-20, w:34, h:76}; }
 function updateBarriers(){
   for(const b of barriers){ b.age++; b.life--; const bx=barrierBox(b);
-    for(const f of fireballs){ if(f.life>0 && rectHit(bx,{x:f.x-8,y:f.y-8,w:16,h:16})){ f.life=0;   // てきの たまを けす
+    for(const f of fireballs){ if(f.life>0 && !f.solid && rectHit(bx,{x:f.x-8,y:f.y-8,w:16,h:16})){ f.life=0;   // てきの たまを けす
       for(let i=0;i<5;i++) particles.push({x:f.x,y:f.y,vx:(Math.random()-.5)*3,vy:(Math.random()-.5)*3,life:16,c:'#ffd1f0',ng:true}); } }
     for(const e of enemies){ if(!e.alive || !rectHit(bx,e)) continue;
       if(e.type==='tsubomi' && e.mode!=='open') continue; if(e.type==='tobiuo' && e.mode!=='jump') continue;
@@ -1355,7 +1507,7 @@ function threatNear(dir){ const px=player.x+player.w/2, py=player.y+player.h/2, 
   for(const e of enemies){ if(!e.alive) continue;
     if(e.type==='tsubomi' && e.mode!=='open') continue; if(e.type==='tobiuo' && e.mode!=='jump') continue; if(e.type==='tsuru' && e.mode==='walk') continue;
     if(near(e.x,e.w,e.y+e.h/2,100)) return true; }
-  for(const f of fireballs) if(near(f.x-8,16,f.y,80)) return true;
+  for(const f of fireballs) if(!f.solid && near(f.x-8,16,f.y,80)) return true;
   if(!boss.defeated){ if(boss.split){ for(const m of boss.minis) if(m.alive && near(m.x,m.w,m.y+m.h/2,100)) return true; }
     else if(near(boss.x,boss.w,boss.y+boss.h/2,140)) return true; }
   return false; }
@@ -1444,71 +1596,152 @@ function drawAngel(){ const a=angel; if(!a || a.mode==='gone' || a.mode==='wait'
   ctx.restore();
   if(a.mode==='hover' && Math.abs(player.x-a.x)<360){ const by=a.y-30+Math.sin(a.t*0.1)*2;           // ふきだし
     ctx.fillStyle='rgba(255,255,255,.95)'; ctx.strokeStyle='#c8a0ff'; ctx.lineWidth=2; roundRect(x-62,by-24,124,26,13); ctx.fill(); ctx.stroke();
-    ctx.fillStyle='#7a3ab8'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.fillText('なぞなぞ だよ！',x,by-6); ctx.textAlign='left'; }
+    ctx.fillStyle='#7a3ab8'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.fillText('クイズ だよ！',x,by-6); ctx.textAlign='left'; }
 }
 
-// ── なぞなぞ（3たく・ひらがな）。むずかしさは なんいどに あわせる ──
-const RIDDLES={
-  easy:[
-    ['パンは パンでも たべられない パンは なあに？',[['🍳','フライパン'],['🍞','しょくパン'],['🥐','クロワッサン']]],
-    ['みみが ながくて ぴょんぴょん はねる どうぶつは？',[['🐰','うさぎ'],['🐘','ぞう'],['🐟','さかな']]],
-    ['あさに 「コケコッコー」と なく とりは？',[['🐔','にわとり'],['🦉','ふくろう'],['🐧','ペンギン']]],
-    ['はなが ながーい おおきな どうぶつは？',[['🐘','ぞう'],['🐶','いぬ'],['🐱','ねこ']]],
-    ['あめが ふったら さす ものは？',[['☂️','かさ'],['👟','くつ'],['🧢','ぼうし']]],
-    ['つめたくて あまくて、なめると とける おやつは？',[['🍦','アイス'],['🍪','クッキー'],['🍙','おにぎり']]],
-    ['あしが 8ぽん ある うみの いきものは？',[['🐙','たこ'],['🐟','さかな'],['🐢','かめ']]],
-    ['きいろくて ながい、おさるさんの だいすきな くだものは？',[['🍌','バナナ'],['🍎','りんご'],['🍇','ぶどう']]],
-    ['さくらの はなは なにいろ？',[['🌸','ピンク'],['💙','あお'],['🖤','くろ']]],
-    ['ゆきで つくる、まるい にんぎょうは？',[['⛄','ゆきだるま'],['🧸','くまの ぬいぐるみ'],['🤖','ロボット']]],
-    ['「ブーブー」と なく どうぶつは？',[['🐷','ぶた'],['🐮','うし'],['🐸','かえる']]],
-    ['はを みがく ときに つかう ものは？',[['🪥','はブラシ'],['🥄','スプーン'],['✏️','えんぴつ']]],
-    ['くびが ながーい どうぶつは？',[['🦒','きりん'],['🐭','ねずみ'],['🐻','くま']]],
-    ['よるに なると そらに でてくる、ひかる ものは？',[['🌙','おつきさま'],['🌈','にじ'],['☁️','くも']]],
-    ['みずの なかを およぐ、ひれの ある いきものは？',[['🐟','さかな'],['🐦','とり'],['🐱','ねこ']]],
-  ],
-  normal:[
-    ['つかえば つかうほど ちいさく なる ぶんぼうぐは？',[['🧽','けしゴム'],['📏','じょうぎ'],['✂️','はさみ']]],
-    ['さかさまに よむと「かるい」に なる うみの いきものは？',[['🐬','いるか'],['🐳','くじら'],['🦈','さめ']]],
-    ['さかさまに よんでも おなじ、あかい やさいは？',[['🍅','トマト'],['🥕','にんじん'],['🌶️','ピーマン']]],
-    ['かみは かみでも、ゴロゴロ なる かみは？',[['⚡','かみなり'],['📄','おりがみ'],['💇','かみのけ']]],
-    ['かみは かみでも、あたまに はえている かみは？',[['💇','かみのけ'],['⚡','かみなり'],['📄','おりがみ']]],
-    ['いすは いすでも、つめたくて あまい いすは？',[['🍦','アイス'],['🪑','つくえの いす'],['🛋️','ソファ']]],
-    ['はしは はしでも、わたれない はしは？',[['🥢','おはし'],['🌉','つりばし'],['🪨','いしばし']]],
-    ['バスは バスでも、のれない バスは？',[['🛁','バスタオル'],['🚌','スクールバス'],['🚍','ろせんバス']]],
-    ['くまは くまでも、おちばを あつめる くまは？',[['🍂','くまで'],['🐻','ツキノワグマ'],['🐼','パンダ']]],
-    ['ひるは ひるでも、みずに うかぶ ひるは？',[['🦆','あひる'],['🍱','おひる'],['😴','おひるね']]],
-    ['つきは つきでも、そらに ない つきは？',[['🍡','もちつき'],['🌙','みかづき'],['🌕','まんげつ']]],
-    ['「は（歯）」が あるのに なにも たべない ものは？',[['🪮','くし'],['🍙','おにぎり'],['🧢','ぼうし']]],
-    ['とりは とりでも、ごみを あつめる とりは？',[['🧹','ちりとり'],['🐔','にわとり'],['🦜','オウム']]],
-    ['たこは たこでも、そらを とぶ たこは？',[['🪁','たこあげの たこ'],['🐙','うみの たこ'],['🍡','たこやき']]],
-  ],
-  hard:[
-    ['おしりに「ん」を つけると、がっこうへ もっていく ものに なる どうぶつは？',[['🦛','かば'],['🐘','ぞう'],['🦒','きりん']]],
-    ['いぬが 1ぴき、ねこが 2ひき。あしは ぜんぶで なんぼん？',[['🐾','12ほん'],['🐾','10ぽん'],['🐾','8ほん']]],
-    ['1しゅうかんは なんにち？',[['📅','7にち'],['📅','5にち'],['📅','10にち']]],
-    ['あしが 6ぽん ある むしは どれ？',[['🐞','てんとうむし'],['🕷️','くも'],['🐛','むかで']]],
-    ['いつも さかさまに ぶらさがって ねる どうぶつは？',[['🦇','こうもり'],['🐒','さる'],['🦉','ふくろう']]],
-    ['うみで いちばん おおきな いきものは？',[['🐳','くじら'],['🦈','さめ'],['🐙','たこ']]],
-    ['あおむしが おおきく なると なにに なる？',[['🦋','ちょうちょ'],['🐝','はち'],['🐞','てんとうむし']]],
-    ['おたまじゃくしが おおきく なると なにに なる？',[['🐸','かえる'],['🐟','さかな'],['🐢','かめ']]],
-    ['10から 3を ひくと いくつ？',[['🔢','7'],['🔢','6'],['🔢','13']]],
-    ['にほんで よく いう にじの いろの かずは？',[['🌈','7しょく'],['🌈','3しょく'],['🌈','10しょく']]],
-    ['まえから よんでも うしろから よんでも おなじ ことばは？',[['📰','しんぶんし'],['📕','ほんだな'],['✏️','えんぴつ']]],
-    ['しろくて ふわふわ、おまつりで うっている あまい おかしは？',[['🍭','わたあめ'],['🍡','おだんご'],['🍘','せんべい']]],
-    ['ふゆに なると はが ぜんぶ おちる きは どれ？',[['🍁','もみじ'],['🌲','まつ'],['🌴','ヤシ']]],
-    ['とけいの みじかい はりが おしえて くれるのは？',[['🕐','なんじ'],['⏱️','なんびょう'],['📅','なんようび']]],
-  ],
+// ── てんしの クイズ（2026-11-21 なぞなぞ → クイズ中心に変更・A案）──
+//   ステージに ちなんだ クイズ（7ステージ × かんたん/ふつう/むずかしい × 5もん）。さいしょの せんたくしが せいかい（ひょうじは シャッフル）
+//   ふつう・むずかしい では 4かいに 1かいくらい、むかしからの「なぞなぞ」も でる
+const QUIZ={
+  town:{
+    easy:[['ひを けしに いく、あかい くるまは？',[['🚒','しょうぼうしゃ'],['🚑','きゅうきゅうしゃ'],['🚌','バス']]],
+      ['びょうきや けがの ひとを はこぶ くるまは？',[['🚑','きゅうきゅうしゃ'],['🚒','しょうぼうしゃ'],['🚜','トラクター']]],
+      ['せんろの うえを はしる のりものは？',[['🚃','でんしゃ'],['🚗','くるま'],['🚲','じてんしゃ']]],
+      ['パンを うっている おみせは？',[['🥖','パンやさん'],['🐟','さかなやさん'],['💐','はなやさん']]],
+      ['しんごうが なにいろの とき わたって いい？',[['🟢','あお'],['🔴','あか'],['🟡','きいろ']]]],
+    normal:[['ポストは なにいろ？',[['📮','あか'],['🟦','あお'],['🟩','みどり']]],
+      ['おまわりさんが いる ちいさな たてものは？',[['👮','こうばん'],['🏥','びょういん'],['🏫','がっこう']]],
+      ['そらを とんで とおくへ いく のりものは？',[['✈️','ひこうき'],['🚢','ふね'],['🚂','きしゃ']]],
+      ['ほんを かりられる ところは？',[['📚','としょかん'],['🏪','コンビニ'],['🏦','ぎんこう']]],
+      ['じてんしゃの タイヤは いくつ？',[['🚲','2つ'],['🚲','3つ'],['🚲','4つ']]]],
+    hard:[['しんごうの いろは、あお・きいろと あと ひとつは？',[['🔴','あか'],['⚪','しろ'],['🟣','むらさき']]],
+      ['きゅうきゅうしゃや しょうぼうしゃを よぶ でんわばんごうは？',[['📞','119'],['📞','110'],['📞','117']]],
+      ['けいさつを よぶ でんわばんごうは？',[['📞','110'],['📞','119'],['📞','177']]],
+      ['ふねが とまる ところは？',[['⚓','みなと'],['🚉','えき'],['🛫','くうこう']]],
+      ['くるまに ガソリンを いれる おみせは？',[['⛽','ガソリンスタンド'],['🏪','コンビニ'],['🏥','びょういん']]]]},
+  sea:{
+    easy:[['あしが 8ほん ある うみの いきものは？',[['🐙','たこ'],['🐟','さかな'],['🐢','かめ']]],
+      ['よこに あるく うみの いきものは？',[['🦀','かに'],['🐟','さかな'],['🐙','たこ']]],
+      ['うみの みずは どんな あじ？',[['🧂','しょっぱい'],['🍬','あまい'],['🍋','すっぱい']]],
+      ['あたまから しおを ふきあげる、とても おおきな いきものは？',[['🐳','くじら'],['🦀','かに'],['🐚','かい']]],
+      ['こうらを せおって、うみを およぐ いきものは？',[['🐢','うみがめ'],['🦀','かに'],['🐬','いるか']]]],
+    normal:[['いかの あしは なんぼん？',[['🦑','10ぽん'],['🦑','8ほん'],['🦑','6ぽん']]],
+      ['すみを はいて にげる いきものは？',[['🐙','たこ'],['🐬','いるか'],['🐢','かめ']]],
+      ['うみで いちばん おおきな いきものは？',[['🐳','くじら'],['🦈','さめ'],['🐬','いるか']]],
+      ['おおきな ひれで、みずの うえを とぶ さかなは？',[['🐟','トビウオ'],['🐡','フグ'],['🐠','クマノミ']]],
+      ['クマノミが かくれて すんで いる ところは？',[['🌊','イソギンチャク'],['🌴','ヤシの き'],['🏠','いえ']]]],
+    hard:[['くじらは なんの なかま？',[['🐄','いぬや ひとと おなじ なかま'],['🐟','さかなの なかま'],['🐚','かいの なかま']]],
+      ['ヤドカリが せなかに せおって いる ものは？',[['🐚','かいがら'],['🪨','いし'],['🥥','ヤシの み']]],
+      ['うみの みずが ふえたり へったり する ことを なんと いう？',[['🌊','しおの みちひき'],['🌀','たつまき'],['🌈','にじ']]],
+      ['ペンギンは そらを とべる？',[['🐧','とべない'],['🕊️','とべる'],['🌙','よるだけ とべる']]],
+      ['ぷくーっと ふくらむ さかなは？',[['🐡','フグ'],['🐟','サンマ'],['🦈','サメ']]]]},
+  snow:{
+    easy:[['ゆきで つくる、まるい にんぎょうは？',[['⛄','ゆきだるま'],['🧸','ぬいぐるみ'],['🤖','ロボット']]],
+      ['さむい ひに てに はめる ものは？',[['🧤','てぶくろ'],['👟','くつ'],['🕶️','サングラス']]],
+      ['ゆきは なにいろ？',[['⚪','しろ'],['🔴','あか'],['🟢','みどり']]],
+      ['みずが こおると なにに なる？',[['🧊','こおり'],['☁️','くも'],['🌈','にじ']]],
+      ['ゆきの うえを すべる どうぐは？',[['🎿','スキー'],['🚲','じてんしゃ'],['🛒','カート']]]],
+    normal:[['ふゆの あいだ ながく ねむる どうぶつは？',[['🐻','くま'],['🐶','いぬ'],['🐔','にわとり']]],
+      ['ゆきが ふる きせつは？',[['❄️','ふゆ'],['🌸','はる'],['🌻','なつ']]],
+      ['さむい ところに すむ、くろと しろの とりは？',[['🐧','ペンギン'],['🦜','オウム'],['🦩','フラミンゴ']]],
+      ['むれで くらして「ワオーン」と ほえる どうぶつは？',[['🐺','オオカミ'],['🐒','サル'],['🦒','キリン']]],
+      ['ゆきを まるめて なげあう あそびは？',[['⚪','ゆきがっせん'],['🏐','バレーボール'],['⚾','やきゅう']]]],
+    hard:[['ゆきの けっしょうの かどは いくつ？',[['❄️','6つ'],['❄️','4つ'],['❄️','3つ']]],
+      ['こおりは みずに うく？ しずむ？',[['🧊','うく'],['⬇️','しずむ'],['💨','きえる']]],
+      ['にほんで いちばん たかい やまは？',[['🗻','ふじさん'],['⛰️','あそさん'],['🏔️','たかおさん']]],
+      ['ふゆに なると からだが しろく なる どうぶつは？',[['🐇','ゆきうさぎ'],['🐷','ぶた'],['🐸','かえる']]],
+      ['ホッキョクグマの けの いろは？',[['⚪','しろ'],['🟤','ちゃいろ'],['⚫','くろ']]]]},
+  jungle:{
+    easy:[['きいろくて ながい、おさるさんの だいすきな くだものは？',[['🍌','バナナ'],['🍎','りんご'],['🍇','ぶどう']]],
+      ['むねを たたいて「ドンドン」と ならす おおきな どうぶつは？',[['🦍','ゴリラ'],['🐰','うさぎ'],['🐭','ねずみ']]],
+      ['はなが ながーい どうぶつは？',[['🐘','ぞう'],['🦁','ライオン'],['🐊','ワニ']]],
+      ['たてがみの ある「どうぶつの おうさま」は？',[['🦁','ライオン'],['🐯','トラ'],['🐻','くま']]],
+      ['しましまもようの おおきな ねこの なかまは？',[['🐯','トラ'],['🦁','ライオン'],['🐼','パンダ']]]],
+    normal:[['ひとの ことばを まねする とりは？',[['🦜','オウム'],['🦉','ふくろう'],['🐧','ペンギン']]],
+      ['みずべで おおきな くちを あける、かたい からだの いきものは？',[['🐊','ワニ'],['🐸','カエル'],['🐢','カメ']]],
+      ['ゴリラが よく たべる ものは？',[['🌿','はっぱや くだもの'],['🍖','おにく'],['🐟','さかな']]],
+      ['きの えだに ぶらさがって あそぶ どうぶつは？',[['🐒','さる'],['🐘','ぞう'],['🦓','しまうま']]],
+      ['ぞうは はなで なにを する？',[['💧','みずを すう'],['👀','ものを みる'],['👂','おとを きく']]]],
+    hard:[['カメレオンが かえられる ものは？',[['🎨','からだの いろ'],['📏','せの たかさ'],['🦵','あしの かず']]],
+      ['ナマケモノは 1にちに どれくらい ねる？',[['😴','15じかん いじょう'],['⏰','1じかん'],['🙅','ぜんぜん ねない']]],
+      ['ヘビの あしは なんぼん？',[['🐍','0ぽん'],['🐍','2ほん'],['🐍','4ほん']]],
+      ['ゴリラの あかちゃんは なにを のんで そだつ？',[['🍼','おかあさんの おちち'],['🧃','ジュース'],['🍵','おちゃ']]],
+      ['バナナは どこに なる？',[['🌴','きの うえ'],['🥔','つちの なか'],['🌊','うみの なか']]]]},
+  haunt:{
+    easy:[['よるに「ホーホー」と なく とりは？',[['🦉','ふくろう'],['🐔','にわとり'],['🦆','あひる']]],
+      ['よるの そらで きらきら ひかる ものは？',[['⭐','ほし'],['☀️','たいよう'],['🌈','にじ']]],
+      ['ハロウィンで かざる オレンジの やさいは？',[['🎃','かぼちゃ'],['🥕','にんじん'],['🍅','トマト']]],
+      ['くらい ところを てらす どうぐは？',[['🔦','かいちゅうでんとう'],['🥄','スプーン'],['🧦','くつした']]],
+      ['ねる ときに あたまを のせる ものは？',[['🛏️','まくら'],['🧢','ぼうし'],['🍽️','おさら']]]],
+    normal:[['さかさまに ぶらさがって ねる どうぶつは？',[['🦇','こうもり'],['🐒','さる'],['🦉','ふくろう']]],
+      ['まんげつの おつきさまの かたちは？',[['🌕','まんまる'],['🌙','ほそい'],['⭐','ほしがた']]],
+      ['ハロウィンで こどもが いう ことばは？',[['🍬','トリック・オア・トリート'],['🎄','メリークリスマス'],['🎍','あけまして おめでとう']]],
+      ['よるに おしりが ひかる むしは？',[['✨','ホタル'],['🦋','チョウ'],['🐝','ハチ']]],
+      ['よるでも よく みえる めを もつ とりは？',[['🦉','ふくろう'],['🐔','にわとり'],['🐧','ペンギン']]]],
+    hard:[['おつきさまが ひかって みえる わけは？',[['☀️','たいようの ひかりが あたるから'],['💡','でんきが ついて いるから'],['🔥','もえて いるから']]],
+      ['こうもりは くらやみで なにを つかって とぶ？',[['👂','じぶんの こえの はねかえり'],['👃','におい'],['🔦','ライト']]],
+      ['よるの 12じの ことを なんと いう？',[['🕛','まよなか'],['🌅','よあけ'],['🌞','おひる']]],
+      ['ほしを せんで つないで かたちに した ものを なんと いう？',[['✨','せいざ'],['🗺️','ちず'],['🎨','ぬりえ']]],
+      ['おつきさまが まるく なって、また まるく なるまで どれくらい？',[['📅','やく 1かげつ'],['📅','1にち'],['📅','1ねん']]]]},
+  sakura:{
+    easy:[['さくらの はなは なにいろ？',[['🌸','ピンク'],['💙','あお'],['🖤','くろ']]],
+      ['はなの みつを あつめる むしは？',[['🐝','みつばち'],['🐜','あり'],['🐞','てんとうむし']]],
+      ['あかい からだに くろい てんてんの むしは？',[['🐞','てんとうむし'],['🐛','けむし'],['🦗','バッタ']]],
+      ['チューリップは どれ？',[['🌷','チューリップ'],['🌻','ひまわり'],['🌵','サボテン']]],
+      ['さくらの したで ごはんを たべる ことを なんと いう？',[['🍙','おはなみ'],['🎆','はなび'],['🎄','クリスマス']]]],
+    normal:[['あおむしが おおきく なると なにに なる？',[['🦋','ちょうちょ'],['🐝','はち'],['🐞','てんとうむし']]],
+      ['さくらが さく きせつは？',[['🌸','はる'],['🍂','あき'],['❄️','ふゆ']]],
+      ['たねから でて さいしょに ひらく 2まいの はっぱは？',[['🌱','ふたば'],['🍁','もみじ'],['🍀','よつば']]],
+      ['みつばちの あしに つく、はなの こなは？',[['🌼','かふん'],['🍚','おこめ'],['🧂','しお']]],
+      ['たんぼで「ケロケロ」と なく いきものは？',[['🐸','かえる'],['🐶','いぬ'],['🐦','すずめ']]]],
+    hard:[['さくらの はなびらは 1つの はなに なんまい？',[['🌸','5まい'],['🌸','3まい'],['🌸','8まい']]],
+      ['てんとうむしの あしは なんぼん？',[['🐞','6ぽん'],['🐞','8ほん'],['🐞','4ほん']]],
+      ['ちょうちょが はなから すう ものは？',[['🍯','みつ'],['💧','どろみず'],['🍃','はっぱ']]],
+      ['さくらの はなが ちった あと、えだに でてくる ものは？',[['🍃','みどりの はっぱ'],['❄️','ゆき'],['🍎','りんご']]],
+      ['おたまじゃくしが おおきく なると なにに なる？',[['🐸','かえる'],['🐟','さかな'],['🐢','かめ']]]]},
+  lair:{
+    easy:[['おひめさまが あたまに のせる ものは？',[['👑','かんむり'],['🧢','ぼうし'],['🪣','バケツ']]],
+      ['ひを けす ときに つかう ものは？',[['💧','みず'],['🔥','ひ'],['🍬','あめ']]],
+      ['ゆうしゃが もって いる ぶきは？',[['🗡️','けん'],['🥄','スプーン'],['🪥','はブラシ']]],
+      ['おしろに すんで いるのは？',[['👸','おひめさま'],['🐟','さかな'],['🐮','うし']]],
+      ['かぎで あける ものは？',[['🚪','ドア'],['🍎','りんご'],['☁️','くも']]]],
+    normal:[['1しゅうかんは なんにち？',[['📅','7にち'],['📅','5にち'],['📅','10にち']]],
+      ['にほんで よく いう にじの いろの かずは？',[['🌈','7しょく'],['🌈','3しょく'],['🌈','10しょく']]],
+      ['10から 3を ひくと いくつ？',[['🔢','7'],['🔢','6'],['🔢','13']]],
+      ['とけいの みじかい はりが おしえて くれるのは？',[['🕐','なんじ'],['⏱️','なんびょう'],['📅','なんようび']]],
+      ['1ねんは なんかげつ？',[['📅','12かげつ'],['📅','10かげつ'],['📅','7かげつ']]]],
+    hard:[['いぬが 1ぴき、ねこが 2ひき。あしは ぜんぶで なんぼん？',[['🐾','12ほん'],['🐾','10ぽん'],['🐾','8ほん']]],
+      ['1ねんは なんにち？（うるうどし では ない とし）',[['📅','365にち'],['📅','100にち'],['📅','1000にち']]],
+      ['みずが こおるのは なんど？',[['🌡️','0ど'],['🌡️','100ど'],['🌡️','50ど']]],
+      ['5×2は いくつ？',[['🔢','10'],['🔢','7'],['🔢','52']]],
+      ['よるに みえる、ちきゅうの まわりを まわって いる ものは？',[['🌙','おつきさま'],['☀️','たいよう'],['☁️','くも']]]]},
 };
-let quizUsed={easy:new Set(),normal:new Set(),hard:new Set()};
-function pickRiddle(){ const pool=RIDDLES[diffKey]||RIDDLES.normal, used=quizUsed[diffKey]||(quizUsed[diffKey]=new Set());
-  if(used.size>=pool.length) used.clear();
+// むかしからの なぞなぞ（ふつう・むずかしい で ときどき）
+const NAZO=[
+  ['パンは パンでも たべられない パンは なあに？',[['🍳','フライパン'],['🍞','しょくパン'],['🥐','クロワッサン']]],
+  ['さかさまに よむと「かるい」に なる うみの いきものは？',[['🐬','いるか'],['🐳','くじら'],['🦈','さめ']]],
+  ['さかさまに よんでも おなじ、あかい やさいは？',[['🍅','トマト'],['🥕','にんじん'],['🫑','ピーマン']]],
+  ['かみは かみでも、ゴロゴロ なる かみは？',[['⚡','かみなり'],['📄','おりがみ'],['💇','かみのけ']]],
+  ['いすは いすでも、つめたくて あまい いすは？',[['🍦','アイス'],['🪑','つくえの いす'],['🛋️','ソファ']]],
+  ['はしは はしでも、わたれない はしは？',[['🥢','おはし'],['🌉','つりばし'],['🪨','いしばし']]],
+  ['バスは バスでも、のれない バスは？',[['🛁','バスタオル'],['🚌','スクールバス'],['🚍','ろせんバス']]],
+  ['くまは くまでも、おちばを あつめる くまは？',[['🍂','くまで'],['🐻','ツキノワグマ'],['🐼','パンダ']]],
+  ['ひるは ひるでも、みずに うかぶ ひるは？',[['🦆','あひる'],['🍱','おひる'],['😴','おひるね']]],
+  ['つきは つきでも、そらに ない つきは？',[['🍡','もちつき'],['🌙','みかづき'],['🌕','まんげつ']]],
+  ['とりは とりでも、ごみを あつめる とりは？',[['🧹','ちりとり'],['🐔','にわとり'],['🦜','オウム']]],
+  ['おしりに「ん」を つけると、がっこうへ もっていく ものに なる どうぶつは？',[['🦛','かば'],['🐘','ぞう'],['🦒','きりん']]],
+];
+let quizUsed={};
+function pickRiddle(){ const nazo=diffKey!=='easy' && Math.random()<0.25;
+  const pool=nazo?NAZO:((QUIZ[stageKey]||QUIZ.town)[diffKey]||QUIZ.town.normal), key=nazo?'nazo':stageKey+'/'+diffKey;
+  const used=quizUsed[key]||(quizUsed[key]=new Set()); if(used.size>=pool.length) used.clear();
   let i; do{ i=Math.floor(Math.random()*pool.length); }while(used.has(i)); used.add(i);
   const r=pool[i], opts=r[1].map((o,k)=>({e:o[0],t:o[1],ok:k===0}));
   for(let k=opts.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [opts[k],opts[j]]=[opts[j],opts[k]]; }
-  return {q:r[0],opts}; }
+  return {q:r[0],opts,nazo}; }
 function sayQuiz(){ if(!quiz||!window.KidsAudio||!KidsAudio.speak) return;
   const r=quiz.r, nums=['いちばん','にばん','さんばん'];
-  KidsAudio.speak('なぞなぞ。'+r.q.replace(/（[^）]*）/g,'')+'　'+r.opts.map((o,i)=>nums[i]+'、'+o.t).join('。'),{lang:'ja-JP',rate:0.9}); }
+  KidsAudio.speak((r.nazo?'なぞなぞ。':'クイズ。')+r.q.replace(/（[^）]*）/g,'')+'　'+r.opts.map((o,i)=>nums[i]+'、'+o.t).join('。'),{lang:'ja-JP',rate:0.9}); }
 function sayText(t){ if(window.KidsAudio && KidsAudio.speak) KidsAudio.speak(t,{lang:'ja-JP',rate:0.95}); }
 // よみあげが おわってから つぎへ すすむ（とちゅうで こえが きれない ように 2026-11-21）
 //   こえが でない たんまつでは minMs で すすむ。ねんの ため 9びょうで かならず すすむ
@@ -1523,6 +1756,7 @@ function openQuiz(){ if(quiz) return; state='quiz'; keys.left=keys.right=keys.ju
   quiz={try:1, r:pickRiddle(), lock:false}; renderQuiz(); document.getElementById('quiz').classList.remove('hidden'); sAngel();
   setTimeout(()=>{ if(quiz) sayQuiz(); },350); }
 function renderQuiz(){ const r=quiz.r;
+  document.getElementById('qz-title').textContent=r.nazo?'てんしの なぞなぞ':'てんしの クイズ';
   document.getElementById('qz-q').textContent=r.q;
   document.getElementById('qz-msg').textContent=quiz.try===1?'こたえを えらんでね':'もう 1もん！ がんばれ！';
   const box=document.getElementById('qz-opts'); box.innerHTML='';
