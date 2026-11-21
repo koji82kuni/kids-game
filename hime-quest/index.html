@@ -43,6 +43,35 @@
   .diff-btn .d-emoji{display:block;font-size:clamp(22px,6vw,30px);margin-bottom:2px;}
   .diff-btn.sel{background:#ffd166;border-color:#fff;color:#5b3fa0;transform:scale(1.06);box-shadow:0 6px 0 rgba(0,0,0,.2);}
   .diff-desc{font-size:clamp(11px,2.9vw,14px);opacity:.85;margin:6px 0 16px;min-height:20px;}
+  /* しゅじんこう えらび */
+  .hero-label{font-size:clamp(12px,3.2vw,15px);font-weight:900;opacity:.95;margin-bottom:6px;}
+  .hero-btn{background:rgba(255,255,255,.14);border:3px solid rgba(255,255,255,.35);border-radius:16px;padding:8px 16px;
+    font-size:clamp(14px,4vw,18px);font-weight:bold;color:#fff;cursor:pointer;font-family:inherit;transition:transform .1s;min-width:120px;}
+  .hero-btn .d-emoji{display:block;font-size:clamp(24px,6vw,32px);margin-bottom:2px;}
+  .hero-btn.sel{background:#7ad0ff;border-color:#fff;color:#1e3a6a;transform:scale(1.06);box-shadow:0 6px 0 rgba(0,0,0,.2);}
+  .hero-btn[data-h=girl].sel{background:#ffb3d9;color:#7a1a4a;}
+  #hero-desc{margin-bottom:10px;}
+  .pick{display:flex;flex-wrap:wrap;justify-content:center;gap:0 34px;}
+  .pick-col{display:flex;flex-direction:column;align-items:center;}
+  .pick .diff-desc{margin:6px 0 12px;max-width:330px;}
+  /* てんしの なぞなぞ */
+  #quiz{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:rgba(30,15,70,.55);padding:10px;}
+  #quiz.hidden{display:none;}
+  .qz-card{background:linear-gradient(180deg,#fffdf4,#fff0fa);border:4px solid #ffd23a;border-radius:24px;padding:12px 18px 14px;width:min(680px,96%);
+    max-height:100%;overflow-y:auto;text-align:center;color:#5a2a8a;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+  .qz-head{font-size:clamp(14px,3.4vh,20px);font-weight:900;color:#c0306a;}
+  .qz-head .qz-angel{font-size:clamp(26px,6vh,40px);vertical-align:middle;margin-right:4px;}
+  .qz-q{font-size:clamp(16px,4.6vh,26px);font-weight:900;line-height:1.45;margin:6px 0 4px;}
+  .qz-say{border:none;background:#efe4ff;color:#5a2a8a;border-radius:999px;padding:5px 16px;font-size:clamp(12px,3vh,16px);font-weight:bold;cursor:pointer;font-family:inherit;}
+  .qz-opts{display:flex;gap:10px;justify-content:center;margin:10px 0 6px;flex-wrap:wrap;}
+  .qz-opt{flex:1 1 150px;max-width:200px;background:#fff;border:3px solid #c8a0ff;border-radius:18px;padding:6px 6px 8px;cursor:pointer;font-family:inherit;
+    color:#4a2a7a;font-weight:900;font-size:clamp(14px,3.8vh,20px);display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 5px 0 #c8a0ff;}
+  .qz-opt:active{transform:translateY(3px);box-shadow:0 2px 0 #c8a0ff;}
+  .qz-opt .qz-n{font-size:.7em;background:#c8a0ff;color:#fff;border-radius:999px;padding:0 9px;}
+  .qz-opt .qz-e{font-size:clamp(28px,8vh,48px);line-height:1.1;}
+  .qz-opt.ok{background:#d4ffd9;border-color:#3cc05a;box-shadow:0 5px 0 #3cc05a;}
+  .qz-opt.ng{background:#ffe0e0;border-color:#ff7a7a;box-shadow:0 5px 0 #ff7a7a;opacity:.8;}
+  .qz-msg{font-size:clamp(13px,3.4vh,18px);font-weight:900;color:#c0306a;min-height:1.4em;}
   .start-btn{background:linear-gradient(135deg,#ff7eb3,#ff4d6d);border:none;border-radius:999px;
     padding:15px 44px;font-size:clamp(17px,5vw,24px);font-weight:900;color:#fff;cursor:pointer;font-family:inherit;
     box-shadow:0 7px 0 #c9385a,0 10px 20px rgba(0,0,0,.3);animation:bob 1.2s ease-in-out infinite;}
@@ -188,6 +217,12 @@
 
   /* 背の低い横向き画面では文字量をへらして押しやすく */
   @media (max-height:440px){
+    .game-title{font-size:clamp(22px,8.5vh,34px);line-height:1.1;}
+    .hero-label{margin-bottom:2px;}
+    .hero-btn{padding:5px 12px;min-width:96px;}
+    .hero-btn .d-emoji{font-size:22px;margin-bottom:0;}
+    .pick .diff-desc{margin:3px 0 6px;}
+    .start-btn{padding:10px 36px;}
     .story{display:none;}
     .subtitle{margin-bottom:6px;}
     .diff-desc{margin:4px 0 10px;}
@@ -227,6 +262,15 @@
   </div>
   <button id="mute-btn" class="hidden">🔊</button>
 
+  <!-- てんしの なぞなぞ -->
+  <div id="quiz" class="hidden"><div class="qz-card">
+    <div class="qz-head"><span class="qz-angel">👼</span>てんしの なぞなぞ</div>
+    <div class="qz-q" id="qz-q"></div>
+    <button class="qz-say" id="qz-say">🔊 もういちど きく</button>
+    <div class="qz-opts" id="qz-opts"></div>
+    <div class="qz-msg" id="qz-msg"></div>
+  </div></div>
+
   <!-- 縦向き時：横向きにするよう案内 -->
   <div id="rotate-screen">
     <div class="ph">📱</div>
@@ -239,14 +283,27 @@
     <div class="game-title">おひめさまを<br><span class="hime">たすけろ！</span></div>
     <div class="subtitle">👑 だい魔王から おひめさまを すくいだそう 🗡️</div>
     <div class="story">大魔王（だいまおう）が おひめさまを さらってしまった！<br>ゆうしゃになって、いろんな せかいで てきや ボスを たおしながら すすもう。</div>
+    <div class="pick">
+      <div class="pick-col">
+    <div class="hero-label">だれで あそぶ？</div>
+      <div class="diff-row">
+        <button class="hero-btn" data-h="boy"><span class="d-emoji">👦🗡️</span>おとこのこ</button>
+        <button class="hero-btn" data-h="girl"><span class="d-emoji">👧🪄</span>おんなのこ</button>
+      </div>
+      <div class="diff-desc hero-d" id="hero-desc"></div>
+      </div>
+      <div class="pick-col">
+        <div class="hero-label">むずかしさ</div>
     <div class="diff-row">
-      <button class="diff-btn" data-d="easy"><span class="d-emoji">🐣</span>かんたん</button>
-      <button class="diff-btn" data-d="normal"><span class="d-emoji">🙂</span>ふつう</button>
-      <button class="diff-btn" data-d="hard"><span class="d-emoji">🔥</span>むずかしい</button>
+        <button class="diff-btn" data-d="easy"><span class="d-emoji">🐣</span>かんたん</button>
+        <button class="diff-btn" data-d="normal"><span class="d-emoji">🙂</span>ふつう</button>
+        <button class="diff-btn" data-d="hard"><span class="d-emoji">🔥</span>むずかしい</button>
+      </div>
+      <div class="diff-desc" id="diff-desc">ハート3こ・てきはふつうの はやさ</div>
+      </div>
     </div>
-    <div class="diff-desc" id="diff-desc">ハート3こ・てきはふつうの はやさ</div>
     <button class="start-btn" id="start-btn">▶ ステージを えらぶ</button>
-    <div class="how">🎮 キーボード：← → うごく／スペース・↑ ジャンプ<br>📱 スマホ：がめんの ボタンで そうさ／🪙コインを つかって ★を なげる！</div>
+    <div class="how">🎮 キーボード：← → うごく／スペース・↑ ジャンプ<br>📱 スマホ：がめんの ボタンで そうさ／🪙コインを つかって ★や バリアで こうげき！<br>👼 てんしに さわると なぞなぞ。せいかいで パワーアップ！</div>
   </div></div>
 
   <!-- ステージ選択 -->
@@ -499,6 +556,7 @@ function reset(){
   boss={type:bt, x:BOSS_X, w:bs[0], h:bs[1], y:GT-bs[1], hp:diff.boss, dir:-1, hit:0, vy:0,
     onGround:true, t:0, fireCd:120, defeated:false, dropY:0, minX:curLevel.arenaX};
   fireballs=[]; particles=[]; stars=[]; starCd=0; princessFree=false;
+  barriers=[]; powered=false; closeQuizSilently(); placeAngel();       // パワーアップは ステージごとに リセット
   coinsGot=0; hearts=diff.hearts; invuln=0; freezeTimer=0; cam=0;
   coinsTotal=coins.length; coinsCollected=0;
   player={x:60,y:GT-44,w:26,h:40,vx:0,vy:0,face:1,onGround:false,coyote:0,jbuf:0,run:0,atk:0,safeX:60,safeY:GT-44,stompWin:0,hiT:0,caught:0,vine:null};
@@ -547,7 +605,7 @@ function updatePlayer(){
 
   if(keys.jumpEdge){ p.jbuf=8; keys.jumpEdge=false; }
   if(p.jbuf>0)p.jbuf--; if(p.coyote>0)p.coyote--;
-  if(p.jbuf>0 && (p.onGround||p.coyote>0)){ p.vy=-11.6; p.onGround=false; p.coyote=0; p.jbuf=0; sJump(); }
+  if(p.jbuf>0 && (p.onGround||p.coyote>0)){ p.vy=powered?-13.2:-11.6; p.onGround=false; p.coyote=0; p.jbuf=0; sJump(); }
   // てきを ふんだ すぐあと（0.15びょう）に ジャンプを おしても ハイジャンプ
   if(p.stompWin>0){ p.stompWin--; if(p.jbuf>0) highBounce(); }
   if(p.hiT>0) p.hiT--;
@@ -835,7 +893,8 @@ function hasTargetAhead(){
 
 // ★こうげき（コイン10まいで発動・2秒に1回）
 function throwStar(){ if(coinsGot<=0)return; coinsGot--;   // コインを1枚 消費して★を投げる
-  stars.push({x:player.x+player.w/2, y:player.y+16, vx:player.face*6.4, life:80, spin:0});
+  if(powered){ for(const dy of [4,26]) stars.push({x:player.x+player.w/2, y:player.y+dy, vx:player.face*6.4, life:80, spin:0}); }   // パワーアップ：★が 2つ
+  else stars.push({x:player.x+player.w/2, y:player.y+16, vx:player.face*6.4, life:80, spin:0});
   player.atk=14; sThrow(); }
 function updateStars(){
   for(const s of stars){ s.x+=s.vx; s.spin+=0.4; s.life--;
@@ -858,8 +917,11 @@ function tick(){
   if(freezeTimer>0){ freezeTimer--; updateParticles(); if(freezeTimer===0){ win(); } return; }
   updatePlayer(); updateEnemies(); updateBoss(); updateFireballs(); updateCoins();
   if(starCd>0)starCd--;
-  if(coinsGot>0 && starCd<=0 && hasTargetAhead()){ throwStar(); starCd=68; }
-  updateStars(); updateParticles();
+  updateAngel(); if(state!=='play') return;                          // てんしに さわったら なぞなぞ（ゲームは とまる）
+  if(coinsGot>0 && starCd<=0){
+    if(heroKey==='girl'){ if(threatNear(player.face) || (powered && threatNear(-player.face))){ castBarrier(); starCd=60; } }
+    else if(hasTargetAhead()){ throwStar(); starCd=68; } }
+  updateBarriers(); updateStars(); updateParticles();
   if(shakeT>0) shakeT--; if(bossBanner>0) bossBanner--;
   const tgt=Math.max(0,Math.min(player.x-W*0.4, LEVEL_W-W));
   cam+=(tgt-cam)*0.12;
@@ -899,6 +961,7 @@ function drawCoin(c){ if(c.got)return; const x=c.x-cam; if(x<-20||x>W+20)return;
 
 // ===== 主人公（勇者）=====
 function drawHero(){ const p=player; if(invuln>0 && Math.floor(animT/4)%2) return;
+  if(heroKey==='girl') return drawHeroGirl();
   const x=p.x-cam, y=p.y; ctx.save(); ctx.translate(x+p.w/2,y);
   if(p.face<0)ctx.scale(-1,1);
   const walk=p.onGround&&Math.abs(p.vx)>0.4, leg=walk?Math.sin(p.run)*5:0, air=!p.onGround, atk=p.atk>0;
@@ -1250,6 +1313,233 @@ function drawFire(f){ const x=f.x-cam;
 function star5(ro,ri){ ctx.beginPath(); for(let i=0;i<10;i++){ const r=i%2?ri:ro, a=-Math.PI/2+i*Math.PI/5; const px=Math.cos(a)*r, py=Math.sin(a)*r; if(i===0)ctx.moveTo(px,py); else ctx.lineTo(px,py);} ctx.closePath(); }
 function drawStar(s){ const x=s.x-cam; if(x<-20||x>W+20)return; ctx.save(); ctx.translate(x,s.y); ctx.rotate(s.spin);
   ctx.fillStyle='#ffe14d'; star5(11,4.8); ctx.fill(); ctx.fillStyle='#fff7c0'; star5(5,2.2); ctx.fill(); ctx.restore(); }
+
+// ===================================================================
+// しゅじんこう えらび・まほうの バリア・てんしの なぞなぞ（2026-11-21 追加）
+//   おとこのこ＝★を まっすぐ なげる／おんなのこ＝まえに みじかい あいだ バリアを はる（どちらも コイン 1まい）
+//   てんしに さわると なぞなぞ（3たく）。せいかいで パワーアップ（ジャンプりょく＋こうげき 2つ）＝その ステージの クリアまで
+// ===================================================================
+let heroKey='boy'; try{ heroKey=localStorage.getItem('himeHero')==='girl'?'girl':'boy'; }catch(e){}
+let barriers=[], powered=false, angel=null, quiz=null;
+const HERO_DESC={boy:'けんを もった ゆうしゃ。★を まっすぐ なげるよ', girl:'まほうの ステッキ。まえに バリアを はって まもるよ'};
+function syncHero(){ document.querySelectorAll('.hero-btn').forEach(b=>b.classList.toggle('sel',b.dataset.h===heroKey));
+  const d=document.getElementById('hero-desc'); if(d) d.textContent=HERO_DESC[heroKey]; }
+function sBarrier(){ [784,1175,1568].forEach((f,i)=>beep(f,.12,'sine',.1,i*0.04)); }
+function sAngel(){ [1046,1318,1568,2093].forEach((f,i)=>beep(f,.16,'sine',.08,i*0.09)); }
+function sPower(){ [523,659,784,1046,1318,1568].forEach((f,i)=>beep(f,.14,'square',.1,i*0.07)); }
+
+// ── バリア（おんなのこ）──
+function castBarrier(){ if(coinsGot<=0) return; coinsGot--;
+  const dirs=powered?[player.face,-player.face]:[player.face];          // パワーアップ中は まえと うしろ
+  for(const d of dirs) barriers.push({dir:d, age:0, life:52, hitBoss:false});
+  player.atk=18; sBarrier(); }
+function barrierBox(b){ const cx=player.x+player.w/2, off=10+Math.min(30,b.age*1.5);   // すこし まえへ ひろがる
+  return {x:b.dir>0?cx+off:cx-off-34, y:player.y-20, w:34, h:76}; }
+function updateBarriers(){
+  for(const b of barriers){ b.age++; b.life--; const bx=barrierBox(b);
+    for(const f of fireballs){ if(f.life>0 && rectHit(bx,{x:f.x-8,y:f.y-8,w:16,h:16})){ f.life=0;   // てきの たまを けす
+      for(let i=0;i<5;i++) particles.push({x:f.x,y:f.y,vx:(Math.random()-.5)*3,vy:(Math.random()-.5)*3,life:16,c:'#ffd1f0',ng:true}); } }
+    for(const e of enemies){ if(!e.alive || !rectHit(bx,e)) continue;
+      if(e.type==='tsubomi' && e.mode!=='open') continue; if(e.type==='tobiuo' && e.mode!=='jump') continue;
+      killEnemy(e); }
+    if(!boss.defeated && !b.hitBoss){                                     // ボスには 1まいの バリアで 1かいだけ
+      if(boss.split){ for(const m of boss.minis){ if(!m.alive || !rectHit(bx,m)) continue;
+          if(m.real){ if(boss.hit===0){ b.hitBoss=true; regroup(boss,m); bossDamage(); break; } } else poofMini(m); } }
+      else if(boss.hit===0 && boss.mode!=='regroup' && rectHit(bx,boss)){ b.hitBoss=true; bossDamage(); } }
+  }
+  barriers=barriers.filter(b=>b.life>0);
+}
+// ちかくに てき・ボス・たまが あるか（バリアは ちかい ときだけ はる＝コインの むだづかい ぼうし）
+function threatNear(dir){ const px=player.x+player.w/2, py=player.y+player.h/2, R=70;
+  const near=(x,w,cy,dyMax)=>{ const dx=(x+w/2)-px; return Math.sign(dx)===dir && Math.abs(dx)-w/2<R && Math.abs(cy-py)<dyMax; };
+  for(const e of enemies){ if(!e.alive) continue;
+    if(e.type==='tsubomi' && e.mode!=='open') continue; if(e.type==='tobiuo' && e.mode!=='jump') continue; if(e.type==='tsuru' && e.mode==='walk') continue;
+    if(near(e.x,e.w,e.y+e.h/2,100)) return true; }
+  for(const f of fireballs) if(near(f.x-8,16,f.y,80)) return true;
+  if(!boss.defeated){ if(boss.split){ for(const m of boss.minis) if(m.alive && near(m.x,m.w,m.y+m.h/2,100)) return true; }
+    else if(near(boss.x,boss.w,boss.y+boss.h/2,140)) return true; }
+  return false; }
+function drawBarriers(){ for(const b of barriers){ const bx=barrierBox(b), x=bx.x-cam+bx.w/2, cy=bx.y+bx.h/2;
+  const a=Math.min(1,b.life/12)*Math.min(1,b.age/5), k=0.5+0.5*Math.sin(animT*0.4);
+  ctx.save(); ctx.globalAlpha=a;
+  const g=ctx.createRadialGradient(x,cy,6,x,cy,44); g.addColorStop(0,'rgba(255,240,255,.75)'); g.addColorStop(1,'rgba(200,140,255,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(x,cy,26,44,0,0,7); ctx.fill();
+  ctx.strokeStyle='rgba(255,120,210,'+(0.75+0.25*k)+')'; ctx.lineWidth=4; ctx.beginPath(); ctx.ellipse(x,cy,16,38,0,0,7); ctx.stroke();
+  ctx.strokeStyle='rgba(180,140,255,.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(x,cy,10,30,0,0,7); ctx.stroke();
+  ctx.fillStyle='#fff6a0'; for(let i=0;i<3;i++){ const t=animT*0.08+i*2.1; ctx.save(); ctx.translate(x+Math.cos(t)*14,cy+Math.sin(t)*34); star5(5,2.2); ctx.fill(); ctx.restore(); }
+  ctx.restore(); } }
+
+// ── おんなのこの ゆうしゃ ──
+function drawHeroGirl(){ const p=player;
+  const x=p.x-cam, y=p.y; ctx.save(); ctx.translate(x+p.w/2,y);
+  if(p.face<0)ctx.scale(-1,1);
+  const walk=p.onGround&&Math.abs(p.vx)>0.4, leg=walk?Math.sin(p.run)*5:0, air=!p.onGround, atk=p.atk>0;
+  // ケープ（うしろ）
+  ctx.fillStyle='#a78bfa'; ctx.beginPath(); ctx.moveTo(-5,8); ctx.quadraticCurveTo(-15-Math.sin(animT*0.2)*2,22,-9,38); ctx.lineTo(1,32); ctx.lineTo(1,9); ctx.closePath(); ctx.fill();
+  // うしろの ながい かみ（ポニーテール）
+  ctx.fillStyle='#8a4a2a'; ctx.beginPath(); ctx.moveTo(-7,-4); ctx.quadraticCurveTo(-19,6-Math.sin(animT*0.25)*2,-14,22); ctx.quadraticCurveTo(-10,12,-3,2); ctx.closePath(); ctx.fill();
+  // あし（ピンクの ブーツ）
+  ctx.fillStyle='#d9467e'; ctx.fillRect(-7,33,6,9+(air?1:(leg>0?leg:0))); ctx.fillRect(2,33,6,9+(air?1:(leg<0?-leg:0)));
+  // ドレス（すそが ひろがる）
+  ctx.fillStyle='#ff7eb3'; ctx.beginPath(); ctx.moveTo(-8,9); ctx.lineTo(8,9); ctx.lineTo(13,35); ctx.lineTo(-13,35); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#ffe0ef'; ctx.fillRect(-13,31,26,4);                    // すその フリル
+  ctx.fillStyle='#ffd23a'; ctx.beginPath(); ctx.moveTo(-4,12); ctx.lineTo(0,15); ctx.lineTo(4,12); ctx.lineTo(4,18); ctx.lineTo(0,15); ctx.lineTo(-4,18); ctx.closePath(); ctx.fill();   // むねの リボン
+  // まほうの ステッキを もつ うで
+  ctx.fillStyle='#f7cfa6';
+  const wand=(tx,ty,rot)=>{ ctx.save(); ctx.translate(tx,ty); ctx.rotate(rot);
+    ctx.fillStyle='#ffffff'; ctx.fillRect(-1.5,-22,3,22); ctx.fillStyle='#ff7eb3'; ctx.fillRect(-1.5,-16,3,3); ctx.fillRect(-1.5,-8,3,3);
+    ctx.save(); ctx.translate(0,-25); if(atk){ ctx.shadowColor='#fff6a0'; ctx.shadowBlur=12; } ctx.fillStyle='#ffe14d'; star5(7,3); ctx.fill(); ctx.restore();
+    ctx.restore(); };
+  if(atk){ ctx.fillRect(6,6,6,11); wand(11,6,0.9); }                     // ステッキを まえに むける
+  else { ctx.fillRect(6,15,5,11); wand(10,25,0.2); }
+  // あたま・まえがみ
+  ctx.fillStyle='#f7cfa6'; ctx.beginPath(); ctx.arc(0,2,10,0,7); ctx.fill();
+  ctx.fillStyle='#8a4a2a'; ctx.beginPath(); ctx.arc(0,1,10.6,Math.PI*1.02,Math.PI*1.98); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-10,0); ctx.quadraticCurveTo(-6,5,-1,-1); ctx.quadraticCurveTo(3,4,8,-2); ctx.lineTo(9,-5); ctx.lineTo(-10,-5); ctx.closePath(); ctx.fill();
+  // ティアラと うしろの リボン
+  ctx.fillStyle='#ffd23a'; ctx.beginPath(); ctx.moveTo(-6,-8); ctx.lineTo(-4,-13); ctx.lineTo(-1,-9); ctx.lineTo(1,-15); ctx.lineTo(3,-9); ctx.lineTo(6,-13); ctx.lineTo(7,-8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#7ad0ff'; dot(1,-11,1.6);
+  ctx.fillStyle='#ff5d9e'; ctx.beginPath(); ctx.moveTo(-9,-6); ctx.lineTo(-16,-11); ctx.lineTo(-15,-1); ctx.closePath(); ctx.fill();
+  // め・ほっぺ
+  ctx.fillStyle='#222'; ctx.fillRect(3,0,3,4); ctx.fillStyle='rgba(255,120,150,.6)'; dot(5,6,2.2);
+  ctx.restore();
+}
+// パワーアップ中の はね（うしろ）と てんしの わ（あたまの うえ）
+function drawPowerBack(){ if(!powered) return; const p=player; if(invuln>0 && Math.floor(animT/4)%2) return;
+  const cx=p.x-cam+p.w/2, cy=p.y+16, fl=Math.sin(animT*0.3)*0.3;
+  ctx.save(); const g=ctx.createRadialGradient(cx,cy,4,cx,cy,40); g.addColorStop(0,'rgba(255,250,200,.45)'); g.addColorStop(1,'rgba(255,250,200,0)'); ctx.fillStyle=g; dot(cx,cy,40);
+  for(const sd of [-1,1]){ ctx.save(); ctx.translate(cx+sd*-2,cy-4); ctx.rotate(sd*(-0.5-fl)); ctx.fillStyle='rgba(255,255,255,.92)'; ctx.strokeStyle='#bcd8ff'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.ellipse(sd*-12,0,13,7,0,0,7); ctx.fill(); ctx.stroke(); ctx.restore(); }
+  ctx.restore(); }
+function drawPowerFront(){ if(!powered) return; const p=player; if(invuln>0 && Math.floor(animT/4)%2) return;
+  ctx.save(); ctx.strokeStyle='#ffd23a'; ctx.lineWidth=3; ctx.shadowColor='#fff6a0'; ctx.shadowBlur=8;
+  ctx.beginPath(); ctx.ellipse(p.x-cam+p.w/2,p.y-14+Math.sin(animT*0.1)*1.5,9,3,0,0,7); ctx.stroke(); ctx.restore(); }
+
+// ── てんし ──
+function placeAngel(){ const gs=curLevel.grounds, g=gs[Math.max(1,Math.floor(gs.length/2))];
+  angel={x:g[0]+g[1]*0.5, y:-90, w:34, h:46, mode:'wait', t:0, tries:0}; }
+function updateAngel(){ const a=angel; if(!a || a.mode==='gone') return; a.t++;
+  const pcx=player.x+player.w/2;
+  if(a.mode==='wait'){ if(pcx>a.x-W*0.5){ a.mode='down'; sAngel(); } return; }
+  if(a.mode==='leave'){ a.y-=2.2; a.x+=0.5; if(a.y<-90) a.mode='gone'; return; }
+  if(a.mode==='down'){ a.y+=1.4; if(a.y>=GT-140) a.mode='hover'; }                                  // ゆっくり おりてくる
+  else { const ty=GT-86+Math.sin(a.t*0.05)*6; a.y+=(ty-a.y)*0.05;
+    const dx=pcx-a.x; if(Math.abs(dx)<420) a.x+=Math.sign(dx)*Math.min(Math.abs(dx),1.1); }          // とおりすぎても ついてきて まってくれる
+  if(player.caught<=0 && rectHit(player,{x:a.x-a.w/2,y:a.y,w:a.w,h:a.h})) openQuiz();
+}
+function drawAngel(){ const a=angel; if(!a || a.mode==='gone' || a.mode==='wait') return; const x=a.x-cam; if(x<-80||x>W+80) return;
+  const fl=Math.sin(a.t*0.25)*0.35, cy=a.y+a.h/2;
+  ctx.save(); ctx.translate(x,cy);
+  const g=ctx.createRadialGradient(0,0,6,0,0,46); g.addColorStop(0,'rgba(255,250,210,.8)'); g.addColorStop(1,'rgba(255,250,210,0)'); ctx.fillStyle=g; dot(0,0,46);
+  for(const sd of [-1,1]){ ctx.save(); ctx.translate(sd*6,-4); ctx.rotate(sd*(0.5+fl)); ctx.fillStyle='#ffffff'; ctx.strokeStyle='#a8c8f0'; ctx.lineWidth=1.5;   // はね
+    ctx.beginPath(); ctx.ellipse(sd*13,-2,15,8,0,0,7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.ellipse(sd*10,5,10,5,0,0,7); ctx.fill(); ctx.stroke(); ctx.restore(); }
+  ctx.fillStyle='#ffffff'; ctx.strokeStyle='#cfe0f5'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(-7,-4); ctx.lineTo(7,-4); ctx.lineTo(12,20); ctx.lineTo(-12,20); ctx.closePath(); ctx.fill(); ctx.stroke();   // ふく
+  ctx.fillStyle='#f7cfa6'; dot(0,-12,9);
+  ctx.fillStyle='#ffd23a'; ctx.beginPath(); ctx.arc(0,-13,9.6,Math.PI*1.05,Math.PI*1.95); ctx.fill(); dot(-8,-10,3.5); dot(8,-10,3.5);
+  ctx.strokeStyle='#3a2a2a'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(-3.5,-11,2,Math.PI*1.1,Math.PI*1.9); ctx.stroke(); ctx.beginPath(); ctx.arc(3.5,-11,2,Math.PI*1.1,Math.PI*1.9); ctx.stroke();   // にっこり め
+  ctx.fillStyle='rgba(255,130,160,.6)'; dot(-6,-7,2.2); dot(6,-7,2.2);
+  ctx.strokeStyle='#ffc21a'; ctx.lineWidth=3; ctx.beginPath(); ctx.ellipse(0,-27,9,3,0,0,7); ctx.stroke();   // てんしの わ
+  ctx.fillStyle='#fff3c8'; ctx.strokeStyle='#c89a4a'; ctx.lineWidth=1.5; roundRect(-9,2,18,13,3); ctx.fill(); ctx.stroke();   // なぞなぞの まきもの
+  ctx.fillStyle='#ff5d8f'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillText('？',0,13);
+  ctx.restore();
+  if(a.mode==='hover' && Math.abs(player.x-a.x)<360){ const by=a.y-30+Math.sin(a.t*0.1)*2;           // ふきだし
+    ctx.fillStyle='rgba(255,255,255,.95)'; ctx.strokeStyle='#c8a0ff'; ctx.lineWidth=2; roundRect(x-62,by-24,124,26,13); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#7a3ab8'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.fillText('なぞなぞ だよ！',x,by-6); ctx.textAlign='left'; }
+}
+
+// ── なぞなぞ（3たく・ひらがな）。むずかしさは なんいどに あわせる ──
+const RIDDLES={
+  easy:[
+    ['パンは パンでも たべられない パンは なあに？',[['🍳','フライパン'],['🍞','しょくパン'],['🥐','クロワッサン']]],
+    ['みみが ながくて ぴょんぴょん はねる どうぶつは？',[['🐰','うさぎ'],['🐘','ぞう'],['🐟','さかな']]],
+    ['あさに 「コケコッコー」と なく とりは？',[['🐔','にわとり'],['🦉','ふくろう'],['🐧','ペンギン']]],
+    ['はなが ながーい おおきな どうぶつは？',[['🐘','ぞう'],['🐶','いぬ'],['🐱','ねこ']]],
+    ['あめが ふったら さす ものは？',[['☂️','かさ'],['👟','くつ'],['🧢','ぼうし']]],
+    ['つめたくて あまくて、なめると とける おやつは？',[['🍦','アイス'],['🍪','クッキー'],['🍙','おにぎり']]],
+    ['あしが 8ぽん ある うみの いきものは？',[['🐙','たこ'],['🐟','さかな'],['🐢','かめ']]],
+    ['きいろくて ながい、おさるさんの だいすきな くだものは？',[['🍌','バナナ'],['🍎','りんご'],['🍇','ぶどう']]],
+    ['さくらの はなは なにいろ？',[['🌸','ピンク'],['💙','あお'],['🖤','くろ']]],
+    ['ゆきで つくる、まるい にんぎょうは？',[['⛄','ゆきだるま'],['🧸','くまの ぬいぐるみ'],['🤖','ロボット']]],
+    ['「ブーブー」と なく どうぶつは？',[['🐷','ぶた'],['🐮','うし'],['🐸','かえる']]],
+    ['はを みがく ときに つかう ものは？',[['🪥','はブラシ'],['🥄','スプーン'],['✏️','えんぴつ']]],
+    ['くびが ながーい どうぶつは？',[['🦒','きりん'],['🐭','ねずみ'],['🐻','くま']]],
+    ['よるに なると そらに でてくる、ひかる ものは？',[['🌙','おつきさま'],['🌈','にじ'],['☁️','くも']]],
+    ['みずの なかを およぐ、ひれの ある いきものは？',[['🐟','さかな'],['🐦','とり'],['🐱','ねこ']]],
+  ],
+  normal:[
+    ['つかえば つかうほど ちいさく なる ぶんぼうぐは？',[['🧽','けしゴム'],['📏','じょうぎ'],['✂️','はさみ']]],
+    ['さかさまに よむと「かるい」に なる うみの いきものは？',[['🐬','いるか'],['🐳','くじら'],['🦈','さめ']]],
+    ['さかさまに よんでも おなじ、あかい やさいは？',[['🍅','トマト'],['🥕','にんじん'],['🌶️','ピーマン']]],
+    ['かみは かみでも、ゴロゴロ なる かみは？',[['⚡','かみなり'],['📄','おりがみ'],['💇','かみのけ']]],
+    ['かみは かみでも、あたまに はえている かみは？',[['💇','かみのけ'],['⚡','かみなり'],['📄','おりがみ']]],
+    ['いすは いすでも、つめたくて あまい いすは？',[['🍦','アイス'],['🪑','つくえの いす'],['🛋️','ソファ']]],
+    ['はしは はしでも、わたれない はしは？',[['🥢','おはし'],['🌉','つりばし'],['🪨','いしばし']]],
+    ['バスは バスでも、のれない バスは？',[['🛁','バスタオル'],['🚌','スクールバス'],['🚍','ろせんバス']]],
+    ['くまは くまでも、おちばを あつめる くまは？',[['🍂','くまで'],['🐻','ツキノワグマ'],['🐼','パンダ']]],
+    ['ひるは ひるでも、みずに うかぶ ひるは？',[['🦆','あひる'],['🍱','おひる'],['😴','おひるね']]],
+    ['つきは つきでも、そらに ない つきは？',[['🍡','もちつき'],['🌙','みかづき'],['🌕','まんげつ']]],
+    ['「は（歯）」が あるのに なにも たべない ものは？',[['🪮','くし'],['🍙','おにぎり'],['🧢','ぼうし']]],
+    ['とりは とりでも、ごみを あつめる とりは？',[['🧹','ちりとり'],['🐔','にわとり'],['🦜','オウム']]],
+    ['たこは たこでも、そらを とぶ たこは？',[['🪁','たこあげの たこ'],['🐙','うみの たこ'],['🍡','たこやき']]],
+  ],
+  hard:[
+    ['おしりに「ん」を つけると、がっこうへ もっていく ものに なる どうぶつは？',[['🦛','かば'],['🐘','ぞう'],['🦒','きりん']]],
+    ['いぬが 1ぴき、ねこが 2ひき。あしは ぜんぶで なんぼん？',[['🐾','12ほん'],['🐾','10ぽん'],['🐾','8ほん']]],
+    ['1しゅうかんは なんにち？',[['📅','7にち'],['📅','5にち'],['📅','10にち']]],
+    ['あしが 6ぽん ある むしは どれ？',[['🐞','てんとうむし'],['🕷️','くも'],['🐛','むかで']]],
+    ['いつも さかさまに ぶらさがって ねる どうぶつは？',[['🦇','こうもり'],['🐒','さる'],['🦉','ふくろう']]],
+    ['うみで いちばん おおきな いきものは？',[['🐳','くじら'],['🦈','さめ'],['🐙','たこ']]],
+    ['あおむしが おおきく なると なにに なる？',[['🦋','ちょうちょ'],['🐝','はち'],['🐞','てんとうむし']]],
+    ['おたまじゃくしが おおきく なると なにに なる？',[['🐸','かえる'],['🐟','さかな'],['🐢','かめ']]],
+    ['10から 3を ひくと いくつ？',[['🔢','7'],['🔢','6'],['🔢','13']]],
+    ['にほんで よく いう にじの いろの かずは？',[['🌈','7しょく'],['🌈','3しょく'],['🌈','10しょく']]],
+    ['まえから よんでも うしろから よんでも おなじ ことばは？',[['📰','しんぶんし'],['📕','ほんだな'],['✏️','えんぴつ']]],
+    ['しろくて ふわふわ、おまつりで うっている あまい おかしは？',[['🍭','わたあめ'],['🍡','おだんご'],['🍘','せんべい']]],
+    ['ふゆに なると はが ぜんぶ おちる きは どれ？',[['🍁','もみじ'],['🌲','まつ'],['🌴','ヤシ']]],
+    ['とけいの みじかい はりが おしえて くれるのは？',[['🕐','なんじ'],['⏱️','なんびょう'],['📅','なんようび']]],
+  ],
+};
+let quizUsed={easy:new Set(),normal:new Set(),hard:new Set()};
+function pickRiddle(){ const pool=RIDDLES[diffKey]||RIDDLES.normal, used=quizUsed[diffKey]||(quizUsed[diffKey]=new Set());
+  if(used.size>=pool.length) used.clear();
+  let i; do{ i=Math.floor(Math.random()*pool.length); }while(used.has(i)); used.add(i);
+  const r=pool[i], opts=r[1].map((o,k)=>({e:o[0],t:o[1],ok:k===0}));
+  for(let k=opts.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [opts[k],opts[j]]=[opts[j],opts[k]]; }
+  return {q:r[0],opts}; }
+function sayQuiz(){ if(!quiz||!window.KidsAudio||!KidsAudio.speak) return;
+  const r=quiz.r, nums=['いちばん','にばん','さんばん'];
+  KidsAudio.speak('なぞなぞ。'+r.q.replace(/（[^）]*）/g,'')+'　'+r.opts.map((o,i)=>nums[i]+'、'+o.t).join('。'),{lang:'ja-JP',rate:0.9}); }
+function sayText(t){ if(window.KidsAudio && KidsAudio.speak) KidsAudio.speak(t,{lang:'ja-JP',rate:0.95}); }
+function openQuiz(){ if(quiz) return; state='quiz'; keys.left=keys.right=keys.jump=false; keys.jumpEdge=false;
+  quiz={try:1, r:pickRiddle(), lock:false}; renderQuiz(); document.getElementById('quiz').classList.remove('hidden'); sAngel();
+  setTimeout(()=>{ if(quiz) sayQuiz(); },350); }
+function renderQuiz(){ const r=quiz.r;
+  document.getElementById('qz-q').textContent=r.q;
+  document.getElementById('qz-msg').textContent=quiz.try===1?'こたえを えらんでね':'もう 1もん！ がんばれ！';
+  const box=document.getElementById('qz-opts'); box.innerHTML='';
+  r.opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='qz-opt';
+    b.innerHTML='<span class="qz-n">'+(i+1)+'</span><span class="qz-e">'+o.e+'</span><span class="qz-t"></span>';
+    b.querySelector('.qz-t').textContent=o.t; b.addEventListener('click',()=>answerQuiz(i)); box.appendChild(b); }); }
+function answerQuiz(i){ if(!quiz||quiz.lock) return; quiz.lock=true;
+  const btns=[...document.querySelectorAll('.qz-opt')], o=quiz.r.opts[i], msg=document.getElementById('qz-msg');
+  if(o.ok){ btns[i].classList.add('ok'); msg.textContent='せいかい！ パワーアップ！'; sayText('せいかい！ パワーアップ！'); sPower();
+    setTimeout(()=>closeQuiz('power'),1700); }
+  else if(quiz.try===1){ btns[i].classList.add('ng'); msg.textContent='おしい！ もう 1もん いくよ'; sayText('おしい！ もう いちもん いくよ'); sOver();
+    setTimeout(()=>{ if(!quiz) return; quiz.try=2; quiz.r=pickRiddle(); quiz.lock=false; renderQuiz(); setTimeout(()=>{ if(quiz) sayQuiz(); },300); },1700); }
+  else { btns[i].classList.add('ng'); btns[quiz.r.opts.findIndex(x=>x.ok)].classList.add('ok');
+    msg.textContent='ざんねん！ ハートを 1こ あげるね'; sayText('ざんねん！ ハートを ひとつ あげるね');
+    setTimeout(()=>closeQuiz('heart'),2300); } }
+function closeQuiz(result){ document.getElementById('quiz').classList.add('hidden'); quiz=null;
+  if(window.speechSynthesis) try{ speechSynthesis.cancel(); }catch(e){}
+  if(!angel) return; angel.mode='leave';
+  const p=player;
+  if(result==='power'){ powered=true;
+    particles.push({x:p.x+13,y:p.y-16,vx:0,vy:-0.7,life:60,txt:'パワーアップ！',c:'#ffe14d',ring:true});
+    for(let i=0;i<16;i++){ const a=i/16*Math.PI*2; particles.push({x:p.x+13,y:p.y+20,vx:Math.cos(a)*3,vy:Math.sin(a)*3,life:28,c:'#fff6a0',ng:true}); } }
+  else if(result==='heart'){ hearts=Math.min(diff.hearts,hearts+1);
+    particles.push({x:p.x+13,y:p.y-16,vx:0,vy:-0.7,life:50,txt:'❤ +1',c:'#ff8fb0',ring:true}); }
+  if(state==='quiz') state='play'; }
+function closeQuizSilently(){ const q=document.getElementById('quiz'); if(q) q.classList.add('hidden'); quiz=null; }
 
 // ===================================================================
 // ゆきやま・大魔王のすみか の そらの てき（2026-11-21 ハチ から いれかえ）
@@ -1947,6 +2237,7 @@ function render(){
   if(SD.bossType==='demon') drawCastle();
   for(const pl of plats){ if(!pl.ground) drawPlat(pl); }
   for(const c of coins) drawCoin(c);
+  drawAngel();
   if(SD.bossType==='demon') drawPrincess();
   for(const e of enemies){ if(e.alive) drawEnemy(e); else if(e.dead<16){ ctx.globalAlpha=1-e.dead/16; e.sq=1.4; e.rot=0; drawEnemy(e); ctx.globalAlpha=1; } }  // ふまれると ぺちゃんこ
   for(const f of fireballs) drawFire(f);
@@ -1959,7 +2250,7 @@ function render(){
     else if(p.ring){ ctx.strokeStyle=p.c; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,p.y,(30-p.life)*0.8,0,7); ctx.stroke(); }
     else { ctx.fillStyle=p.c; ctx.fillRect(x-2,p.y-2,4,4);} }
   ctx.globalAlpha=1;
-  drawHero();
+  drawPowerBack(); drawHero(); drawPowerFront(); drawBarriers();
   if(SD.deco==='snow') snowFall();
   else if(SD.fx==='leaves') leafFall();
   else if(SD.fx==='fog') fogDrift();
@@ -1982,14 +2273,14 @@ function drawBossBanner(){ ctx.setTransform(DPR,0,0,DPR,0,0);
 // ===== HUD =====
 function updateHUD(){
   let h=''; for(let i=0;i<diff.hearts;i++) h+= i<hearts?'❤':'🖤';
-  document.getElementById('hearts').textContent=h;
+  document.getElementById('hearts').textContent=h+(powered?'  👼':'');
   const cd=document.getElementById('coins');
-  cd.textContent='🪙 '+coinsGot+(coinsGot>0?' ×★':'');
+  cd.textContent='🪙 '+coinsGot+(coinsGot>0?(heroKey==='girl'?' ×🛡️':' ×★'):'');
   cd.classList.toggle('pw',coinsGot>0);
 }
 
 // ===== 画面遷移 =====
-function show(scr){ document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+function show(scr){ document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden')); if(scr) closeQuizSilently();
   if(scr) document.getElementById(scr).classList.remove('hidden');
   if(scr!=='clear-screen'){ stopClearFx(); closeSecret(); clearTimers.forEach(clearTimeout); clearTimers=[]; }
   if(scr==='stage-select-screen') updateStageBest();
@@ -1999,7 +2290,7 @@ function show(scr){ document.querySelectorAll('.screen').forEach(s=>s.classList.
   document.getElementById('mute-btn').classList.toggle('hidden',!playing);
 }
 function syncDiff(){ document.querySelectorAll('.diff-btn').forEach(x=>x.classList.toggle('sel',x.dataset.d===diffKey));
-  document.querySelectorAll('.diff-desc').forEach(d=>d.textContent=diff.desc); }
+  document.querySelectorAll('.diff-desc:not(.hero-d)').forEach(d=>d.textContent=diff.desc); }
 function startGame(key){ if(key) stageKey=key; reset(); state='play'; show(null); resumeAudio(); startBGM(); tryFullscreen();
   preloadSecret(); }
 // ===== クリア画面 =====
@@ -2238,6 +2529,9 @@ document.querySelectorAll('.diff-btn').forEach(b=>b.addEventListener('click',()=
 // タイトル→ステージ選択→ゲーム
 document.getElementById('start-btn').addEventListener('click',()=>{ state='title'; show('stage-select-screen'); });
 document.querySelectorAll('.stage-btn').forEach(b=>b.addEventListener('click',()=>startGame(b.dataset.s)));
+document.querySelectorAll('.hero-btn').forEach(b=>b.addEventListener('click',()=>{ heroKey=b.dataset.h; try{ localStorage.setItem('himeHero',heroKey); }catch(e){} syncHero(); }));
+document.getElementById('qz-say').addEventListener('click',sayQuiz);
+addEventListener('keydown',e=>{ if(quiz && ['1','2','3'].includes(e.key)) answerQuiz(+e.key-1); });   // パソコンは 1・2・3 キーでも こたえられる
 document.getElementById('ss-back').addEventListener('click',()=>show('title-screen'));
 document.getElementById('clear-again').addEventListener('click',()=>{state='title';show('stage-select-screen');});
 document.getElementById('clear-retry').addEventListener('click',()=>startGame());
@@ -2414,7 +2708,7 @@ document.getElementById('mute-btn').addEventListener('click',()=>{ muted=!muted;
   try{ if(bgmBus) bgmBus.gain.setValueAtTime(muted?0:0.42,AC().currentTime); }catch(e){} });
 
 // 起動時：難易度・解像度・向き
-diffKey='normal'; diff=DIFFS.normal; syncDiff();
+diffKey='normal'; diff=DIFFS.normal; syncDiff(); syncHero();
 reset(); resize(); updateOrient(); updateStageBest();
 </script>
 </body>
