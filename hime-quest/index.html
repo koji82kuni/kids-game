@@ -1510,6 +1510,15 @@ function sayQuiz(){ if(!quiz||!window.KidsAudio||!KidsAudio.speak) return;
   const r=quiz.r, nums=['いちばん','にばん','さんばん'];
   KidsAudio.speak('なぞなぞ。'+r.q.replace(/（[^）]*）/g,'')+'　'+r.opts.map((o,i)=>nums[i]+'、'+o.t).join('。'),{lang:'ja-JP',rate:0.9}); }
 function sayText(t){ if(window.KidsAudio && KidsAudio.speak) KidsAudio.speak(t,{lang:'ja-JP',rate:0.95}); }
+// よみあげが おわってから つぎへ すすむ（とちゅうで こえが きれない ように 2026-11-21）
+//   こえが でない たんまつでは minMs で すすむ。ねんの ため 9びょうで かならず すすむ
+function sayThen(t, minMs, fn){ let done=false, started=false; const t0=Date.now();
+  const go=()=>{ if(done) return; done=true; fn(); };
+  const ok=!!(window.KidsAudio && KidsAudio.speak && KidsAudio.speak(t,{lang:'ja-JP',rate:0.95,
+    onstart:()=>{ started=true; },
+    onend:()=>{ if(started) setTimeout(go, Math.max(400, minMs-(Date.now()-t0))); }}));
+  setTimeout(()=>{ if(!started) go(); }, ok?Math.max(minMs,3200):minMs);
+  setTimeout(go, 9000); }
 function openQuiz(){ if(quiz) return; state='quiz'; keys.left=keys.right=keys.jump=false; keys.jumpEdge=false;
   quiz={try:1, r:pickRiddle(), lock:false}; renderQuiz(); document.getElementById('quiz').classList.remove('hidden'); sAngel();
   setTimeout(()=>{ if(quiz) sayQuiz(); },350); }
@@ -1522,15 +1531,14 @@ function renderQuiz(){ const r=quiz.r;
     b.querySelector('.qz-t').textContent=o.t; b.addEventListener('click',()=>answerQuiz(i)); box.appendChild(b); }); }
 function answerQuiz(i){ if(!quiz||quiz.lock) return; quiz.lock=true;
   const btns=[...document.querySelectorAll('.qz-opt')], o=quiz.r.opts[i], msg=document.getElementById('qz-msg');
-  if(o.ok){ btns[i].classList.add('ok'); msg.textContent='せいかい！ パワーアップ！'; sayText('せいかい！ パワーアップ！'); sPower();
-    setTimeout(()=>closeQuiz('power'),1700); }
-  else if(quiz.try===1){ btns[i].classList.add('ng'); msg.textContent='おしい！ もう 1もん いくよ'; sayText('おしい！ もう いちもん いくよ'); sOver();
-    setTimeout(()=>{ if(!quiz) return; quiz.try=2; quiz.r=pickRiddle(); quiz.lock=false; renderQuiz(); setTimeout(()=>{ if(quiz) sayQuiz(); },300); },1700); }
+  if(o.ok){ btns[i].classList.add('ok'); msg.textContent='せいかい！ パワーアップ！'; sPower();
+    sayThen('せいかい！ パワーアップ！',1700,()=>closeQuiz('power')); }
+  else if(quiz.try===1){ btns[i].classList.add('ng'); msg.textContent='おしい！ もう 1もん いくよ'; sOver();
+    sayThen('おしい！ もう いちもん いくよ',1700,()=>{ if(!quiz) return; quiz.try=2; quiz.r=pickRiddle(); quiz.lock=false; renderQuiz(); setTimeout(()=>{ if(quiz) sayQuiz(); },300); }); }
   else { btns[i].classList.add('ng'); btns[quiz.r.opts.findIndex(x=>x.ok)].classList.add('ok');
-    msg.textContent='ざんねん！ ハートを 1こ あげるね'; sayText('ざんねん！ ハートを ひとつ あげるね');
-    setTimeout(()=>closeQuiz('heart'),2300); } }
-function closeQuiz(result){ document.getElementById('quiz').classList.add('hidden'); quiz=null;
-  if(window.speechSynthesis) try{ speechSynthesis.cancel(); }catch(e){}
+    msg.textContent='ざんねん！ ハートを 1こ あげるね';
+    sayThen('ざんねん！ ハートを ひとつ あげるね',2300,()=>closeQuiz('heart')); } }
+function closeQuiz(result){ document.getElementById('quiz').classList.add('hidden'); quiz=null;   // ここでは こえを とめない（いいおわってから よばれる）
   if(!angel) return; angel.mode='leave';
   const p=player;
   if(result==='power'){ powered=true;
@@ -1539,7 +1547,7 @@ function closeQuiz(result){ document.getElementById('quiz').classList.add('hidde
   else if(result==='heart'){ hearts=Math.min(diff.hearts,hearts+1);
     particles.push({x:p.x+13,y:p.y-16,vx:0,vy:-0.7,life:50,txt:'❤ +1',c:'#ff8fb0',ring:true}); }
   if(state==='quiz') state='play'; }
-function closeQuizSilently(){ const q=document.getElementById('quiz'); if(q) q.classList.add('hidden'); quiz=null; }
+function closeQuizSilently(){ const q=document.getElementById('quiz'); if(q && !q.classList.contains('hidden')){ q.classList.add('hidden'); if(window.KidsAudio && KidsAudio.cancel) KidsAudio.cancel(); } quiz=null; }
 
 // ===================================================================
 // ゆきやま・大魔王のすみか の そらの てき（2026-11-21 ハチ から いれかえ）
